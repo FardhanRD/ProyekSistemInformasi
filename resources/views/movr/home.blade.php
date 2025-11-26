@@ -69,6 +69,11 @@
                                     <a href="{{ route('produk.show', $item->slug) }}" class="w-full bg-dark-bg border border-border-color text-light-text py-2 rounded-lg text-center hover:bg-card-bg transition btn-scale">
                                         <i class="fas fa-eye mr-2"></i>Detail
                                     </a>
+                                    @auth
+                                                <button type="button" onclick="toggleFavorite({{ $item->id }})" class="p-2 border border-border-color rounded-lg text-light-text hover:text-accent-green transition favorite-btn" data-id="{{ $item->id }}" data-favorited="false" title="Tambahkan ke favorit">
+                                                    <i class="fas fa-heart"></i>
+                                                </button>
+                                            @endauth
                                 </div>
                             </div>
                         </div>
@@ -94,3 +99,126 @@
     </div>
 </section>
 @endsection
+
+
+<script>
+function toggleFavorite(productId) {
+    console.log('Toggle favorite for product:', productId);
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch('{{ route('favorit.toggle') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        body: JSON.stringify({
+            produk_id: productId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+        const buttons = document.querySelectorAll(`[data-id="${productId}"]`);
+        buttons.forEach(btn => {
+            const icon = btn.querySelector('i');
+            if (data.status === 'added') {
+                icon.style.color = '#10b981 !important';
+                icon.style.fontWeight = '900 !important';
+                btn.classList.add('favorited');
+                showNotification('✓ Ditambahkan ke favorit', 'success');
+            } else if (data.status === 'removed') {
+                icon.style.color = 'currentColor !important';
+                icon.style.fontWeight = '400 !important';
+                btn.classList.remove('favorited');
+                showNotification('✓ Dihapus dari favorit', 'info');
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('✗ Terjadi kesalahan', 'error');
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const bgColor = {
+        'success': 'bg-accent-green',
+        'info': 'bg-blue-500',
+        'error': 'bg-red-500'
+    }[type] || 'bg-blue-500';
+
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+    notification.textContent = message;
+    notification.style.animation = 'fadeIn 0.3s ease-in';
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Check favorite status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    favoriteButtons.forEach(button => {
+        const productId = button.getAttribute('data-id');
+        
+        fetch('{{ route('favorit.toggle') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                produk_id: productId,
+                check_only: true
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.isFavorited) {
+                const icon = button.querySelector('i');
+                icon.style.color = '#10b981 !important';
+                icon.style.fontWeight = '900 !important';
+                button.classList.add('favorited');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+</script>
+
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.favorite-btn.favorited i {
+    color: #10b981 !important;
+    font-weight: 900 !important;
+}
+</style>
