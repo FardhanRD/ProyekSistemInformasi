@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-// TAMBAHKAN INI
-use Laravel\Sanctum\HasApiTokens; 
-
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    // TAMBAHKAN 'HasApiTokens' DI SINI
-    use HasApiTokens, HasFactory, Notifiable; 
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -26,17 +23,35 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    // Relationships
+    public function keranjangItems()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(\App\Models\KeranjangItem::class, 'pembeli_id');
+    }
+    public function ulasan()
+    {
+        return $this->hasMany(\App\Models\Ulasan::class, 'user_id');
+    }
+    public function favorit()
+    {
+        return $this->hasMany(\App\Models\Favorit::class, 'pembeli_id');
+    }
+    public function pembayaran()
+    {
+        return $this->hasMany(\App\Models\Pembayaran::class, 'pembeli_id');
+    }
+    public function alamat()
+    {
+        return $this->hasMany(\App\Models\Alamat::class, 'pembeli_id');
     }
 
-    // ... sisa relasi Anda biarkan saja ...
-    public function keranjangItems() { return $this->hasMany(\App\Models\KeranjangItem::class, 'id'); }
-    public function ulasan() { return $this->hasMany(\App\Models\Ulasan::class, 'user_id'); }
-    public function favorit() { return $this->hasMany(\App\Models\Favorit::class, 'id'); }
-    public function isAdmin() { return $this->role === 'admin'; }
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
 }
