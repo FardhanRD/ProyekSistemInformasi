@@ -3,18 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\KeranjangItem;
-use App\Models\Produk;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class KeranjangController extends Controller
 {
-    /**
-     * Display the shopping cart
-     */
+    // Menampilkan Keranjang
     public function index()
     {
         $keranjangItems = KeranjangItem::with('produk')
-            ->where('pembeli_id', auth()->id())
+            ->where('pembeli_id', Auth::id())
             ->get();
         
         $total = $keranjangItems->sum(function ($item) {
@@ -24,40 +23,57 @@ class KeranjangController extends Controller
         return view('movr.keranjang.index', compact('keranjangItems', 'total'));
     }
 
-    /**
-     * Add item to cart
-     */
+    // Menambah ke Keranjang
     public function store(Request $request)
     {
         $request->validate([
-            'produk_id' => 'required|exists:produk,id',
+            'produk_id' => 'required|exists:products,id',
             'jumlah' => 'required|integer|min:1',
         ]);
 
-        $produk = Produk::findOrFail($request->produk_id);
+        $produk = Product::findOrFail($request->produk_id);
         
-        // Check if product has enough stock
-        if ($produk->stok < $request->jumlah) {
+        if ($produk->stock < $request->jumlah) {
             return redirect()->back()->with('error', 'Stok tidak mencukupi!');
         }
 
-        $keranjangItem = KeranjangItem::updateOrCreate(
-            [
-                'pembeli_id' => auth()->id(),
-                'produk_id' => $request->produk_id,
-            ],
-            [
-                'jumlah' => $request->jumlah,
-                'harga_saat_ini' => $produk->harga,
-            ]
-        );
+        // Jika user menekan tombol 'Buy Now' (action=checkout), lewati redirect ke keranjang
+        if ($request->input('action') === 'checkout') {
+            $checkoutItem = [
+                'id' => $produk->id,
+                'name' => $produk->name,
+                'price' => $produk->price,
+                'image' => $produk->image,
+                'qty' => (int) $request->jumlah,
+                'total' => $produk->price * (int) $request->jumlah,
+            ];
 
-        return redirect()->route('keranjang.index')->with('status', 'Produk berhasil ditambahkan ke keranjang!');
+            session(['checkout_type' => 'direct']);
+            session(['checkout_items' => [$checkoutItem]]);
+
+            return redirect()->route('checkout.index');
+        }
+
+        $existingItem = KeranjangItem::where('pembeli_id', Auth::id())
+                        ->where('produk_id', $request->produk_id)
+                        ->first();
+
+        if ($existingItem) {
+            $existingItem->jumlah += $request->jumlah;
+            $existingItem->save();
+        } else {
+            KeranjangItem::create([
+                'pembeli_id' => Auth::id(),
+                'produk_id' => $request->produk_id,
+                'jumlah' => $request->jumlah,
+                'harga_saat_ini' => $produk->price,
+            ]);
+        }
+
+        return redirect()->route('keranjang.index')->with('status', 'Produk berhasil masuk keranjang!');
     }
 
-    /**
-     * Update cart item quantity
-     */
+    // Update Keranjang
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -65,34 +81,31 @@ class KeranjangController extends Controller
         ]);
 
         $keranjangItem = KeranjangItem::where('id', $id)
-            ->where('pembeli_id', auth()->id())
+            ->where('pembeli_id', Auth::id())
             ->firstOrFail();
             
-        $produk = Produk::findOrFail($keranjangItem->produk_id);
+        $produk = Product::findOrFail($keranjangItem->produk_id);
         
-        // Check if product has enough stock
-        if ($produk->stok < $request->jumlah) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi!');
+        if ($produk->stock < $request->jumlah) {
+            return redirect()->back()->with('error', 'Stok maksimum tercapai!');
         }
 
         $keranjangItem->update([
             'jumlah' => $request->jumlah,
         ]);
 
-        return redirect()->route('keranjang.index')->with('status', 'Keranjang berhasil diperbarui!');
+        return redirect()->route('keranjang.index')->with('status', 'Keranjang diperbarui!');
     }
 
-    /**
-     * Remove item from cart
-     */
+    // Hapus dari Keranjang
     public function destroy($id)
     {
         $keranjangItem = KeranjangItem::where('id', $id)
-            ->where('pembeli_id', auth()->id())
+            ->where('pembeli_id', Auth::id())
             ->firstOrFail();
         
         $keranjangItem->delete();
 
-        return redirect()->route('keranjang.index')->with('status', 'Produk berhasil dihapus dari keranjang!');
+        return redirect()->route('keranjang.index')->with('status', 'Produk dihapus!');
     }
 }

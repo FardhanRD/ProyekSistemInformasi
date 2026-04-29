@@ -122,6 +122,23 @@ class ProfilPembeliController extends Controller
     {
         $alamat = Alamat::where('id', $id)->where('pembeli_id', auth()->id())->firstOrFail();
 
+        $request->validate([
+            'label' => 'required|string|max:100',
+            'provinsi' => 'required|string|max:100',
+            'kota' => 'required|string|max:100',
+            'kecamatan' => 'required|string|max:100',
+            'detail_alamat' => 'required|string',
+            'kode_pos' => 'required|string|max:10',
+        ]);
+
+        // If this is set as default, update other addresses to not be default
+        if ($request->boolean('is_default')) {
+        // Reset semua alamat lain
+        Alamat::where('pembeli_id', auth()->id())
+            ->update(['is_default' => false]);
+
+            $alamat->is_default = true;
+        }
 
         $alamat->label = $request->label;
         $alamat->provinsi = $request->provinsi;

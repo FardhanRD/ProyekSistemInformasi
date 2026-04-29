@@ -6,7 +6,10 @@ use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -79,6 +82,67 @@ class AuthController extends Controller
         return back()->withErrors([
             'email' => 'Kredensial yang diberikan tidak cocok dengan catatan kami.',
         ]);
+    }
+
+    /**
+     * Redirect user to Google authentication page
+     */
+    public function redirectToGoogle()
+    {
+        if (!config('services.google.client_id') || !config('services.google.client_secret')) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Konfigurasi Google Sign-In belum diatur.',
+            ]);
+        }
+
+        return Socialite::driver('google')->stateless()->redirect();
+    }
+
+    /**
+     * Handle Google callback and authenticate user
+     */
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            $email = $googleUser->getEmail();
+            if (!$email) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Akun Google tidak memiliki email yang valid.',
+                ]);
+            }
+
+            $user = Pengguna::where('email', $email)->first();
+
+            if (!$user) {
+                $fallbackName = 'User ' . Str::upper(Str::random(4));
+
+                $user = Pengguna::create([
+                    'name' => $googleUser->getName() ?: $fallbackName,
+                    'email' => $email,
+                    'password' => Hash::make(Str::random(40)),
+                    'role' => 'pembeli',
+                ]);
+
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+
+            Auth::login($user, true);
+            $request->session()->regenerate();
+
+            if (Auth::user()->isAdmin()) {
+                return redirect()->intended('/admin/dashboard');
+            }
+
+            return redirect()->intended('/');
+        } catch (\Throwable $e) {
+            Log::error('Google OAuth callback failed', ['error' => $e->getMessage()]);
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Login Google gagal. Silakan coba lagi.',
+            ]);
+        }
     }
 
     /**

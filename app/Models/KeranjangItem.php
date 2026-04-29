@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Product; // Import Model Product (Baru)
+use App\Models\User;    // Import Model User
 
 class KeranjangItem extends Model
 {
@@ -20,22 +22,18 @@ class KeranjangItem extends Model
 
     protected $casts = [
         'jumlah' => 'integer',
-        'harga_saat_ini' => 'decimal:2',
+        'harga_saat_ini' => 'decimal:0',
     ];
 
-    /**
-     * Get the customer (pembeli) that owns this cart item
-     */
     public function pembeli()
     {
-        return $this->belongsTo(Pengguna::class, 'pembeli_id');
+        return $this->belongsTo(User::class, 'pembeli_id');
     }
 
-    /**
-     * Get the product for this cart item
-     */
+    // Relasi ke Model Product (Bahasa Inggris)
     public function produk()
     {
-        return $this->belongsTo(Produk::class, 'produk_id');
+        return $this->belongsTo(Product::class, 'produk_id');
     }
+   
 }

@@ -1,252 +1,342 @@
 @extends('movr.layouts.app')
 
 @section('content')
-<!-- Page Header -->
-<section class="py-12 bg-darker-bg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-light-text">Profil Saya</h1>
-        <p class="mt-2 text-gray-400">Kelola informasi profil dan alamat Anda</p>
-    </div>
-</section>
 
-<!-- Profile Content -->
-<section class="py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Profile Information -->
-            <div class="lg:col-span-2">
-                <div class="bg-card-bg border border-border-color rounded-lg p-6">
-                    <h3 class="text-xl font-semibold text-light-text mb-6">Informasi Profil</h3>
-                    
-                    @if(session('status'))
-                        <div class="mb-4 p-4 bg-accent-green bg-opacity-10 border border-accent-green rounded-lg text-accent-green">
-                            {{ session('status') }}
+{{-- BREADCRUMB --}}
+<div class="bg-white border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+        <nav class="flex text-xs font-bold uppercase tracking-wider text-gray-500">
+            <ol class="inline-flex items-center space-x-2">
+                <li><a href="{{ route('home') }}" class="hover:text-black transition">Home</a></li>
+                <li><span class="text-gray-300">/</span></li>
+                <li class="text-black">Account Settings</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-12 bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto px-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {{-- SIDEBAR MENU (Sticky) --}}
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-8">
+                    {{-- User Short Info --}}
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-xl font-bold">
+                            {{ substr($user->name, 0, 1) }}
                         </div>
-                    @endif
-                    
-                    @if(session('error'))
-                        <div class="mb-4 p-4 bg-red-500 bg-opacity-10 border border-red-500 rounded-lg text-red-500">
-                            {{ session('error') }}
+                        <div class="overflow-hidden">
+                            <h3 class="font-bold text-black truncate">{{ $user->name }}</h3>
+                            <p class="text-xs text-gray-500 truncate">{{ $user->email }}</p>
                         </div>
-                    @endif
-                    
-                    <form action="{{ route('profil.update') }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="mb-4">
-                            <label for="name" class="block text-sm font-medium text-light-text mb-2">Nama</label>
-                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                            @error('name')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="email" class="block text-sm font-medium text-light-text mb-2">Email</label>
-                            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                            @error('email')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        
-                        <button type="submit" class="bg-accent-green text-dark-bg px-6 py-2 rounded-lg hover:bg-opacity-90 transition btn-scale">
-                            Simpan Perubahan
+                    </div>
+
+                    {{-- Navigation --}}
+                    <nav class="space-y-1">
+                        <button onclick="switchTab('profile')" id="nav-profile" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors bg-gray-100 text-black">
+                            <i class="far fa-user w-5"></i> Personal Info
                         </button>
-                    </form>
-                    
-                    <hr class="my-6 border-border-color">
-                    
-                    <h4 class="text-lg font-medium text-light-text mb-4">Ubah Kata Sandi</h4>
-                    <form action="{{ route('profil.password.update') }}" method="POST">
-                        @csrf
-                        
-                        <div class="mb-4">
-                            <label for="current_password" class="block text-sm font-medium text-light-text mb-2">Kata Sandi Saat Ini</label>
-                            <input type="password" id="current_password" name="current_password" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                            @error('current_password')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="new_password" class="block text-sm font-medium text-light-text mb-2">Kata Sandi Baru</label>
-                            <input type="password" id="new_password" name="new_password" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                            @error('new_password')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="new_password_confirmation" class="block text-sm font-medium text-light-text mb-2">Konfirmasi Kata Sandi Baru</label>
-                            <input type="password" id="new_password_confirmation" name="new_password_confirmation" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                        </div>
-                        
-                        <button type="submit" class="bg-accent-green text-dark-bg px-6 py-2 rounded-lg hover:bg-opacity-90 transition btn-scale">
-                            Ubah Kata Sandi
+                        <button onclick="switchTab('security')" id="nav-security" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">
+                            <i class="fas fa-lock w-5"></i> Security
                         </button>
-                    </form>
+                        <button onclick="switchTab('address')" id="nav-address" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">
+                            <i class="fas fa-map-marker-alt w-5"></i> Address Book
+                        </button>
+                        <a href="{{ route('customer.dashboard') }}" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">
+                            <i class="fas fa-box-open w-5"></i> My Orders
+                        </a>
+                    </nav>
                 </div>
             </div>
-            
-            <!-- Addresses -->
-            <div>
-                <div class="bg-card-bg border border-border-color rounded-lg p-6">
-                    <h3 class="text-xl font-semibold text-light-text mb-6">Alamat Pengiriman</h3>
-                    
-                    @foreach($alamat as $item)
-                        <div class="mb-4 p-4 bg-darker-bg rounded-lg">
-                            <div class="flex justify-between items-start">
+
+            {{-- MAIN CONTENT --}}
+            <div class="lg:col-span-9">
+                
+                {{-- Global Alert Messages --}}
+                @if(session('status'))
+                    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span class="text-sm text-green-700">{{ session('status') }}</span>
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 flex items-center">
+                        <i class="fas fa-exclamation-circle text-blue-500 mr-3"></i>
+                        <span class="text-sm text-blue-700">{{ session('error') }}</span>
+                    </div>
+                @endif
+
+                {{-- TAB 1: PERSONAL INFO --}}
+                <div id="tab-profile" class="tab-content block">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                        <h2 class="text-2xl font-bold text-black mb-1">Personal Information</h2>
+                        <p class="text-gray-500 text-sm mb-8">Update your personal details here.</p>
+
+                        <form action="{{ route('profil.update') }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div>
-                                    <h4 class="font-medium text-light-text">{{ $item->label }}</h4>
-                                    <p class="text-sm text-gray-400 mt-1">
-                                        {{ $item->detail_alamat }}, {{ $item->kecamatan }}, {{ $item->kota }}, {{ $item->provinsi }} {{ $item->kode_pos }}
-                                    </p>
-                                    @if($item->is_default)
-                                        <span class="inline-block mt-2 px-2 py-1 bg-accent-green text-dark-bg text-xs rounded">Alamat Utama</span>
-                                    @endif
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Full Name</label>
+                                    <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black focus:ring-0 transition">
+                                    @error('name') <p class="text-blue-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
-                                <div class="flex space-x-2">
-                                    <button onclick="editAlamat({{ $item->id }})" class="text-accent-green hover:text-opacity-80">
-                                        <i class="fas fa-edit"></i>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Email Address</label>
+                                    <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black focus:ring-0 transition">
+                                    @error('email') <p class="text-blue-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-black text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-gray-800 transition">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- TAB 2: SECURITY --}}
+                <div id="tab-security" class="tab-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                        <h2 class="text-2xl font-bold text-black mb-1">Login & Security</h2>
+                        <p class="text-gray-500 text-sm mb-8">Manage your password to keep your account safe.</p>
+
+                        <form action="{{ route('profil.password.update') }}" method="POST" class="max-w-lg">
+                            @csrf
+                            <div class="space-y-6 mb-8">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Current Password</label>
+                                    <input type="password" name="current_password" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black focus:ring-0 transition">
+                                    @error('current_password') <p class="text-blue-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-2">New Password</label>
+                                    <input type="password" name="new_password" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black focus:ring-0 transition">
+                                    @error('new_password') <p class="text-blue-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Confirm New Password</label>
+                                    <input type="password" name="new_password_confirmation" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black focus:ring-0 transition">
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-black text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-gray-800 transition">
+                                    Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- TAB 3: ADDRESS BOOK --}}
+                <div id="tab-address" class="tab-content hidden">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-black mb-1">Address Book</h2>
+                            <p class="text-gray-500 text-sm">Manage your shipping destinations.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Add New Card Button --}}
+                        <button onclick="addAlamat()" class="group flex flex-col items-center justify-center h-full min-h-[180px] border-2 border-dashed border-gray-300 rounded-xl hover:border-black hover:bg-gray-50 transition-all cursor-pointer">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-black group-hover:text-white transition-colors mb-3">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <span class="font-bold text-gray-500 group-hover:text-black">Add New Address</span>
+                        </button>
+
+                        {{-- Address List --}}
+                        @foreach($alamat as $item)
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 relative group hover:shadow-md transition-shadow">
+                                @if($item->is_default)
+                                    <span class="absolute top-4 right-4 bg-green-100 text-green-700 text-[10px] font-bold uppercase px-2 py-1 rounded">Default</span>
+                                @endif
+                                
+                                <div class="mb-4">
+                                    <h4 class="font-bold text-black text-lg mb-1">{{ $item->label }}</h4>
+                                    <p class="text-gray-500 text-sm leading-relaxed">
+                                        {{ $item->detail_alamat }}<br>
+                                        {{ $item->kecamatan }}, {{ $item->kota }}<br>
+                                        {{ $item->provinsi }} {{ $item->kode_pos }}
+                                    </p>
+                                </div>
+
+                                <div class="flex items-center gap-3 border-t border-gray-100 pt-4 mt-auto">
+                                    <button onclick="editAlamat({{ $item->id }})" class="text-sm font-bold text-gray-500 hover:text-black flex items-center gap-1">
+                                        <i class="far fa-edit"></i> Edit
                                     </button>
-                                    <form action="{{ route('profil.alamat.destroy', $item->id) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-500 hover:text-opacity-80" onclick="return confirm('Apakah Anda yakin ingin menghapus alamat ini?')">
-                                            <i class="fas fa-trash"></i>
+                                    <div class="h-4 w-px bg-gray-300"></div>
+                                    <form action="{{ route('profil.alamat.destroy', $item->id) }}" method="POST">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" onclick="return confirm('Delete this address?')" class="text-sm font-bold text-gray-500 hover:text-blue-600 flex items-center gap-1">
+                                            <i class="far fa-trash-alt"></i> Remove
                                         </button>
                                     </form>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
-                    
-                    <button onclick="addAlamat()" class="w-full bg-dark-bg border border-border-color text-light-text py-2 rounded-lg hover:bg-card-bg transition btn-scale">
-                        <i class="fas fa-plus mr-2"></i>Tambah Alamat
-                    </button>
+                        @endforeach
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 </section>
 
-<!-- Modal for Add/Edit Address -->
-<div id="alamatModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-card-bg rounded-lg max-w-md w-full p-6">
-            <h3 id="modalTitle" class="text-xl font-semibold text-light-text mb-4">Tambah Alamat</h3>
-            <form id="alamatForm" action="{{ route('profil.alamat.store') }}" method="POST">
-                @csrf
-                <input type="hidden" id="alamatId" name="id">
-                
-                <div class="mb-4">
-                    <label for="label" class="block text-sm font-medium text-light-text mb-2">Label Alamat</label>
-                    <input type="text" id="label" name="label" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
+{{-- MODAL: Modern & Centered --}}
+<div id="alamatModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    {{-- Backdrop --}}
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                {{-- Header --}}
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100">
+                    <h3 class="text-xl font-bold text-black" id="modalTitle">Add New Address</h3>
                 </div>
-                
-                <div class="mb-4">
-                    <label for="provinsi" class="block text-sm font-medium text-light-text mb-2">Provinsi</label>
-                    <input type="text" id="provinsi" name="provinsi" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="kota" class="block text-sm font-medium text-light-text mb-2">Kota</label>
-                    <input type="text" id="kota" name="kota" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="kecamatan" class="block text-sm font-medium text-light-text mb-2">Kecamatan</label>
-                    <input type="text" id="kecamatan" name="kecamatan" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="detail_alamat" class="block text-sm font-medium text-light-text mb-2">Detail Alamat</label>
-                    <textarea id="detail_alamat" name="detail_alamat" rows="3" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="kode_pos" class="block text-sm font-medium text-light-text mb-2">Kode Pos</label>
-                    <input type="text" id="kode_pos" name="kode_pos" class="w-full px-3 py-2 bg-darker-bg border border-border-color rounded-lg text-light-text focus:ring-accent-green focus:border-accent-green" required>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="flex items-center">
-                        <input type="hidden" name="is_default" value="0">
-                        <input type="checkbox" id="is_default" name="is_default" value="1" class="rounded bg-card-bg border-border-color text-accent-green focus:ring-accent-green">
-                        <span class="ml-2 text-light-text">Jadikan alamat utama</span>
-                    </label>
-                </div>
-                
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-600 text-light-text rounded-lg hover:bg-gray-700 transition">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-accent-green text-dark-bg rounded-lg hover:bg-opacity-90 transition">Simpan</button>
-                </div>
-            </form>
+
+                {{-- Form Content --}}
+                <form id="alamatForm" action="{{ route('profil.alamat.store') }}" method="POST">
+                    @csrf
+                    <div id="method-spoofing"></div> {{-- Placeholder for PUT method --}}
+                    <input type="hidden" id="alamatId" name="id">
+
+                    <div class="px-6 py-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Address Label</label>
+                            <input type="text" id="label" name="label" placeholder="e.g. Home, Office" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none" required>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Province</label>
+                                <input type="text" id="provinsi" name="provinsi" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">City</label>
+                                <input type="text" id="kota" name="kota" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none" required>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">District</label>
+                                <input type="text" id="kecamatan" name="kecamatan" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Postal Code</label>
+                                <input type="text" id="kode_pos" name="kode_pos" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Full Address</label>
+                            <textarea id="detail_alamat" name="detail_alamat" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none" required></textarea>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="hidden" name="is_default" value="0">
+                            <input type="checkbox" id="is_default" name="is_default" value="1" class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black">
+                            <label for="is_default" class="ml-2 block text-sm text-gray-900 font-medium">Set as default address</label>
+                        </div>
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800">Save Address</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-function addAlamat() {
-    document.getElementById('modalTitle').textContent = 'Tambah Alamat';
-    document.getElementById('alamatForm').action = '{{ route('profil.alamat.store') }}';
-    document.getElementById('alamatForm').method = 'POST';
-    document.getElementById('alamatId').value = '';
-    document.getElementById('alamatModal').classList.remove('hidden');
-}
+    // 1. Tab Switching Logic
+    function switchTab(tabName) {
+        // Hide all contents
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        // Show target content
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
-function submitAlamat(id) {
-    document.getElementById('modalTitle').textContent = 'Edit Alamat';
-    document.getElementById('alamatForm').action = '{{ route('profil.alamat.edit', ':id') }}'.replace(':id', id);
-    document.getElementById('alamatForm').method = 'GET';
-    document.getElementById('alamatId').value = id;
-    
-    // Here you would typically fetch the address data via AJAX and populate the form
-    // For simplicity, this is left as a placeholder
-    
-    document.getElementById('alamatModal').classList.remove('hidden');
-}
+        // Reset nav styles
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.classList.remove('bg-gray-100', 'text-black');
+            el.classList.add('text-gray-500', 'hover:bg-gray-50', 'hover:text-black');
+        });
 
-function editAlamat(id) {
-    document.getElementById('modalTitle').textContent = 'Tambah Alamat';
+        // Set active nav style
+        const activeNav = document.getElementById(`nav-${tabName}`);
+        activeNav.classList.remove('text-gray-500', 'hover:bg-gray-50');
+        activeNav.classList.add('bg-gray-100', 'text-black');
+    }
 
-    fetch(`/profil/alamat/${id}`)
-        .then(res => res.json())
-        .then(data => {
+    // 2. Modal Logic
+    function addAlamat() {
+        document.getElementById('modalTitle').textContent = 'Add New Address';
+        const form = document.getElementById('alamatForm');
+        form.action = '{{ route('profil.alamat.store') }}';
+        form.reset(); // Clear form
+        
+        // Remove method spoofing if exists (reset to POST)
+        document.getElementById('method-spoofing').innerHTML = '';
 
-            // Isi field sesuai struktur form kamu
-            document.getElementById('alamatId').value = data.id;
-            document.getElementById('label').value = data.label;
-            document.getElementById('provinsi').value = data.provinsi;
-            document.getElementById('kota').value = data.kota;
-            document.getElementById('kecamatan').value = data.kecamatan;
-            document.getElementById('detail_alamat').value = data.detail_alamat;
-            document.getElementById('kode_pos').value = data.kode_pos;
-            document.getElementById('is_default').checked = data.is_default == 1;
+        document.getElementById('alamatModal').classList.remove('hidden');
+    }
 
-            // Ganti action form ke route update
-            const form = document.getElementById('alamatForm');
-            form.action =  '{{ route('profil.alamat.edit', ':id') }}'.replace(':id', id);// misal route update POST/PUT /alamat/{id}`
+    function editAlamat(id) {
+        document.getElementById('modalTitle').textContent = 'Edit Address';
 
-            // Karena form awalnya untuk CREATE, kita tambahkan method override untuk UPDATE
-            let methodInput = document.getElementById('_method_override');
-            if (!methodInput) {
-                methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.id = '_method_override';
-                form.appendChild(methodInput);
+        // Fetch data
+        fetch(`/profil/alamat/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('alamatId').value = data.id;
+                document.getElementById('label').value = data.label;
+                document.getElementById('provinsi').value = data.provinsi;
+                document.getElementById('kota').value = data.kota;
+                document.getElementById('kecamatan').value = data.kecamatan;
+                document.getElementById('detail_alamat').value = data.detail_alamat;
+                document.getElementById('kode_pos').value = data.kode_pos;
+                document.getElementById('is_default').checked = data.is_default == 1;
+
+                // Set Action to Update Route
+                const form = document.getElementById('alamatForm');
+                // Ganti dengan route update yang sesuai, contoh: /profil/alamat/{id}/update
+                // Di Laravel resource biasanya PUT /profil/alamat/{id}
+                let updateUrl = '{{ route('profil.alamat.edit', ':id') }}'; 
+                updateUrl = updateUrl.replace(':id', id);
+                form.action = updateUrl;
+
+                // Add PUT method spoofing
+                document.getElementById('method-spoofing').innerHTML = '<input type="hidden" name="_method" value="PUT">';
+
+                document.getElementById('alamatModal').classList.remove('hidden');
+            })
+            .catch(err => console.error(err));
+    }
+
+    function closeModal() {
+        document.getElementById('alamatModal').classList.add('hidden');
+    }
+
+    // Check URL hash to switch tab on load (optional)
+    document.addEventListener("DOMContentLoaded", () => {
+        if(window.location.hash) {
+            const hash = window.location.hash.substring(1); // e.g. 'security'
+            if(['profile', 'security', 'address'].includes(hash)) {
+                switchTab(hash);
             }
-            methodInput.value = 'PUT';
-
-            // Tampilkan modal
-            document.getElementById('alamatModal').classList.remove('hidden');
-        })
-        .catch(err => console.error('Error: ', err));
-}
-function closeModal() {
-    document.getElementById('alamatModal').classList.add('hidden');
-}
+        }
+    });
 </script>
+
 @endsection

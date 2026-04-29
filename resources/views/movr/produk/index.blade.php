@@ -1,120 +1,180 @@
 @extends('movr.layouts.app')
 
 @section('content')
-<!-- Page Header -->
-<section class="py-12 bg-darker-bg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-light-text">Semua Produk</h1>
-        <p class="mt-2 text-gray-400">Temukan produk sporty terbaik untuk gaya hidup aktif Anda</p>
-    </div>
-</section>
 
-<!-- Product Listing -->
-<section class="py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row">
-            <!-- Filters Sidebar -->
-            <div class="md:w-1/4 mb-8 md:mb-0 md:pr-8">
-                <div class="bg-card-bg border border-border-color rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-light-text mb-4">Filter</h3>
-                    
-                    <div class="mb-6">
-                        <h4 class="font-medium text-light-text mb-2">Kategori</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#" class="text-gray-400 hover:text-accent-green transition">Semua Kategori</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-accent-green transition">Sepatu</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-accent-green transition">Pakaian</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-accent-green transition">Aksesoris</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-accent-green transition">Perlengkapan</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <h4 class="font-medium text-light-text mb-2">Harga</h4>
-                        <div class="space-y-2">
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded bg-card-bg border-border-color text-accent-green focus:ring-accent-green">
-                                <span class="ml-2 text-gray-400">Rp 0 - Rp 500.000</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded bg-card-bg border-border-color text-accent-green focus:ring-accent-green">
-                                <span class="ml-2 text-gray-400">Rp 500.000 - Rp 1.000.000</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded bg-card-bg border-border-color text-accent-green focus:ring-accent-green">
-                                <span class="ml-2 text-gray-400">Rp 1.000.000+</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+{{-- HEADER SECTION --}}
+<div class="bg-white pt-10 pb-6 border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+            <div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Catalog</span>
+                <h1 class="text-4xl md:text-5xl font-heading font-bold text-black uppercase tracking-tight">
+                    All Products
+                </h1>
             </div>
             
-            <!-- Products Grid -->
-            <div class="md:w-3/4">
-                <div class="flex justify-between items-center mb-6">
-                    <p class="text-gray-400">{{ $produk->total() }} produk ditemukan</p>
+            <div class="flex items-center gap-4">
+                <form action="{{ route('produk.index') }}" method="GET" class="flex items-center">
+                    @if(request('kategori'))
+                        <input type="hidden" name="kategori" value="{{ request('kategori') }}">
+                    @endif
+                    <input type="search" name="search" value="{{ old('search', $search) }}" placeholder="Search products..."
+                        class="w-64 md:w-80 border border-gray-200 rounded-lg p-2 text-sm focus:border-black focus:ring-0" />
+                    <button type="submit" class="ml-2 px-3 py-2 bg-black text-white rounded-lg text-sm">Search</button>
+                </form>
+
+                <div class="text-sm text-gray-500 font-medium">
+                    Showing <span class="text-black font-bold">{{ $products->count() }}</span> of {{ $products->total() }} results
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="py-12 bg-white min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row gap-12">
+
+            {{-- 1. SIDEBAR FILTER (Sticky) --}}
+            <aside class="w-full lg:w-64 flex-shrink-0">
+                <div class="sticky top-24 space-y-8">
+                    
+                    {{-- Filter Group: Category --}}
                     <div>
-                        <select class="bg-card-bg border border-border-color rounded-lg px-4 py-2 text-light-text">
-                            <option>Terbaru</option>
-                            <option>Harga Terendah</option>
-                            <option>Harga Tertinggi</option>
-                            <option>Terlaris</option>
+                        <h3 class="font-heading font-bold text-black text-lg uppercase mb-4 border-b-2 border-black pb-2 inline-block">
+                            Categories
+                        </h3>
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="{{ route('produk.index') }}" 
+                                   class="group flex items-center justify-between text-sm transition-all duration-200 
+                                   {{ !request('kategori') ? 'text-accent-green font-bold pl-2 border-l-2 border-accent-green' : 'text-gray-500 hover:text-black' }}">
+                                    <span>All Categories</span>
+                                    @if(!request('kategori')) <i class="fas fa-check text-xs"></i> @endif
+                                </a>
+                            </li>
+                            @foreach($categories as $cat)
+                            <li>
+                                <a href="{{ route('produk.index', ['kategori' => $cat->slug]) }}" 
+                                   class="group flex items-center justify-between text-sm transition-all duration-200
+                                   {{ request('kategori') == $cat->slug ? 'text-accent-green font-bold pl-2 border-l-2 border-accent-green' : 'text-gray-500 hover:text-black' }}">
+                                    <span>{{ $cat->name }}</span>
+                                    @if(request('kategori') == $cat->slug) <i class="fas fa-check text-xs"></i> @endif
+                                </a>
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    {{-- Sort By --}}
+                    <div>
+                        <h3 class="font-heading font-bold text-black text-lg uppercase mb-4 border-b-2 border-black pb-2 inline-block">
+                            Sort By
+                        </h3>
+                        <select onchange="location = this.value;" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-black focus:border-black block p-2.5 outline-none">
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'newest']) }}">Newest Arrivals</option>
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'price_low']) }}">Price: Low to High</option>
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'price_high']) }}">Price: High to Low</option>
                         </select>
                     </div>
+
+                    {{-- Promo Banner --}}
+                    <div class="bg-black text-white p-6 rounded-xl text-center hidden lg:block">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Member Only</p>
+                        <h4 class="font-heading font-bold text-2xl uppercase mb-4">Save 20%</h4>
+                        <a href="#" class="text-xs border-b border-white hover:text-accent-green hover:border-accent-green transition pb-1">Join Now</a>
+                    </div>
                 </div>
-                
-                @if($produk->count() > 0)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        @foreach($produk as $item)
-                            <div class="product-card lift-effect">
-                                <div class="p-4">
-                                    <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-card-bg">
-                                        @if($item->gambar)
-                                            <img src="{{ asset('storage/' . $item->gambar) }}" alt="{{ $item->nama_produk }}" class="w-full h-48 object-cover">
+            </aside>
+
+            {{-- 2. PRODUCT GRID --}}
+            <div class="flex-1">
+                @if($products->count() > 0)
+                    {{-- Grid Layout --}}
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        @foreach($products as $item)
+                            
+                            {{-- [MODIFIED] CARD DESIGN --}}
+                            {{-- Background abu-abu (bg-gray-50), Padding (p-4), Rounded (rounded-2xl) --}}
+                            <div class="group flex flex-col h-full bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-200 rounded-2xl p-4 transition-all duration-300">
+                                
+                                {{-- Image Area --}}
+                                <div class="relative w-full aspect-[3/4] bg-white rounded-xl overflow-hidden mb-4 shadow-sm">
+                                    {{-- Wishlist Button --}}
+                                    <button onclick="toggleFavorite({{ $item->id }})" id="fav-btn-{{ $item->id }}" 
+                                            class="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-gray-400 hover:text-blue-500 hover:bg-white transition-all">
+                                        <i class="far fa-heart" id="fav-icon-{{ $item->id }}"></i>
+                                    </button>
+
+                                    <a href="{{ route('produk.show', $item->id) }}">
+                                        @if($item->image)
+                                            <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" class="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 group-hover:scale-105">
                                         @else
-                                            <div class="w-full h-48 bg-gray-700 flex items-center justify-center">
-                                                <i class="fas fa-image text-gray-500 text-4xl"></i>
+                                            <div class="w-full h-full flex items-center justify-center text-gray-300">
+                                                <i class="fas fa-image text-3xl"></i>
                                             </div>
                                         @endif
+                                    </a>
+                                </div>
+
+                                {{-- Details --}}
+                                <div class="flex flex-col flex-grow">
+                                    <div class="mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-heading">
+                                        {{ $item->category ? $item->category->name : 'Sport' }}
                                     </div>
-                                    <div class="mt-4">
-                                        <h3 class="text-lg font-medium text-light-text">{{ $item->nama_produk }}</h3>
-                                        <p class="mt-1 text-sm text-gray-400">{{ $item->kategori }}</p>
-                                        <p class="mt-2 text-xl font-bold text-accent-green">Rp {{ number_format($item->harga, 0, ',', '.') }}</p>
-                                        
-                                        <div class="mt-4 flex space-x-2">
-                                            <form action="{{ route('keranjang.store') }}" method="POST" class="flex-1">
-                                                @csrf
-                                                <input type="hidden" name="produk_id" value="{{ $item->id }}">
-                                                <input type="hidden" name="jumlah" value="1">
-                                                <button type="submit" class="w-full bg-accent-green text-dark-bg py-2 rounded-lg hover:bg-opacity-90 transition btn-scale">
-                                                    <i class="fas fa-shopping-cart mr-2"></i>Tambahkan
-                                                </button>
-                                            </form>
-                                            <a href="{{ route('produk.show', $item->slug) }}" class="w-full bg-dark-bg border border-border-color text-light-text py-2 rounded-lg text-center hover:bg-card-bg transition btn-scale">
-                                                <i class="fas fa-eye mr-2"></i>Lihat
-                                            </a>
-                                            @auth
-                                                <button type="button" onclick="toggleFavorite({{ $item->id }})" class="p-2 border border-border-color rounded-lg text-light-text hover:text-accent-green transition favorite-btn" data-id="{{ $item->id }}" data-favorited="false" title="Tambahkan ke favorit">
-                                                    <i class="fas fa-heart"></i>
-                                                </button>
-                                            @endauth
+                                    
+                                    <h3 class="text-base font-heading font-bold text-black leading-tight mb-2 line-clamp-2 group-hover:text-accent-green transition-colors">
+                                        <a href="{{ route('produk.show', $item->id) }}">{{ $item->name }}</a>
+                                    </h3>
+                                    
+                                    <div class="mt-auto">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <span class="text-lg font-bold text-black">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
+                                            <div class="flex items-center text-xs text-yellow-500">
+                                                <i class="fas fa-star"></i> 4.9
+                                            </div>
                                         </div>
+
+                                        {{-- ACTIONS SECTION --}}
+                                        <form action="{{ route('keranjang.store') }}" method="POST" class="grid grid-cols-5 gap-2">
+                                            @csrf
+                                            <input type="hidden" name="produk_id" value="{{ $item->id }}">
+                                            <input type="hidden" name="jumlah" value="1">
+                                            
+                                            {{-- Cart Button (Secondary) --}}
+                                            <button type="submit" name="action" value="cart" 
+                                                class="col-span-2 py-3 rounded-lg bg-white border border-gray-200 text-gray-600 font-heading font-bold uppercase text-[10px] sm:text-xs hover:border-black hover:text-black hover:shadow-md transition-all duration-300 flex items-center justify-center">
+                                                <i class="fas fa-shopping-cart text-sm"></i>
+                                            </button>
+
+                                            {{-- Buy Button (Primary) --}}
+                                            <button type="submit" name="action" value="checkout"
+                                                class="col-span-3 py-3 rounded-lg bg-black text-white font-heading font-bold uppercase tracking-wider text-[10px] sm:text-xs hover:bg-gray-800 transition-all duration-300 shadow-md shadow-gray-300 hover:shadow-lg">
+                                                Buy Now
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                    
-                    <!-- Pagination -->
-                    <div class="mt-12">
-                        {{ $produk->links() }}
+
+                    {{-- Pagination --}}
+                    <div class="mt-16 flex justify-center">
+                        {{ $products->links() }} 
                     </div>
+
                 @else
-                    <div class="text-center py-12">
-                        <i class="fas fa-box text-6xl text-gray-500 mb-4"></i>
-                        <h3 class="text-xl font-medium text-light-text mb-2">Tidak ada produk ditemukan</h3>
-                        <p class="text-gray-400">Silakan coba filter yang berbeda.</p>
+                    {{-- Empty State --}}
+                    <div class="flex flex-col items-center justify-center py-24 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                        <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                            <i class="fas fa-search text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-heading font-bold text-black mb-2 uppercase">No Products Found</h3>
+                        <p class="text-gray-500 mb-6">Try adjusting your filters.</p>
+                        <a href="{{ route('produk.index') }}" class="text-sm font-bold text-black border-b border-black hover:text-accent-green hover:border-accent-green transition">
+                            Clear Filters
+                        </a>
                     </div>
                 @endif
             </div>
@@ -122,125 +182,76 @@
     </div>
 </section>
 
+{{-- Script Favorit --}}
 <script>
-function toggleFavorite(productId) {
-    console.log('Toggle favorite for product:', productId);
-    
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    fetch('{{ route('favorit.toggle') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
-        body: JSON.stringify({
-            produk_id: productId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Response:', data);
-        const buttons = document.querySelectorAll(`[data-id="${productId}"]`);
-        buttons.forEach(btn => {
-            const icon = btn.querySelector('i');
-            if (data.status === 'added') {
-                icon.style.color = '#10b981 !important';
-                icon.style.fontWeight = '900 !important';
-                btn.classList.add('favorited');
-                showNotification('✓ Ditambahkan ke favorit', 'success');
-            } else if (data.status === 'removed') {
-                icon.style.color = 'currentColor !important';
-                icon.style.fontWeight = '400 !important';
-                btn.classList.remove('favorited');
-                showNotification('✓ Dihapus dari favorit', 'info');
-            }
-        });
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('✗ Terjadi kesalahan', 'error');
-    });
-}
+    function showFavoriteToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-6 right-6 z-[9999] px-4 py-3 rounded-lg text-sm font-semibold shadow-lg transition-all duration-300 ${type === 'success' ? 'bg-black text-white' : 'bg-blue-500 text-white'}`;
+        toast.textContent = message;
 
-function showNotification(message, type = 'info') {
-    const bgColor = {
-        'success': 'bg-accent-green',
-        'info': 'bg-blue-500',
-        'error': 'bg-red-500'
-    }[type] || 'bg-blue-500';
+        document.body.appendChild(toast);
 
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
-    notification.textContent = message;
-    notification.style.animation = 'fadeIn 0.3s ease-in';
-    document.body.appendChild(notification);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-8px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 1800);
+    }
 
-    setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
-// Check favorite status on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    favoriteButtons.forEach(button => {
-        const productId = button.getAttribute('data-id');
-        
+    function toggleFavorite(productId) {
         fetch('{{ route('favorit.toggle') }}', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({
-                produk_id: productId,
-                check_only: true
-            })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: JSON.stringify({ product_id: productId })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.isFavorited) {
-                const icon = button.querySelector('i');
-                icon.style.color = '#10b981 !important';
-                icon.style.fontWeight = '900 !important';
-                button.classList.add('favorited');
+            if (data.status === 401) {
+                alert('Silakan login terlebih dahulu!');
+                window.location.href = '{{ route('login') }}';
+                return;
             }
-        })
-        .catch(error => console.error('Error:', error));
+            if (data) {
+                updateFavoriteIcon(productId, data.isFavorited);
+                if (data.status === 'added') {
+                    showFavoriteToast('Produk berhasil ditambahkan ke favorit.');
+                }
+                if (data.status === 'removed') {
+                    showFavoriteToast('Produk dihapus dari favorit.');
+                }
+            }
+        });
+    }
+
+    function updateFavoriteIcon(productId, isFavorited) {
+        const btn = document.getElementById(`fav-btn-${productId}`);
+        const icon = document.getElementById(`fav-icon-${productId}`);
+
+        if (isFavorited) {
+            icon.classList.remove('far');
+            icon.classList.add('fas', 'text-blue-500');
+            btn.classList.add('text-blue-500', 'bg-blue-50'); 
+        } else {
+            icon.classList.remove('fas', 'text-blue-500');
+            icon.classList.add('far');
+            btn.classList.remove('text-blue-500', 'bg-blue-50');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        @auth
+            const productIds = @json($products->pluck('id'));
+            productIds.forEach(id => {
+                fetch('{{ route('favorit.toggle') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ product_id: id, check_only: true })
+                })
+                .then(res => res.json())
+                .then(data => { if(data.isFavorited) updateFavoriteIcon(id, true); });
+            });
+        @endauth
     });
-});
 </script>
 
-<style>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-
-.favorite-btn.favorited i {
-    color: #10b981 !important;
-    font-weight: 900 !important;
-}
-</style>
 @endsection

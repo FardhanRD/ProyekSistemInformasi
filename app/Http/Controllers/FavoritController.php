@@ -3,70 +3,60 @@
 namespace App\Http\Controllers;
 
 use App\Models\Favorit;
-use App\Models\Produk;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FavoritController extends Controller
 {
-    /**
-     * Display the user's favorite products
-     */
+    // Menampilkan halaman favorit.
     public function index()
     {
-        $favorit = Favorit::with('produk')
-            ->where('pembeli_id', auth()->id())
+        $favorits = Favorit::with('product')
+            ->where('user_id', Auth::id())
+            ->latest()
             ->paginate(12);
-
-        return view('movr.favorit.index', compact('favorit'));
+        
+        return view('movr.favorit.index', compact('favorits'));
     }
 
-    /**
-     * Toggle favorite status for a product
-     */
+    // Toggle favorit (tambah/hapus).
     public function toggle(Request $request)
     {
-        $request->validate([
-            'produk_id' => 'required|exists:produk,id',
-        ]);
-
-        $produk = Produk::findOrFail($request->produk_id);
-
-        // Jika hanya ingin cek status favorit
-        if ($request->input('check_only')) {
-            $isFavorite = Favorit::where('pembeli_id', auth()->id())
-                ->where('produk_id', $request->produk_id)
-                ->exists();
-
-            return response()->json([
-                'isfavorite' => $isFavorite
-            ]);
+        if (!Auth::check()) {
+            return response()->json(['status' => 401, 'message' => 'Login required']);
         }
 
-        // Cek apakah produk sudah difavoritkan sebelumnya
-        $existingFavorite = Favorit::where('pembeli_id', auth()->id())
-            ->where('produk_id', $request->produk_id)
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $userId = Auth::id();
+        $productId = $request->product_id;
+
+        $existingFavorit = Favorit::where('user_id', $userId)
+            ->where('product_id', $productId)
             ->first();
 
-        if ($existingFavorite) {
-            // Hapus dari favorit
-            $existingFavorite->delete();
+        if ($request->input('check_only')) {
+            return response()->json(['isFavorited' => (bool)$existingFavorit]);
+        }
 
+        if ($existingFavorit) {
+            // Jika sudah ada -> HAPUS
+            $existingFavorit->delete();
             return response()->json([
-                'status' => 'remove',
-                'message' => 'Produk berhasil dihapus dari favorit',
-                'isfavorite' => false
+                'status' => 'removed',
+                'isFavorited' => false
             ]);
         } else {
-            // Tambahkan ke favorit
             Favorit::create([
-                'pembeli_id' => auth()->id(),
-                'produk_id' => $request->produk_id,
+                'user_id' => $userId,
+                'product_id' => $productId,
             ]);
 
             return response()->json([
-                'status' => 'add',
-                'message' => 'Produk berhasil ditambahkan ke favorit',
-                'isfavorite' => true
+                'status' => 'added',
+                'isFavorited' => true
             ]);
         }
     }

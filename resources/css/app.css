@@ -8,16 +8,18 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
-    --color-dark-bg: #14171a;
-    --color-darker-bg: #080a0c;
-    --color-light-text: #f0f0f0;
+  --color-movr-red: #63a2bb;
+    --color-dark-bg: #ffffff; /* White background */
+    --color-darker-bg: #f5f5f5; /* Light grey background */
+    --color-light-text: #000000; /* Black text */
+    --color-dark-text: #000000; /* Black text */
     --color-accent-green: #00bf8f;
     --color-accent-blue: #00a3ff;
-    --color-card-bg: #14171a;
-    --color-border: #2a2f35;
+    --color-card-bg: #ffffff; /* White card background */
+    --color-border: #d1d5db; /* Light grey border */
 }
 
-/* Custom Dark Theme Styles for MOVR */
+/* Custom White/Light Grey/Black Theme Styles for MOVR */
 body {
   background-color: var(--color-dark-bg);
   color: var(--color-light-text);
@@ -34,6 +36,10 @@ body {
 
 .text-light {
   color: var(--color-light-text);
+}
+
+.text-dark {
+  color: var(--color-dark-text);
 }
 
 .text-accent-green {
@@ -118,9 +124,30 @@ body {
 
 /* Rating stars */
 .rating-star {
-  color: #d1d5db; /* gray-300 */
+  color: #d1d5db; /* light grey */
 }
 
 .rating-star.active {
   color: #fbbf24; /* yellow-400 */
+}
+
+/* Additional styles for white/light grey/black theme */
+.bg-white {
+  background-color: #ffffff;
+}
+
+.bg-light {
+  background-color: #f5f5f5;
+}
+
+.text-black {
+  color: #000000;
+}
+
+.text-gray {
+  color: #4b5563;
+}
+
+.border-light {
+  border-color: #d1d5db;
 }

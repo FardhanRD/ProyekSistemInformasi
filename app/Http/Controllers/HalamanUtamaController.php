@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produk;
+use App\Models\Product; // Pastikan pakai Model Product (Inggris)
+use Illuminate\Http\Request;
 
 class HalamanUtamaController extends Controller
 {
     /**
-     * Display the homepage with featured products
+     * Menampilkan halaman home dengan produk terbaru
      */
     public function index()
     {
-        $produk = Produk::with('penjual')->latest()->take(8)->get();
-        return view('movr.home', compact('produk'));
+        // Ambil 8 produk terbaru beserta kategorinya
+        $products = Product::with('category')->latest()->take(8)->get();
+        
+        // Kirim ke view home
+        return view('movr.home', compact('products'));
     }
 }

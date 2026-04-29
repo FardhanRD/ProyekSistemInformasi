@@ -2,19 +2,23 @@
 
 namespace App\Models;
 
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role', // kalau kamu pakai role di user
+        'role',
+        'is_blocked',
+        'blocked_at',
+        'blocked_reason',
     ];
 
     protected $hidden = [
@@ -22,38 +26,47 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_blocked' => 'boolean',
+        'blocked_at' => 'datetime',
+    ];
 
-    // ===========================
-    // 🔥 RELASI YANG DIBUTUHKAN
-    // ===========================
-
-    // Relasi ke item keranjang
+    // Relationships
     public function keranjangItems()
     {
-        return $this->hasMany(\App\Models\KeranjangItem::class, 'id');
+        return $this->hasMany(\App\Models\KeranjangItem::class, 'pembeli_id');
     }
-
-    // Relasi ke ulasan
     public function ulasan()
     {
         return $this->hasMany(\App\Models\Ulasan::class, 'user_id');
     }
-
-    // Relasi ke produk favorit
     public function favorit()
     {
-        return $this->hasMany(\App\Models\Favorit::class, 'id');
+        return $this->hasMany(\App\Models\Favorit::class, 'pembeli_id');
+    }
+    public function pembayaran()
+    {
+        return $this->hasMany(\App\Models\Pembayaran::class, 'pembeli_id');
+    }
+    public function alamat()
+    {
+        return $this->hasMany(\App\Models\Alamat::class, 'pembeli_id');
     }
 
     public function isAdmin()
-{
-    return $this->role === 'admin';
-}
+    {
+        return $this->role === 'admin';
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function adminActivityLogs()
+    {
+        return $this->hasMany(AdminActivityLog::class, 'admin_id');
+    }
 }

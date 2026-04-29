@@ -1,224 +1,455 @@
-@extends('movr.layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOVR - Premium Sports</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@section('content')
-<!-- Hero Section -->
-<section class="bg-gradient-to-r from-darker-bg to-dark-bg py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row items-center">
-            <div class="md:w-1/2 mb-10 md:mb-0">
-                <h1 class="text-5xl font-bold text-light-text mb-4">Tingkatkan Performa <span class="text-accent-green">Mu</span></h1>
-                <p class="text-xl text-gray-300 mb-8">Temukan koleksi terbaru dari produk sporty premium yang didesain untuk gaya hidup aktif dan performa maksimal.</p>
-                <div class="flex space-x-4">
-                    <a href="{{ route('produk.index') }}" class="bg-accent-green text-dark-bg px-8 py-3 rounded-full font-semibold hover:bg-opacity-90 transition transform hover:-translate-y-1">Belanja Sekarang</a>
-                    <a href="#featured-products" class="border border-accent-green text-accent-green px-8 py-3 rounded-full font-semibold hover:bg-accent-green hover:text-dark-bg transition">Lihat Produk</a>
-                </div>
-            </div>
-            <div class="md:w-1/2 flex justify-center">
-                <div class="relative">
-                    <div class="w-80 h-80 bg-gradient-to-br from-accent-green to-accent-blue rounded-full flex items-center justify-center">
-                        <div class="w-64 h-64 bg-dark-bg rounded-full flex items-center justify-center">
-                            <i class="fas fa-running text-accent-green text-8xl"></i>
-                        </div>
-                    </div>
-                    <div class="absolute -bottom-4 -right-4 bg-card-bg border border-border-color rounded-xl p-4 shadow-xl">
-                        <p class="text-accent-green font-bold">Kualitas Premium</p>
-                        <p class="text-light-text text-sm">Teruji & Terpercaya</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #333;
+        }
 
-<!-- Featured Products -->
-<section id="featured-products" class="py-16 bg-dark-bg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-light-text mb-4">Produk Unggulan</h2>
-            <p class="text-gray-400 max-w-2xl mx-auto">Temukan produk-produk terbaik yang paling banyak diminati oleh pelanggan kami.</p>
-        </div>
-        
-        @if($produk->count() > 0)
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                @foreach($produk as $item)
-                    <div class="product-card lift-effect">
-                        <div class="p-4">
-                            <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-card-bg">
-                                @if($item->gambar)
-                                    <img src="{{ asset('storage/' . $item->gambar) }}" alt="{{ $item->nama_produk }}" class="w-full h-48 object-cover">
-                                @else
-                                    <div class="w-full h-48 bg-gray-700 flex items-center justify-center">
-                                        <i class="fas fa-image text-gray-500 text-4xl"></i>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="mt-4">
-                                <h3 class="text-lg font-medium text-light-text">{{ $item->nama_produk }}</h3>
-                                <p class="mt-1 text-sm text-gray-400">{{ $item->kategori }}</p>
-                                <p class="mt-2 text-xl font-bold text-accent-green">Rp {{ number_format($item->harga, 0, ',', '.') }}</p>
-                                
-                                <div class="mt-4 flex space-x-2">
-                                    <form action="{{ route('keranjang.store') }}" method="POST" class="flex-1">
-                                        @csrf
-                                        <input type="hidden" name="produk_id" value="{{ $item->id }}">
-                                        <input type="hidden" name="jumlah" value="1">
-                                        <button type="submit" class="w-full bg-accent-green text-dark-bg py-2 rounded-lg hover:bg-opacity-90 transition btn-scale">
-                                            <i class="fas fa-shopping-cart mr-2"></i>Tambahkan
-                                        </button>
-                                    </form>
-                                    <a href="{{ route('produk.show', $item->slug) }}" class="w-full bg-dark-bg border border-border-color text-light-text py-2 rounded-lg text-center hover:bg-card-bg transition btn-scale">
-                                        <i class="fas fa-eye mr-2"></i>Detail
-                                    </a>
-                                    @auth
-                                                <button type="button" onclick="toggleFavorite({{ $item->id }})" class="p-2 border border-border-color rounded-lg text-light-text hover:text-accent-green transition favorite-btn" data-id="{{ $item->id }}" data-favorited="false" title="Tambahkan ke favorit">
-                                                    <i class="fas fa-heart"></i>
-                                                </button>
-                                            @endauth
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="text-center py-12">
-                <i class="fas fa-box text-6xl text-gray-500 mb-4"></i>
-                <h3 class="text-xl font-medium text-light-text mb-2">Tidak ada produk tersedia</h3>
-                <p class="text-gray-400">Produk akan segera ditambahkan. Silakan kembali lagi nanti.</p>
-            </div>
-        @endif
-    </div>
-</section>
+        /* Floating Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            padding: 16px 40px;
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+        }
 
-<!-- CTA Section -->
-<section class="py-16 bg-gradient-to-r from-accent-green to-accent-blue">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-bold text-dark-bg mb-4">Siap Tingkatkan Performa Mu?</h2>
-        <p class="text-xl text-dark-bg mb-8 max-w-2xl mx-auto">Bergabunglah dengan ribuan pelanggan lainnya yang telah meningkatkan gaya hidup sporty mereka.</p>
-        <a href="{{ route('produk.index') }}" class="bg-dark-bg text-accent-green px-8 py-3 rounded-full font-semibold hover:bg-darker-bg transition">Mulai Belanja</a>
-    </div>
-</section>
-@endsection
+        .logo {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
 
+        .logo img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
 
-<script>
-function toggleFavorite(productId) {
-    console.log('Toggle favorite for product:', productId);
-    
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    fetch('{{ route('favorit.toggle') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
-        body: JSON.stringify({
-            produk_id: productId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Response:', data);
-        const buttons = document.querySelectorAll(`[data-id="${productId}"]`);
-        buttons.forEach(btn => {
-            const icon = btn.querySelector('i');
-            if (data.status === 'added') {
-                icon.style.color = '#10b981 !important';
-                icon.style.fontWeight = '900 !important';
-                btn.classList.add('favorited');
-                showNotification('✓ Ditambahkan ke favorit', 'success');
-            } else if (data.status === 'removed') {
-                icon.style.color = 'currentColor !important';
-                icon.style.fontWeight = '400 !important';
-                btn.classList.remove('favorited');
-                showNotification('✓ Dihapus dari favorit', 'info');
+        nav {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            flex: 1;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #111;
+            text-decoration: none;
+            font-weight: 400;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+            letter-spacing: 0.3px;
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #9B2226;
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover::after,
+        nav a.active::after {
+            width: 100%;
+        }
+
+        nav a:hover {
+            color: #9B2226;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 8px 14px;
+            flex-shrink: 0;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #111;
+            font-family: inherit;
+            width: 120px;
+            font-size: 0.85rem;
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+        }
+
+        .search-icon {
+            color: #999;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .login-white {
+            background: white;
+            color: #111;
+            border: 1px solid #ccc;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-white:hover {
+            background: #f5f5f5;
+        }
+
+        .login-red {
+            background: #9B2226;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-red:hover {
+            background: #7a1a1d;
+        }
+
+        .login-white:hover {
+            background: #f0f0f0;
+        }
+
+        .login-red {
+            background-color: #9B2226;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-red:hover {
+            background-color: #7a1a1e;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #2d5f5f 0%, #3a7070 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 80px 40px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-video {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 50%;
+        }
+
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .avatars {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatars img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid white;
+            object-fit: cover;
+            margin-left: -15px;
+        }
+
+        .avatars img:first-child {
+            margin-left: 0;
+        }
+
+        .avatar-text {
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .hero-title {
+            font-size: 5.8rem;
+            font-weight: 900;
+            line-height: 0.92;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .hero-title .sports {
+            color: #9B2226;
+            display: block;
+        }
+
+        .hero-title .passion {
+            color: white;
+            display: block;
+            text-shadow: 
+                -1px -1px 0 rgba(255, 255, 255, 0.4),
+                1px -1px 0 rgba(255, 255, 255, 0.4),
+                -1px 1px 0 rgba(255, 255, 255, 0.4),
+                1px 1px 0 rgba(255, 255, 255, 0.4),
+                -2px 0 0 rgba(255, 255, 255, 0.3),
+                2px 0 0 rgba(255, 255, 255, 0.3),
+                0 -2px 0 rgba(255, 255, 255, 0.3),
+                0 2px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        /* Limited Slots Card */
+        .limited-card {
+            position: absolute;
+            right: 40px;
+            top: 140px;
+            width: 280px;
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 3;
+        }
+
+        .limited-card img {
+            width: 100%;
+            height: 150px;
+            border-radius: 15px;
+            object-fit: cover;
+        }
+
+        .limited-card h3 {
+            font-size: 1rem;
+            font-weight: 900;
+            margin-top: 12px;
+            color: #111;
+            letter-spacing: 0.5px;
+        }
+
+        .limited-card p {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            header {
+                padding: 12px 30px;
+                gap: 30px;
             }
-        });
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('✗ Terjadi kesalahan', 'error');
-    });
-}
 
-function showNotification(message, type = 'info') {
-    const bgColor = {
-        'success': 'bg-accent-green',
-        'info': 'bg-blue-500',
-        'error': 'bg-red-500'
-    }[type] || 'bg-blue-500';
-
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
-    notification.textContent = message;
-    notification.style.animation = 'fadeIn 0.3s ease-in';
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
-// Check favorite status on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    favoriteButtons.forEach(button => {
-        const productId = button.getAttribute('data-id');
-        
-        fetch('{{ route('favorit.toggle') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({
-                produk_id: productId,
-                check_only: true
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.isFavorited) {
-                const icon = button.querySelector('i');
-                icon.style.color = '#10b981 !important';
-                icon.style.fontWeight = '900 !important';
-                button.classList.add('favorited');
+            nav {
+                gap: 30px;
+                font-size: 0.85rem;
             }
-        })
-        .catch(error => console.error('Error:', error));
-    });
-});
-</script>
 
-<style>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+            .search-box {
+                width: 100px;
+            }
 
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
+            .search-box input {
+                width: 60px;
+            }
 
-.favorite-btn.favorited i {
-    color: #10b981 !important;
-    font-weight: 900 !important;
-}
-</style>
+            .hero {
+                padding: 80px 30px 40px;
+                flex-direction: column;
+                text-align: center;
+                align-items: flex-start;
+            }
+
+            .hero-content {
+                max-width: 100%;
+            }
+
+            .hero-video {
+                width: 100%;
+                opacity: 0.3;
+            }
+
+            .hero-title {
+                font-size: 4rem;
+            }
+
+            .limited-card {
+                position: static;
+                margin-top: 30px;
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .avatar-section {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-wrap: wrap;
+                padding: 12px 20px;
+                gap: 12px;
+            }
+
+            nav {
+                gap: 20px;
+                font-size: 0.8rem;
+                order: 3;
+                width: 100%;
+                margin-top: 8px;
+                justify-content: center;
+            }
+
+            .auth-buttons {
+                order: 2;
+                gap: 6px;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .login-white,
+            .login-red {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
+
+            .hero {
+                padding: 90px 20px 40px;
+                min-height: 80vh;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .limited-card {
+                width: 100%;
+                max-width: 350px;
+                margin: 20px auto 0;
+            }
+
+            .avatar-section {
+                justify-content: flex-start;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <img src="{{ asset('images/LOGO_MOVR.png') }}" alt="MOVR Logo">
+        </div>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#shop">Shop</a>
+            <a href="#about">About</a>
+            <a href="#sale">Sale</a>
+            <a href="#new">New</a>
+        </nav>
+        <div class="search-box">
+            <input type="text" placeholder="Search...">
+            <span class="search-icon">🔍</span>
+        </div>
+        <div class="auth-buttons">
+            <button class="login-white">Login</button>
+            <button class="login-red">Sign up</button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <video class="hero-video" autoplay muted loop playsinline preload="metadata">
+            <source src="{{ asset('videos/hero-bg.mp4') }}" type="video/mp4">
+        </video>
+        <div class="hero-content">
+            <div class="avatar-section">
+                <div class="avatars">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80" alt="Avatar 1">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80" alt="Avatar 2">
+                    <img src="https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=200&q=80" alt="Avatar 3">
+                </div>
+                <p class="avatar-text">Our intelligent training tools, event updates, and community-driven stories bring together athletes, teams, and fans to push performance beyond limits.</p>
+            </div>
+
+            <h1 class="hero-title">
+                <span class="sports">SPORTS</span>
+                <span class="passion">PASSION</span>
+            </h1>
+        </div>
+
+        <div class="limited-card">
+            <img src="https://images.unsplash.com/photo-1612531385446-f7b8f0f14933?auto=format&fit=crop&w=1000&q=80" alt="Badminton racket">
+            <h3>LIMITED SLOTS AVAILABLE</h3>
+            <p>Our online training tools, event updates community driven stories connect</p>
+        </div>
+    </section>
+</body>
+</html>

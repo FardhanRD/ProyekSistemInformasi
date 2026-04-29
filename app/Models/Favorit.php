@@ -9,26 +9,21 @@ class Favorit extends Model
 {
     use HasFactory;
 
-    protected $table = 'favorit';
+    // Arahkan ke tabel baru 'favorites'
+    protected $table = 'favorites';
 
     protected $fillable = [
-        'pembeli_id',
-        'produk_id',
+        'user_id',
+        'product_id',
     ];
 
-    /**
-     * Get the customer (pembeli) who favorited this product
-     */
-    public function pembeli()
+    public function user()
     {
-        return $this->belongsTo(Pengguna::class, 'pembeli_id');
+        return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the product that was favorited
-     */
-    public function produk()
+    public function product()
     {
-        return $this->belongsTo(Produk::class, 'produk_id');
+        return $this->belongsTo(Product::class);
     }
 }
