@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" fill="none">
+  <rect width="500" height="500" rx="32" fill="#111827"/>
+  <path d="M250 365 138 253c-30-30-30-78 0-108 30-30 78-30 108 0l4 4 4-4c30-30 78-30 108 0 30 30 30 78 0 108L250 365Z" fill="#EF4444"/>
+  <text x="250" y="420" text-anchor="middle" fill="#E5E7EB" font-size="28" font-family="Arial, sans-serif" font-weight="700">Wishlist Kosong</text>
+</svg>

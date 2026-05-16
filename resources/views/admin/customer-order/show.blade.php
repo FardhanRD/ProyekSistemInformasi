@@ -1,0 +1,182 @@
+@extends('layouts.admin')
+
+@section('title', 'Detail Customer Order')
+
+@section('content')
+<div class="max-w-5xl mx-auto space-y-6">
+    {{-- Header --}}
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">{{ $order->kode_transaksi }}</h1>
+                    <p class="text-slate-600 text-sm">{{ \Carbon\Carbon::parse($order->tanggal)->translatedFormat('Y-m-d H:i') }} | {{ $order->pengguna?->nama_pengguna }}</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Status Cards --}}
+    <div class="grid sm:grid-cols-3 gap-4">
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p class="text-slate-600 text-xs font-semibold mb-1">Status Pembayaran</p>
+            @php
+                $status_pembayaran = $order->pembayaran?->status_pembayaran ?? 'belum_ada';
+                $colors = [
+                    'menunggu_konfirmasi' => 'yellow',
+                    'berhasil' => 'green',
+                    'gagal' => 'red',
+                    'ditolak' => 'red',
+                    'belum_ada' => 'gray',
+                ];
+                $color = $colors[$status_pembayaran] ?? 'gray';
+            @endphp
+            <p class="text-lg font-bold text-{{ $color }}-600">{{ ucfirst(str_replace('_', ' ', $status_pembayaran)) }}</p>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p class="text-slate-600 text-xs font-semibold mb-1">Status Pesanan</p>
+            @php
+                $colors = [
+                    'pembayaran_menunggu' => 'yellow',
+                    'pembayaran_dikonfirmasi' => 'blue',
+                    'pesanan_diproses' => 'purple',
+                    'pesanan_dikirim' => 'indigo',
+                    'pesanan_selesai' => 'green',
+                    'pesanan_dibatalkan' => 'red',
+                ];
+                $color = $colors[$order->status] ?? 'gray';
+            @endphp
+            <p class="text-lg font-bold text-{{ $color }}-600">{{ ucfirst(str_replace('_', ' ', $order->status)) }}</p>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p class="text-slate-600 text-xs font-semibold mb-1">Total Pesanan</p>
+            <p class="text-lg font-bold text-[#2B9BAF]">Rp {{ number_format($order->total_harga ?? 0, 0, ',', '.') }}</p>
+        </div>
+    </div>
+
+    {{-- Customer Info --}}
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900 mb-4">Data Pembeli</h2>
+        <div class="grid sm:grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="text-slate-600 font-semibold mb-1">Nama</p>
+                <p class="text-slate-900">{{ $order->pengguna?->nama_pengguna ?? '-' }}</p>
+            </div>
+            <div>
+                <p class="text-slate-600 font-semibold mb-1">Email</p>
+                <p class="text-slate-900">{{ $order->pengguna?->email ?? '-' }}</p>
+            </div>
+            <div>
+                <p class="text-slate-600 font-semibold mb-1">No Telepon</p>
+                <p class="text-slate-900">{{ $order->pengguna?->no_telepon ?? '-' }}</p>
+            </div>
+            <div>
+                <p class="text-slate-600 font-semibold mb-1">Alamat Pengiriman</p>
+                <p class="text-slate-900">{{ $order->alamat?->alamat_lengkap ?? '-' }}</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Items Table --}}
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900 mb-4">Detail Item</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="border-b border-slate-200">
+                    <tr class="text-left font-semibold text-slate-600 uppercase text-xs">
+                        <th class="pb-3">Produk</th>
+                        <th class="pb-3 text-right">Qty</th>
+                        <th class="pb-3 text-right">Harga</th>
+                        <th class="pb-3 text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($order->details ?? [] as $item)
+                        <tr class="border-t border-slate-100">
+                            <td class="py-3">
+                                <div>
+                                    <p class="font-medium">{{ $item->produk?->nama_produk ?? '-' }}</p>
+                                    <p class="text-xs text-slate-600">{{ $item->warna?->nama_warna ?? '-' }}</p>
+                                </div>
+                            </td>
+                            <td class="py-3 text-right">{{ $item->qty }}</td>
+                            <td class="py-3 text-right">Rp {{ number_format($item->harga_satuan ?? 0, 0, ',', '.') }}</td>
+                            <td class="py-3 text-right font-semibold">Rp {{ number_format(($item->qty ?? 0) * ($item->harga_satuan ?? 0), 0, ',', '.') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="py-6 text-center text-slate-600">Tidak ada item.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- Payment Info --}}
+    @if($order->pembayaran)
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Informasi Pembayaran</h2>
+            <div class="grid sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-slate-600 font-semibold mb-1">Metode</p>
+                    <p class="text-slate-900">{{ $order->pembayaran?->metode?->nama_metode ?? '-' }}</p>
+                </div>
+                <div>
+                    <p class="text-slate-600 font-semibold mb-1">Tanggal Pembayaran</p>
+                    <p class="text-slate-900">{{ $order->pembayaran?->tanggal_pembayaran?->format('Y-m-d H:i') ?? 'Belum dibayar' }}</p>
+                </div>
+                <div>
+                    <p class="text-slate-600 font-semibold mb-1">Status</p>
+                    <p class="text-slate-900">{{ $order->pembayaran?->status_pembayaran ?? '-' }}</p>
+                </div>
+            </div>
+
+            @if($order->pembayaran && $order->pembayaran->status_pembayaran === 'menunggu_konfirmasi')
+                <form method="POST" action="{{ route('admin.customer-order.verify-payment', $order->pembayaran->pembayaran_id) }}" class="mt-4">
+                    @csrf
+                    <button type="submit" class="rounded-xl bg-green-500 text-white px-6 py-2 font-semibold hover:bg-green-600">✓ Verifikasi Pembayaran</button>
+                </form>
+            @endif
+        </div>
+    @endif
+
+    {{-- Tracking --}}
+    @if(!$pesanan)
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Tracking Pesanan</h2>
+            <div class="p-6 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50">
+                <p class="text-slate-600 text-sm">Pesanan belum diproses oleh sistem logistik. Update tracking akan muncul setelah pesanan diambil oleh kurir.</p>
+            </div>
+        </div>
+    @elseif(!$pesanan->trackingLogs || $pesanan->trackingLogs->isEmpty())
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Tracking Pesanan</h2>
+            <div class="p-6 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50">
+                <p class="text-slate-600 text-sm">Belum ada update pengiriman untuk pesanan ini. Mohon tunggu update dari kurir.</p>
+            </div>
+        </div>
+    @else
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Tracking Pesanan</h2>
+            <div class="space-y-2">
+                @foreach($pesanan->trackingLogs as $log)
+                    <div class="flex gap-4">
+                        <div class="text-xs font-semibold text-slate-600 min-w-[120px]">{{ $log->waktu?->format('Y-m-d H:i') }}</div>
+                        <div>
+                            <p class="font-medium text-slate-900">{{ $log->status }}</p>
+                            <p class="text-xs text-slate-600">{{ $log->catatan }}</p>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Actions --}}
+    <div class="flex gap-3 justify-end">
+        <a href="{{ route('admin.customer-order.index') }}" class="rounded-xl border border-slate-200 text-slate-900 px-6 py-3 font-semibold hover:bg-slate-50">← Kembali</a>
+        <a href="{{ route('admin.customer-order.invoice-pdf', $order->transaksi_id) }}" class="rounded-xl bg-slate-900 text-white px-6 py-3 font-semibold hover:bg-slate-800">📄 Invoice</a>
+    </div>
+</div>
+@endsection

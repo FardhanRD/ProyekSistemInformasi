@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" fill="none">
+  <rect width="800" height="500" fill="#F3F4F6"/>
+  <rect x="40" y="40" width="720" height="420" rx="20" fill="#E5E7EB"/>
+  <text x="80" y="250" fill="#374151" font-size="44" font-family="Arial, sans-serif" font-weight="700">Kategori</text>
+</svg>

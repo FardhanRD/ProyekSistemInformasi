@@ -1,0 +1,301 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Models\AlamatPengguna;
+use App\Models\Transaksi;
+use App\Models\Buyer;
+use App\Models\AkunPembayaran;
+use App\Services\PenggunaSyncService;
+
+class ProfileController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
+        $addresses = [];
+        $orders = [];
+        $paymentMethods = [];
+
+        if (Schema::hasTable('alamat_pengguna')) {
+            $addresses = AlamatPengguna::where('pengguna_id', $user->pengguna_id)->get();
+        }
+
+        if (Schema::hasTable('transaksi') && Schema::hasTable('buyer')) {
+            $buyer = Buyer::where('pengguna_id', $user->pengguna_id)->first();
+            if ($buyer) {
+                $orders = Transaksi::where('pengguna_id', $user->pengguna_id)->orderBy('tanggal', 'desc')->get();
+            }
+        }
+
+        if (Schema::hasTable('akun_pembayaran')) {
+            $paymentMethods = AkunPembayaran::with('metodePembayaran')
+                                ->where('pengguna_id', $user->pengguna_id)
+                                ->get();
+        }
+        
+        $availableMethods = \App\Models\MetodePembayaran::where('is_active', 1)->get();
+
+        return view('buyer.profile.index', compact('user', 'addresses', 'orders', 'paymentMethods', 'availableMethods'));
+    }
+
+    public function updateProfile(Request $request, PenggunaSyncService $penggunaSyncService)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:100|unique:pengguna,username,' . $user->pengguna_id . ',pengguna_id', // Assuming 'pengguna_id' is the primary key
+            'email' => 'required|string|email|max:255|unique:pengguna,email,' . $user->pengguna_id . ',pengguna_id',
+            'no_telepon' => 'nullable|string|max:25',
+            'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|in:L,P', // Assuming 'L' for Male, 'P' for Female
+            'foto_profil' => 'nullable|image|max:2048',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->username = $validated['username'];
+        $user->email = $validated['email'];
+        $user->no_telepon = $validated['no_telepon'] ?? null;
+        $user->tanggal_lahir = $validated['tanggal_lahir'] ?? null;
+        $user->jenis_kelamin = $validated['jenis_kelamin'] ?? null;
+
+        if ($request->hasFile('foto_profil')) {
+            if ($user->foto_profil) {
+                Storage::disk('public')->delete($user->foto_profil);
+            }
+            $user->foto_profil = $request->file('foto_profil')->store('profile', 'public');
+        }
+
+        $user->save();
+
+        $penggunaSyncService->ensureForAuthUser($user, 'buyer', [
+            'nama_pengguna' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'no_telepon' => $user->no_telepon,
+            'tanggal_lahir' => $user->tanggal_lahir,
+            'jenis_kelamin' => $user->jenis_kelamin,
+            'foto_profil' => $user->foto_profil,
+        ]);
+
+        return back()->with('success', 'Profil berhasil diperbarui');
+    }
+
+    public function addresses()
+    {
+        return redirect()->to(route('profile.index') . '#addresses');
+    }
+
+    public function createAddress(Request $request)
+    {
+        // Ambil parameter 'return' dari URL dan teruskan ke view
+        // agar bisa dimasukkan ke dalam form sebagai hidden input.
+        return view('profile.address-form', ['return_url' => $request->query('return')]);
+    }
+
+    public function storeAddress(Request $request)
+    {
+        $validated = $request->validate([
+            'label' => 'required|string|max:20',
+            'nama_penerima' => 'required|string|max:100',
+            'no_telepon' => 'required|string|max:15',
+            'provinsi' => 'required|string|max:50',
+            'kota' => 'required|string|max:50',
+            'kecamatan' => 'required|string|max:50',
+            'kelurahan' => 'required|string|max:50',
+            'kode_pos' => 'required|string|max:10',
+            'alamat_lengkap' => 'required|string|max:255',
+            'is_utama' => 'nullable|boolean',
+        ]);
+
+        $validated['pengguna_id'] = Auth::user()->pengguna_id;
+
+        // If this is marked as primary, unmark others
+        if ($request->is_utama) {
+            AlamatPengguna::where('pengguna_id', Auth::user()->pengguna_id)->update(['is_utama' => false]);
+            $validated['is_utama'] = true;
+        }
+
+        AlamatPengguna::create($validated);
+
+        // Cek jika ada parameter 'return' untuk redirect kembali ke checkout
+        if ($request->input('return') === 'checkout') {
+            return redirect()->route('checkout.index')->with('success', 'Alamat berhasil ditambahkan.');
+        }
+
+        // Redirect default ke halaman daftar alamat
+        return redirect()->route('profile.addresses')->with('success', 'Alamat berhasil ditambahkan');
+    }
+
+    public function editAddress($id)
+    {
+        $user = Auth::user();
+        $address = AlamatPengguna::findOrFail($id);
+
+        if ($address->pengguna_id != $user->pengguna_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        return view('profile.address-form', compact('address'));
+    }
+
+    public function updateAddress(Request $request, $id)
+    {
+        $user = Auth::user();
+        $address = AlamatPengguna::findOrFail($id);
+
+        if ($address->pengguna_id != $user->pengguna_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'label' => 'required|string|max:20',
+            'nama_penerima' => 'required|string|max:100',
+            'no_telepon' => 'required|string|max:15',
+            'provinsi' => 'required|string|max:50',
+            'kota' => 'required|string|max:50',
+            'kecamatan' => 'required|string|max:50',
+            'kelurahan' => 'required|string|max:50',
+            'kode_pos' => 'required|string|max:10',
+            'alamat_lengkap' => 'required|string|max:255',
+            'is_utama' => 'nullable|boolean',
+        ]);
+
+        // If this is marked as primary, unmark others
+        if ($request->is_utama) {
+            AlamatPengguna::where('pengguna_id', $user->pengguna_id)->where('alamat_id', '!=', $id)->update(['is_utama' => false]);
+            $validated['is_utama'] = true;
+        }
+
+        $address->update($validated);
+
+        // Menggunakan route name untuk konsistensi
+        return redirect()->route('profile.addresses')->with('success', 'Alamat berhasil diperbarui');
+    }
+
+    public function deleteAddress($id)
+    {
+        $user = Auth::user();
+        $address = AlamatPengguna::findOrFail($id);
+
+        if ($address->pengguna_id != $user->pengguna_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $address->delete();
+
+        // Menggunakan route name untuk konsistensi
+        return redirect()->route('profile.addresses')->with('success', 'Alamat berhasil dihapus');
+    }
+
+    /**
+     * Set a specific address as primary.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function setPrimaryAddress($id)
+    {
+        $user = Auth::user();
+        $address = AlamatPengguna::findOrFail($id);
+
+        if ($address->pengguna_id != $user->pengguna_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        DB::transaction(function () use ($user, $address) {
+            AlamatPengguna::where('pengguna_id', $user->pengguna_id)->update(['is_utama' => false]);
+            $address->update(['is_utama' => true]);
+        });
+
+        return back()->with('success', 'Alamat utama berhasil diubah.');
+    }
+
+    /**
+     * Show the saved payment methods.
+     *
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function paymentMethods()
+    {
+        return redirect()->to(route('profile.index') . '#payment-methods');
+    }
+
+    /**
+     * Store a new payment method.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storePaymentMethod(Request $request)
+    {
+        $user = Auth::user();
+        $validated = $request->validate([
+            'metode_id' => 'required|integer|exists:metode_pembayaran,metode_id',
+            'nomor_akun' => 'required|string|max:255',
+            'nama_akun' => 'required|string|max:255',
+        ]);
+
+        AkunPembayaran::create([
+            'pengguna_id' => $user->pengguna_id,
+            'metode_id' => $validated['metode_id'],
+            'nomor_akun' => $validated['nomor_akun'],
+            'nama_akun' => $validated['nama_akun'],
+        ]);
+
+        return back()->with('success', 'Metode pembayaran berhasil ditambahkan.');
+    }
+
+    /**
+     * Delete a saved payment method.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deletePaymentMethod($id)
+    {
+        $user = Auth::user();
+        $account = AkunPembayaran::findOrFail($id);
+
+        if ($account->pengguna_id != $user->pengguna_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $account->delete();
+        return back()->with('success', 'Metode pembayaran berhasil dihapus.');
+    }
+
+    /**
+     * Handle a change password request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'string', function ($attribute, $value, $fail) {
+                if (!Hash::check($value, Auth::user()->password)) {
+                    $fail('Password lama tidak sesuai.');
+                }
+            }],
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        Auth::user()->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return back()->with('success', 'Password berhasil diubah.');
+    }
+}
