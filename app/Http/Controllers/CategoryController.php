@@ -18,7 +18,7 @@ class CategoryController extends Controller
         $filterData = [
             'categories' => Kategori::whereNull('parent_id')->with('children.children')->orderBy('nama_kategori')->get(),
             'sizes' => DetailProduk::whereNotNull('ukuran')->where('ukuran', '!=', '')->distinct()->orderBy('ukuran')->pluck('ukuran'),
-            'colors' => DetailProduk::whereNotNull('warna')->where('warna', '!=', '')->distinct()->orderBy('warna')->pluck('warna'),
+            'colors' => collect(), // warna column tidak ada di detail_produk
             'maxPrice' => Produk::where('is_active', 1)->max('harga_dasar'),
         ];
 
@@ -44,11 +44,11 @@ class CategoryController extends Controller
                 $q->whereIn('ukuran', $request->sizes);
             });
         }
-        if ($request->filled('colors')) {
-            $query->whereHas('details', function ($q) use ($request) {
-                $q->whereIn('warna', $request->colors);
-            });
-        }
+        // if ($request->filled('colors')) {
+        //     $query->whereHas('details', function ($q) use ($request) {
+        //         $q->whereIn('warna', $request->colors);
+        //     });
+        // }
         if ($request->filled('rating')) {
             $query->havingRaw('COALESCE(average_rating, 0) >= ?', [(float) $request->rating]);
         }

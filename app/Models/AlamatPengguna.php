@@ -22,6 +22,8 @@ class AlamatPengguna extends Model
         'kelurahan',
         'kode_pos',
         'alamat_lengkap',
+        'latitude',
+        'longitude',
         'is_utama',
     ];
 

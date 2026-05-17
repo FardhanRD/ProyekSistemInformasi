@@ -60,6 +60,10 @@ class ProfileController extends Controller
             'tanggal_lahir' => 'nullable|date',
             'jenis_kelamin' => 'nullable|in:L,P', // Assuming 'L' for Male, 'P' for Female
             'foto_profil' => 'nullable|image|max:2048',
+        ], [
+            'foto_profil.max' => 'Ukuran foto profil maksimal adalah 2MB.',
+            'foto_profil.image' => 'File harus berupa gambar.',
+            'foto_profil.uploaded' => 'Gagal mengupload foto profil. Pastikan ukuran file tidak lebih dari 2MB.'
         ]);
 
         $user->name = $validated['name'];

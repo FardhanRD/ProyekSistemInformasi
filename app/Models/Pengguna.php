@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+// --- PERBAIKAN: Import trait HasApiTokens dari Sanctum agar bisa generate token ---
+use Laravel\Sanctum\HasApiTokens; 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pengguna extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    // --- PERBAIKAN: Tambahkan HasApiTokens di baris use ini ---
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'pengguna';
     protected $primaryKey = 'pengguna_id';
@@ -93,4 +96,3 @@ class Pengguna extends Authenticatable
         return $this->hasMany(AlamatPengguna::class, 'pengguna_id', 'pengguna_id');
     }
 }
-

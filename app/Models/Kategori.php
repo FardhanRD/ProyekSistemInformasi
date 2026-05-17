@@ -41,5 +41,14 @@ class Kategori extends Model
     {
         return $query->where('is_active', 1);
     }
+
+    public function descendantIds(): array
+    {
+        $ids = [$this->kategori_id];
+        foreach ($this->children as $child) {
+            $ids = array_merge($ids, $child->descendantIds());
+        }
+        return $ids;
+    }
 }
 

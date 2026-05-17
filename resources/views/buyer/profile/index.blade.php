@@ -79,16 +79,34 @@
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Foto Profil</label>
-                            <input type="file" name="foto_profil" accept="image/*" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <input type="file" name="foto_profil" id="foto_profil" accept="image/*" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" onchange="checkFileSize(this)">
                             <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF. Maksimal 2MB.</p>
                         </div>
                     </div>
                     
                     <div class="mt-6 flex justify-end">
-                        <button type="submit" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition">Simpan Perubahan</button>
+                        <button type="submit" id="btn-submit-profile" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition">Simpan Perubahan</button>
                     </div>
                 </form>
             </div>
+
+            <script>
+                function checkFileSize(input) {
+                    const maxAllowedSize = 2 * 1024 * 1024; // 2MB
+                    const submitBtn = document.getElementById('btn-submit-profile');
+                    if (input.files && input.files[0]) {
+                        if (input.files[0].size > maxAllowedSize) {
+                            alert('Ukuran file foto Anda terlalu besar (' + (input.files[0].size / (1024*1024)).toFixed(2) + ' MB). Maksimal ukuran file adalah 2MB.');
+                            input.value = ''; // Reset the input
+                            submitBtn.disabled = true;
+                            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            submitBtn.disabled = false;
+                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
+                }
+            </script>
 
             <!-- Tab: Alamat Saya -->
             <div x-show="tab === 'addresses'" x-cloak>
