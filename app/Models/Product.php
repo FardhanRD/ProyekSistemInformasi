@@ -4,11 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User; // PENTING: Jangan lupa import Model User
+use App\Models\User; 
 
 class Product extends Model
 {
     use HasFactory;
+
+    // 1. Beri tahu Laravel nama tabelnya yang benar
+    protected $table = 'produk';
+
+    // 2. Beri tahu Laravel primary key-nya bukan 'id'
+    protected $primaryKey = 'produk_id';
+
+    // 3. Beri tahu Laravel nama kolom 'created_at' yang sudah diubah
+    const CREATED_AT = 'penyimpanan_waktu';
 
     protected $fillable = [
         'name', 
@@ -19,7 +28,7 @@ class Product extends Model
         'category_id',
         'supplier_id',
         'metadata',
-        'user_id' // TAMBAHAN: Agar kita tahu siapa penjualnya
+        'user_id' 
     ];
 
     protected $casts = [
@@ -33,7 +42,7 @@ class Product extends Model
 
     public function ulasan()
     {
-        return $this->hasMany(Ulasan::class, 'produk_id', 'id'); 
+        return $this->hasMany(Ulasan::class, 'produk_id', 'produk_id'); 
     }
 
     public function supplier()
@@ -51,11 +60,8 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
-    // --- TAMBAHKAN FUNGSI INI ---
     public function penjual()
     {
-        // Kita asumsikan kolom di database namanya 'user_id'
-        // Jika nama kolomnya 'penjual_id', ganti 'user_id' jadi 'penjual_id'
         return $this->belongsTo(User::class, 'user_id');
     }
 }
