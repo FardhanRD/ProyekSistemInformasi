@@ -78,7 +78,7 @@
             <div class="relative" x-data="{open:false}">
                 @if($isLoggedIn)
                     <button @click="open = !open" class="flex items-center gap-2">
-                        <img src="{{ auth()->user()->foto ?? asset('images/default-avatar.svg') }}" alt="avatar" class="h-8 w-8 rounded-full object-cover">
+                        <img src="{{ auth()->user()->foto_profil ? asset('storage/'.auth()->user()->foto_profil) : (auth()->user()->foto ?? asset('images/default-avatar.svg')) }}" alt="avatar" class="h-8 w-8 rounded-full object-cover" style="object-position: {{ auth()->user()->foto_profil_position ?? '50% 50%' }}">
                         <span class="text-sm">{{ auth()->user()->nama ?? auth()->user()->nama_lengkap ?? 'User' }}</span>
                     </button>
 

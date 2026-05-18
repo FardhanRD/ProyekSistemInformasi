@@ -59,11 +59,12 @@ class ProfileController extends Controller
             'no_telepon' => 'nullable|string|max:25',
             'tanggal_lahir' => 'nullable|date',
             'jenis_kelamin' => 'nullable|in:L,P', // Assuming 'L' for Male, 'P' for Female
-            'foto_profil' => 'nullable|image|max:2048',
+            'foto_profil' => 'nullable|image|max:10240',
+            'foto_profil_position' => 'nullable|string|max:50',
         ], [
-            'foto_profil.max' => 'Ukuran foto profil maksimal adalah 2MB.',
+            'foto_profil.max' => 'Ukuran foto profil maksimal adalah 10MB.',
             'foto_profil.image' => 'File harus berupa gambar.',
-            'foto_profil.uploaded' => 'Gagal mengupload foto profil. Pastikan ukuran file tidak lebih dari 2MB.'
+            'foto_profil.uploaded' => 'Gagal mengupload foto profil. Pastikan ukuran file tidak lebih dari 10MB.'
         ]);
 
         $user->name = $validated['name'];
@@ -72,12 +73,37 @@ class ProfileController extends Controller
         $user->no_telepon = $validated['no_telepon'] ?? null;
         $user->tanggal_lahir = $validated['tanggal_lahir'] ?? null;
         $user->jenis_kelamin = $validated['jenis_kelamin'] ?? null;
+        $user->foto_profil_position = $request->input('foto_profil_position', '50% 50%');
 
         if ($request->hasFile('foto_profil')) {
             if ($user->foto_profil) {
                 Storage::disk('public')->delete($user->foto_profil);
             }
-            $user->foto_profil = $request->file('foto_profil')->store('profile', 'public');
+            
+            $file = $request->file('foto_profil');
+            $extension = strtolower($file->getClientOriginalExtension());
+            
+            if (in_array($extension, ['heic', 'heif'])) {
+                // Transcode HEIC to JPG using macOS native sips utility
+                $tempPath = $file->getRealPath();
+                $newFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) . '_' . time() . '.jpg';
+                $targetPath = storage_path('app/public/profile/' . $newFilename);
+                
+                if (!file_exists(storage_path('app/public/profile'))) {
+                    mkdir(storage_path('app/public/profile'), 0755, true);
+                }
+                
+                $cmd = "sips -s format jpeg " . escapeshellarg($tempPath) . " --out " . escapeshellarg($targetPath);
+                exec($cmd);
+                
+                if (file_exists($targetPath)) {
+                    $user->foto_profil = 'profile/' . $newFilename;
+                } else {
+                    $user->foto_profil = $file->store('profile', 'public');
+                }
+            } else {
+                $user->foto_profil = $file->store('profile', 'public');
+            }
         }
 
         $user->save();
@@ -90,6 +116,7 @@ class ProfileController extends Controller
             'tanggal_lahir' => $user->tanggal_lahir,
             'jenis_kelamin' => $user->jenis_kelamin,
             'foto_profil' => $user->foto_profil,
+            'foto_profil_position' => $user->foto_profil_position,
         ]);
 
         return back()->with('success', 'Profil berhasil diperbarui');

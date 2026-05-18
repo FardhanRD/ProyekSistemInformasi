@@ -19,6 +19,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories', [\App\Http\Controllers\Api\CategoryController::class, 'index']);
     Route::get('/categories/{id}', [\App\Http\Controllers\Api\CategoryController::class, 'show']);
     Route::get('/products/category/{id}', [\App\Http\Controllers\Api\ProductController::class, 'getByCategory']);
+    Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'index']);
 
     // --- AUTH ROUTES ---
     Route::post('/register', [AuthController::class, 'register']);

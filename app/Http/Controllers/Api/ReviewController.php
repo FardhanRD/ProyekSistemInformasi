@@ -11,6 +11,63 @@ use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
+    public function index($id)
+    {
+        $reviews = RatingProduk::where('produk_id', $id)
+            ->with(['buyer.pengguna'])
+            ->get()
+            ->map(function ($r) {
+                $user = optional($r->buyer)->pengguna;
+                $avatar = optional($user)->foto_profil ? url('storage/' . $user->foto_profil) : null;
+                
+                $photos = [];
+                if ($r->foto_ulasan) {
+                    $fotoList = is_string($r->foto_ulasan) ? json_decode($r->foto_ulasan, true) : $r->foto_ulasan;
+                    if (is_array($fotoList)) {
+                        foreach ($fotoList as $foto) {
+                            $photos[] = url('storage/' . $foto);
+                        }
+                    }
+                }
+
+                $dateStr = $r->created_at ? (\Carbon\Carbon::parse($r->created_at)->format('d M Y')) : 'Baru saja';
+
+                return [
+                    'id' => $r->rating_id,
+                    'rating' => $r->bintang,
+                    'title' => $r->judul_ulasan ?? '',
+                    'comment' => $r->isi_ulasan ?? '',
+                    'reply' => $r->balasan,
+                    'photos' => $photos,
+                    'name' => optional($user)->nama_pengguna ?? optional($user)->nama ?? 'Anonim',
+                    'avatar' => $avatar ?? 'https://ui-avatars.com/api/?name=' . urlencode(optional($user)->nama_pengguna ?? 'A') . '&background=random',
+                    'date' => $dateStr,
+                ];
+            });
+
+        $avgRating = RatingProduk::where('produk_id', $id)->avg('bintang') ?? 0.0;
+        $totalReviews = RatingProduk::where('produk_id', $id)->count();
+
+        $starsCount = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+        if ($totalReviews > 0) {
+            $grouped = RatingProduk::where('produk_id', $id)
+                ->select('bintang', DB::raw('count(*) as total'))
+                ->groupBy('bintang')
+                ->get();
+            foreach ($grouped as $g) {
+                $starsCount[$g->bintang] = $g->total;
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'average_rating' => round((float)$avgRating, 1),
+            'total_reviews' => $totalReviews,
+            'stars_distribution' => $starsCount,
+            'data' => $reviews
+        ], 200);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

@@ -34,8 +34,31 @@ class ProfileController extends Controller {
         if ($request->remove_photo == 'true') {
             $user->foto_profil = null;
         } else if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('profile_photos', 'public');
-            $user->foto_profil = $path;
+            $file = $request->file('photo');
+            $originalName = $file->getClientOriginalName();
+            $extension = strtolower($file->getClientOriginalExtension());
+
+            if (in_array($extension, ['heic', 'heif'])) {
+                // Transcode HEIC to JPG using macOS native sips utility
+                $tempPath = $file->getRealPath();
+                $newFilename = pathinfo($originalName, PATHINFO_FILENAME) . '_' . time() . '.jpg';
+                $targetPath = storage_path('app/public/profile_photos/' . $newFilename);
+
+                if (!file_exists(storage_path('app/public/profile_photos'))) {
+                    mkdir(storage_path('app/public/profile_photos'), 0755, true);
+                }
+
+                $cmd = "sips -s format jpeg " . escapeshellarg($tempPath) . " --out " . escapeshellarg($targetPath);
+                exec($cmd);
+
+                if (file_exists($targetPath)) {
+                    $user->foto_profil = 'profile_photos/' . $newFilename;
+                } else {
+                    $user->foto_profil = $file->store('profile_photos', 'public');
+                }
+            } else {
+                $user->foto_profil = $file->store('profile_photos', 'public');
+            }
         }
         $user->save();
         return response()->json(['status'=>'success'], 200);

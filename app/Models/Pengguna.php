@@ -25,6 +25,7 @@ class Pengguna extends Authenticatable
         'no_telepon',
         'sandi',
         'foto_profil',
+        'foto_profil_position',
         'jenis_kelamin',
         'tanggal_lahir',
         'role',

@@ -8,7 +8,7 @@
         <aside class="w-full md:w-1/4">
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div class="flex items-center gap-4 mb-6 pb-6 border-b">
-                    <img src="{{ $user->foto_profil ? asset('storage/'.$user->foto_profil) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" alt="Profile" class="w-16 h-16 rounded-full object-cover">
+                    <img src="{{ $user->foto_profil ? asset('storage/'.$user->foto_profil) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" alt="Profile" class="w-16 h-16 rounded-full object-cover" style="object-position: {{ $user->foto_profil_position ?? '50% 50%' }}">
                     <div>
                         <h2 class="font-bold text-lg">{{ $user->name }}</h2>
                         <p class="text-sm text-gray-500">{{ $user->username }}</p>
@@ -77,10 +77,49 @@
                                 <option value="P" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'P' ? 'selected' : '' }}>Perempuan</option>
                             </select>
                         </div>
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2" x-data="{ 
+                            posX: '{{ explode(' ', $user->foto_profil_position ?? '50% 50%')[0] ?? '50%' }}'.replace('%', ''),
+                            posY: '{{ explode(' ', $user->foto_profil_position ?? '50% 50%')[1] ?? '50%' }}'.replace('%', ''),
+                            previewUrl: '{{ $user->foto_profil ? asset('storage/'.$user->foto_profil) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}',
+                            updatePreview(event) {
+                                const file = event.target.files[0];
+                                if (file) {
+                                    this.previewUrl = URL.createObjectURL(file);
+                                }
+                            }
+                        }">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Foto Profil</label>
-                            <input type="file" name="foto_profil" id="foto_profil" accept="image/*" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" onchange="checkFileSize(this)">
-                            <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF. Maksimal 2MB.</p>
+                            
+                            <!-- Premium Interactive Preview & Positioner -->
+                            <div class="flex flex-col sm:flex-row items-center gap-6 mb-4 p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                                <div class="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md bg-slate-200">
+                                    <img :src="previewUrl" alt="Preview Profil" 
+                                         class="w-full h-full object-cover transition-all duration-100" 
+                                         :style="`object-position: ${posX}% ${posY}%`"/>
+                                </div>
+                                <div class="flex-1 w-full space-y-4">
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-xs font-semibold text-slate-500">
+                                            <span>Geser Horisontal (Kiri ↔ Kanan)</span>
+                                            <span x-text="posX + '%'"></span>
+                                        </div>
+                                        <input type="range" min="0" max="100" x-model="posX" class="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-xs font-semibold text-slate-500">
+                                            <span>Geser Vertikal (Atas ↕ Bawah)</span>
+                                            <span x-text="posY + '%'"></span>
+                                        </div>
+                                        <input type="range" min="0" max="100" x-model="posY" class="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="file" name="foto_profil" id="foto_profil" accept="image/*" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2" onchange="checkFileSize(this)" @change="updatePreview($event)">
+                            <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF. Maksimal 10MB. Anda dapat menggeser posisi gambar di atas agar tampak pas!</p>
+                            
+                            <!-- Hidden input to save coordinates -->
+                            <input type="hidden" name="foto_profil_position" :value="`${posX}% ${posY}%`"/>
                         </div>
                     </div>
                     
@@ -92,11 +131,11 @@
 
             <script>
                 function checkFileSize(input) {
-                    const maxAllowedSize = 2 * 1024 * 1024; // 2MB
+                    const maxAllowedSize = 10 * 1024 * 1024; // 10MB
                     const submitBtn = document.getElementById('btn-submit-profile');
                     if (input.files && input.files[0]) {
                         if (input.files[0].size > maxAllowedSize) {
-                            alert('Ukuran file foto Anda terlalu besar (' + (input.files[0].size / (1024*1024)).toFixed(2) + ' MB). Maksimal ukuran file adalah 2MB.');
+                            alert('Ukuran file foto Anda terlalu besar (' + (input.files[0].size / (1024*1024)).toFixed(2) + ' MB). Maksimal ukuran file adalah 10MB.');
                             input.value = ''; // Reset the input
                             submitBtn.disabled = true;
                             submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
