@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 class WishlistController extends Controller {
     public function index() {
         $pengguna_id = auth()->user()->pengguna_id ?? auth()->id();
-        $wishlists = Wishlist::with('produk.images')->where('pengguna_id', $pengguna_id)->get();
+        $wishlists = Wishlist::with(['produk.images', 'produk.details', 'produk.kategori.parent'])
+            ->where('pengguna_id', $pengguna_id)
+            ->get();
         
         $data = $wishlists->map(function($w) {
             $p = $w->produk;
@@ -15,9 +17,22 @@ class WishlistController extends Controller {
             return [
                 'id' => $w->wishlist_id,
                 'product_id' => $p->produk_id,
-                'name' => $p->nama_produk,
-                'price' => $p->harga_dasar,
-                'image' => $p->images->first()->url_gambar ?? ''
+                'product' => [
+                    'id' => $p->produk_id,
+                    'name' => $p->nama_produk,
+                    'price' => $p->harga_dasar,
+                    'description' => $p->deskripsi ?? '',
+                    'image' => $p->images->first()->url_gambar ?? '',
+                    'category' => ($p->kategori && $p->kategori->parent ? $p->kategori->parent->nama_kategori . " " : "") . ($p->kategori->nama_kategori ?? "Umum"),
+                    'details' => $p->details->map(function ($d) {
+                        return [
+                            'detail_id' => $d->detail_produk_id,
+                            'size' => $d->ukuran,
+                            'stock' => $d->stok,
+                            'price' => $d->harga,
+                        ];
+                    })
+                ]
             ];
         })->filter()->values();
         return response()->json(['status'=>'success', 'data'=>$data], 200);

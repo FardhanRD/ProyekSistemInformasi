@@ -104,4 +104,114 @@ class ProfileController extends Controller {
         RatingToko::create(['rating'=>$request->rating, 'review'=>$request->review, 'pengguna_id'=>$pengguna_id]);
         return response()->json(['status'=>'success'], 200);
     }
+
+    public function changePassword(Request $request) {
+        $request->validate([
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->old_password, $user->sandi)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password lama yang Anda masukkan salah.'
+            ], 422);
+        }
+
+        $user->sandi = \Illuminate\Support\Facades\Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil diperbarui.'
+        ], 200);
+    }
+
+    public function getPaymentAccounts() {
+        $user = auth()->user();
+        if (!$user) return response()->json(['message' => 'Unauthenticated'], 401);
+
+        $accounts = \App\Models\AkunPembayaran::with('metodePembayaran')
+            ->where('pengguna_id', $user->pengguna_id)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $accounts->map(function ($acc) {
+                return [
+                    'id' => $acc->akun_pembayaran_id,
+                    'nomor_akun' => $acc->nomor_akun,
+                    'nama_akun' => $acc->nama_akun,
+                    'is_active' => (bool)$acc->is_active,
+                    'metode' => [
+                        'id' => $acc->metode_id,
+                        'name' => optional($acc->metodePembayaran)->metode ?? '',
+                        'jenis' => optional($acc->metodePembayaran)->jenis ?? '',
+                        'logo' => optional($acc->metodePembayaran)->logo_url ?? '',
+                    ]
+                ];
+            })
+        ], 200);
+    }
+
+    public function getActivePaymentMethods() {
+        $methods = \App\Models\MetodePembayaran::where('is_active', true)->get();
+        return response()->json([
+            'success' => true,
+            'data' => $methods
+        ], 200);
+    }
+
+    public function storePaymentAccount(Request $request) {
+        $request->validate([
+            'metode_id' => 'required|integer|exists:metode_pembayaran,metode_id',
+            'nomor_akun' => 'required|string|max:255',
+            'nama_akun' => 'required|string|max:255',
+        ]);
+
+        $user = auth()->user();
+        if (!$user) return response()->json(['message' => 'Unauthenticated'], 401);
+
+        $account = \App\Models\AkunPembayaran::create([
+            'pengguna_id' => $user->pengguna_id,
+            'metode_id' => $request->metode_id,
+            'nomor_akun' => $request->nomor_akun,
+            'nama_akun' => $request->nama_akun,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Akun pembayaran berhasil ditambahkan.',
+            'data' => $account
+        ], 201);
+    }
+
+    public function destroyPaymentAccount($id) {
+        $user = auth()->user();
+        if (!$user) return response()->json(['message' => 'Unauthenticated'], 401);
+
+        $account = \App\Models\AkunPembayaran::where('akun_pembayaran_id', $id)
+            ->where('pengguna_id', $user->pengguna_id)
+            ->first();
+
+        if (!$account) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun pembayaran tidak ditemukan.'
+            ], 404);
+        }
+
+        $account->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Akun pembayaran berhasil dihapus.'
+        ], 200);
+    }
 }

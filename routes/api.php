@@ -33,10 +33,10 @@ Route::prefix('v1')->group(function () {
         });
 
         // Keranjang (Cart)
-        Route::get('/cart', [CartController::class, 'index']);      
-        Route::post('/cart', [CartController::class, 'add']);     
-        Route::put('/cart/{id}', [CartController::class, 'update']); 
-        Route::delete('/cart/{id}', [CartController::class, 'remove']); 
+        Route::get('/cart', [\App\Http\Controllers\Api\CartController::class, 'index']);      
+        Route::post('/cart', [\App\Http\Controllers\Api\CartController::class, 'add']);     
+        Route::put('/cart/{id}', [\App\Http\Controllers\Api\CartController::class, 'update']); 
+        Route::delete('/cart/{id}', [\App\Http\Controllers\Api\CartController::class, 'remove']); 
 
         // Produk (CRUD)
         Route::post('/products', [\App\Http\Controllers\Api\ProductController::class, 'store']);
@@ -50,6 +50,14 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'index']);
         Route::put('/profile/update', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
+        Route::post('/profile/change-password', [\App\Http\Controllers\Api\ProfileController::class, 'changePassword']);
+        
+        // Akun Pembayaran (Payment Accounts)
+        Route::get('/profile/payment-accounts', [\App\Http\Controllers\Api\ProfileController::class, 'getPaymentAccounts']);
+        Route::get('/profile/payment-methods', [\App\Http\Controllers\Api\ProfileController::class, 'getActivePaymentMethods']);
+        Route::post('/profile/payment-accounts', [\App\Http\Controllers\Api\ProfileController::class, 'storePaymentAccount']);
+        Route::delete('/profile/payment-accounts/{id}', [\App\Http\Controllers\Api\ProfileController::class, 'destroyPaymentAccount']);
+
         Route::post('/profile/alamat', [\App\Http\Controllers\Api\ProfileController::class, 'storeAlamat']);
         Route::put('/profile/alamat/{id}', [\App\Http\Controllers\Api\ProfileController::class, 'updateAlamat']);
         Route::put('/profile/alamat/{id}/utama', [\App\Http\Controllers\Api\ProfileController::class, 'setUtamaAlamat']);
