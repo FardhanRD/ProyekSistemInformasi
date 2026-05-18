@@ -19,7 +19,15 @@ class ProductController extends Controller
                 'price' => $p->harga_dasar,
                 'description' => $p->deskripsi ?? '',
                 'image' => $p->images->first()->url_gambar ?? '',
-                'category' => ($p->kategori && $p->kategori->parent ? $p->kategori->parent->nama_kategori . " " : "") . ($p->kategori->nama_kategori ?? "Umum")
+                'category' => ($p->kategori && $p->kategori->parent ? $p->kategori->parent->nama_kategori . " " : "") . ($p->kategori->nama_kategori ?? "Umum"),
+                'details' => $p->details->map(function ($d) {
+                    return [
+                        'detail_id' => $d->detail_produk_id,
+                        'size' => $d->ukuran,
+                        'stock' => $d->stok,
+                        'price' => $d->harga,
+                    ];
+                })
             ];
         });
 
@@ -37,7 +45,15 @@ class ProductController extends Controller
                 'price' => $p->harga_dasar,
                 'description' => $p->deskripsi ?? '',
                 'image' => $p->images->first()->url_gambar ?? '',
-                'category' => ($p->kategori && $p->kategori->parent ? $p->kategori->parent->nama_kategori . " " : "") . ($p->kategori->nama_kategori ?? "Umum")
+                'category' => ($p->kategori && $p->kategori->parent ? $p->kategori->parent->nama_kategori . " " : "") . ($p->kategori->nama_kategori ?? "Umum"),
+                'details' => $p->details->map(function ($d) {
+                    return [
+                        'detail_id' => $d->detail_produk_id,
+                        'size' => $d->ukuran,
+                        'stock' => $d->stok,
+                        'price' => $d->harga,
+                    ];
+                })
             ];
         });
         return response()->json(['status'=>'success', 'data'=>$formatted], 200);

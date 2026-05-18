@@ -236,8 +236,8 @@ Route::get('/api/cart-count', function (Request $request) {
     if (!auth()->check()) {
         return response()->json(['count' => 0]);
     }
-    $penggunaId = auth()->user()->id;
-    $count = \App\Models\Keranjang::where('user_id', $penggunaId)->distinct()->count('detail_produk_id');
+    $penggunaId = auth()->user()->pengguna_id ?? auth()->user()->id;
+    $count = \App\Models\Keranjang::where('pengguna_id', $penggunaId)->distinct()->count('detail_produk_id');
     return response()->json(['count' => $count]);
 });
 

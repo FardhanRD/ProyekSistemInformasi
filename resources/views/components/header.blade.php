@@ -45,8 +45,8 @@
         </div>
 
         {{-- Search + actions --}}
-        <div class="flex items-center gap-4 flex-1 mx-6">
-            <form action="{{ route('product.search') }}" method="GET" class="flex-1" x-data="searchComponent()">
+        <div class="flex items-center gap-4 flex-1 mx-6" x-data="searchComponent()">
+            <form action="{{ route('product.search') }}" method="GET" class="flex-1">
                 <div class="relative">
                     <input x-model="q" @input.debounce="onInput" name="q" type="text" placeholder="Cari produk, brand, kategori..." class="w-full border rounded px-4 py-2" autocomplete="off">
 

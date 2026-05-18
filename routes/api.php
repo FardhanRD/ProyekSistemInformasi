@@ -54,6 +54,9 @@ Route::prefix('v1')->group(function () {
         Route::put('/profile/alamat/{id}/utama', [\App\Http\Controllers\Api\ProfileController::class, 'setUtamaAlamat']);
         Route::delete('/profile/alamat/{id}', [\App\Http\Controllers\Api\ProfileController::class, 'destroyAlamat']);
 
+        // Checkout Options
+        Route::get('/checkout/options', [\App\Http\Controllers\Api\CheckoutController::class, 'options']);
+
         // Favorit / Wishlist (Menyelaraskan rute mobile dengan WishlistController bawaan web)
         Route::get('/favorites', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
         Route::post('/favorites', [\App\Http\Controllers\Api\WishlistController::class, 'store']);
