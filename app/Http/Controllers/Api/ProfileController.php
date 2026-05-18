@@ -8,7 +8,9 @@ class ProfileController extends Controller {
     public function index() {
         $user = auth()->user();
         if(!$user) return response()->json(['message'=>'Unauthenticated'], 401);
-        $addresses = \App\Models\AlamatPengguna::where('pengguna_id', $user->pengguna_id ?? $user->id)->get();
+        $addresses = \App\Models\AlamatPengguna::where('pengguna_id', $user->pengguna_id ?? $user->id)
+            ->orderBy('is_utama', 'desc')
+            ->get();
         return response()->json([
             'user' => [
                 'id' => $user->pengguna_id ?? $user->id,
@@ -42,6 +44,11 @@ class ProfileController extends Controller {
         $pengguna_id = auth()->user()->pengguna_id ?? auth()->id();
         $data = $request->all();
         if(!isset($data['kelurahan'])) $data['kelurahan'] = '-';
+        
+        // If this is the first address, make it main
+        $count = AlamatPengguna::where('pengguna_id', $pengguna_id)->count();
+        $data['is_utama'] = ($count === 0);
+        
         AlamatPengguna::create(array_merge($data, ['pengguna_id'=>$pengguna_id]));
         return response()->json(['status'=>'success'], 200);
     }
@@ -52,6 +59,12 @@ class ProfileController extends Controller {
             if(!isset($data['kelurahan'])) $data['kelurahan'] = '-';
             $alamat->update($data);
         }
+        return response()->json(['status'=>'success'], 200);
+    }
+    public function setUtamaAlamat($id) {
+        $pengguna_id = auth()->user()->pengguna_id ?? auth()->id();
+        AlamatPengguna::where('pengguna_id', $pengguna_id)->update(['is_utama' => false]);
+        AlamatPengguna::where('alamat_id', $id)->where('pengguna_id', $pengguna_id)->update(['is_utama' => true]);
         return response()->json(['status'=>'success'], 200);
     }
     public function destroyAlamat($id) {

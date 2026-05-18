@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $items = [];
@@ -17,7 +17,30 @@ class CartController extends Controller
             $items = Keranjang::with(['detail.produk.images'])
                 ->where('pengguna_id', $user->pengguna_id)
                 ->get();
+        }
 
+        if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
+            $formatted = collect($items)->map(function ($item) {
+                $produk = optional($item->detail)->produk;
+                $imageUrl = $produk && $produk->images->first() ? $produk->images->first()->url_gambar : '';
+                return [
+                    'id' => $item->keranjang_id,
+                    'jumlah' => $item->jumlah,
+                    'harga_saat_ini' => optional($item->detail)->harga ?? optional($produk)->harga_dasar ?? 0,
+                    'produk' => [
+                        'id' => optional($produk)->produk_id ?? 0,
+                        'name' => optional($produk)->nama_produk ?? 'Tanpa Nama',
+                        'price' => optional($produk)->harga_dasar ?? 0,
+                        'description' => optional($produk)->deskripsi ?? '',
+                        'image' => $imageUrl
+                    ]
+                ];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $formatted
+            ]);
         }
 
         return view('buyer.cart.index', compact('items'));
@@ -25,22 +48,39 @@ class CartController extends Controller
 
     public function add(Request $request)
     {
-        $request->validate(['detail_produk_id'=>'required|integer','jumlah'=>'integer|min:1']);
+        $request->validate([
+            'detail_produk_id' => 'nullable|integer',
+            'product_id' => 'nullable|integer',
+            'jumlah' => 'integer|min:1'
+        ]);
+
+        if (!$request->detail_produk_id && !$request->product_id) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => 'The product_id or detail_produk_id field is required.'], 422);
+            }
+            return back()->withErrors(['error' => 'Pilih produk terlebih dahulu']);
+        }
+
         $user = Auth::user();
         if (! $user) {
-            if ($request->expectsJson() || $request->ajax()) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json(['success' => false, 'message' => 'Silakan login terlebih dahulu'], 401);
             }
             return redirect()->route('login');
         }
 
-        $detail = DetailProduk::findOrFail($request->detail_produk_id);
+        if ($request->detail_produk_id) {
+            $detail = DetailProduk::findOrFail($request->detail_produk_id);
+        } else {
+            $detail = DetailProduk::where('produk_id', $request->product_id)->firstOrFail();
+        }
+
         $cart = Keranjang::updateOrCreate(
             ['pengguna_id' => $user->pengguna_id, 'detail_produk_id' => $detail->detail_produk_id],
             ['jumlah' => $request->input('jumlah',1)]
         );
 
-        if ($request->expectsJson() || $request->ajax()) {
+        if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
             return response()->json([
                 'success' => true,
                 'message' => 'Produk berhasil ditambahkan ke keranjang',
@@ -51,10 +91,10 @@ class CartController extends Controller
         return back()->with('success','Produk ditambahkan ke keranjang');
     }
 
-    public function update(Request $request)
+    public function update(Request $request, $id = null)
     {
+        $cartId = $id ?? $request->keranjang_id;
         $request->validate([
-            'keranjang_id' => 'required|integer',
             'jumlah' => 'required|integer|min:1',
         ]);
 
@@ -63,7 +103,7 @@ class CartController extends Controller
             return response()->json(['success' => false, 'message' => 'Silakan login terlebih dahulu'], 401);
         }
 
-        $item = Keranjang::with('detail')->findOrFail($request->keranjang_id);
+        $item = Keranjang::with('detail')->findOrFail($cartId);
         if ((int) $item->pengguna_id !== (int) $user->pengguna_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -98,7 +138,7 @@ class CartController extends Controller
 
         $item->delete();
 
-        if (request()->expectsJson() || request()->ajax()) {
+        if (request()->expectsJson() || request()->ajax() || request()->is('api/*')) {
             return response()->json(['success' => true, 'message' => 'Produk dihapus dari keranjang']);
         }
 

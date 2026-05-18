@@ -33,9 +33,9 @@ Route::prefix('v1')->group(function () {
 
         // Keranjang (Cart)
         Route::get('/cart', [CartController::class, 'index']);      
-        Route::post('/cart', [CartController::class, 'store']);     
+        Route::post('/cart', [CartController::class, 'add']);     
         Route::put('/cart/{id}', [CartController::class, 'update']); 
-        Route::delete('/cart/{id}', [CartController::class, 'destroy']); 
+        Route::delete('/cart/{id}', [CartController::class, 'remove']); 
 
         // Produk (CRUD)
         Route::post('/products', [\App\Http\Controllers\Api\ProductController::class, 'store']);
@@ -51,6 +51,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/profile/update', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
         Route::post('/profile/alamat', [\App\Http\Controllers\Api\ProfileController::class, 'storeAlamat']);
         Route::put('/profile/alamat/{id}', [\App\Http\Controllers\Api\ProfileController::class, 'updateAlamat']);
+        Route::put('/profile/alamat/{id}/utama', [\App\Http\Controllers\Api\ProfileController::class, 'setUtamaAlamat']);
         Route::delete('/profile/alamat/{id}', [\App\Http\Controllers\Api\ProfileController::class, 'destroyAlamat']);
 
         // Favorit / Wishlist (Menyelaraskan rute mobile dengan WishlistController bawaan web)
@@ -60,5 +61,35 @@ Route::prefix('v1')->group(function () {
         Route::delete('/favorites/{id}', [\App\Http\Controllers\Api\WishlistController::class, 'destroy']);
         Route::delete('/favorites/product/{product_id}', [\App\Http\Controllers\Api\WishlistController::class, 'destroyByProduct']);
         Route::delete('/favorites/clear', [\App\Http\Controllers\Api\WishlistController::class, 'clear']);
+        
+        Route::get('/cart-debug', function() {
+            $user = request()->user();
+            $items = \App\Models\Keranjang::with(['detail.produk.images'])
+                ->where('pengguna_id', $user->pengguna_id)
+                ->get();
+            $formatted = collect($items)->map(function ($item) {
+                $produk = optional($item->detail)->produk;
+                $imageUrl = $produk && $produk->images->first() ? $produk->images->first()->url_gambar : '';
+                return [
+                    'id' => $item->keranjang_id,
+                    'jumlah' => $item->jumlah,
+                    'harga_saat_ini' => optional($item->detail)->harga ?? optional($produk)->harga_dasar ?? 0,
+                    'produk' => [
+                        'id' => optional($produk)->produk_id ?? 0,
+                        'name' => optional($produk)->nama_produk ?? 'Tanpa Nama',
+                        'price' => optional($produk)->harga_dasar ?? 0,
+                        'description' => optional($produk)->deskripsi ?? '',
+                        'image' => $imageUrl
+                    ]
+                ];
+            })->values();
+
+            return response()->json([
+                'user_id' => $user->pengguna_id,
+                'items_count' => $items->count(),
+                'success' => true,
+                'data' => $formatted
+            ]);
+        });
     });
 });
