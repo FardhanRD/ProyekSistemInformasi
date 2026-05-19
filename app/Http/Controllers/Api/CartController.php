@@ -32,10 +32,21 @@ class CartController extends Controller
 
                 $imageUrl = $produk->images->first() ? $produk->images->first()->url_gambar : '';
 
+                $color = '';
+                if ($detail && $detail->nama_produk) {
+                    $parts = explode(' - ', $detail->nama_produk);
+                    if (count($parts) > 0) {
+                        $color = trim($parts[0]);
+                    }
+                }
+
                 return [
                     'id' => $item->keranjang_id,
                     'jumlah' => $item->jumlah,
                     'harga_saat_ini' => $detail->harga ?? $produk->harga_dasar ?? 0,
+                    'size' => $detail->ukuran ?? '',
+                    'color' => $color,
+                    'detail_produk_id' => $item->detail_produk_id,
                     'produk' => [
                         'id' => $produk->produk_id,
                         'name' => $produk->nama_produk,
