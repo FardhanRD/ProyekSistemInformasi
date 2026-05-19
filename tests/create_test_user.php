@@ -11,7 +11,7 @@ use App\Models\Buyer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-$pw = password_hash('secret123', PASSWORD_BCRYPT);
+$pw = password_hash('password', PASSWORD_BCRYPT);
 $user = Pengguna::firstOrCreate(
     ['email' => 'test@example.com'],
     [
@@ -45,4 +45,4 @@ if (Schema::hasColumn('buyer', 'user_id')) {
 
 Buyer::updateOrCreate(['pengguna_id' => $user->pengguna_id], $buyerPayload);
 
-echo "Created user: " . $user->pengguna_id . " (email=test@example.com, password=secret123)\n";
+echo "Created user: " . $user->pengguna_id . " (email=test@example.com, password=password)\n";

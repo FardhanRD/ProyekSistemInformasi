@@ -1,253 +1,366 @@
 @extends('layouts.buyer')
-
-@section('title', 'MOVR | Keranjang')
-
+@section('title', 'Keranjang — MOVR')
 @section('content')
-@php
-    $cartData = collect($items ?? [])->map(function ($item) {
-        $produk = $item->detail->produk ?? null;
-        $gambar = optional(optional($produk)->images->first())->url_lengkap
-            ?? (optional(optional($produk)->images->first())->url_gambar ? asset('storage/' . $produk->images->first()->url_gambar) : asset('images/default-product.svg'));
 
-        return [
-            'keranjang_id' => $item->keranjang_id,
-            'detail_produk_id' => $item->detail_produk_id,
-            'slug' => optional($produk)->slug,
-            'nama_produk' => $item->detail->nama_produk ?? optional($produk)->nama_produk ?? 'Produk',
-            'ukuran' => $item->detail->ukuran ?? '-',
-            'warna_nama' => optional($item->detail->warna)->nama_warna,
-            'harga' => (float) ($item->detail->harga ?? 0),
-            'jumlah' => (int) ($item->jumlah ?? 1),
-            'stok' => (int) ($item->detail->stok ?? 1),
-            'image' => $gambar,
-        ];
-    })->values();
+@php
+  // Pastikan hanya item yang masih memiliki relasi detail yang valid
+  $items = $items->filter(function ($i) {
+    return !empty($i->detail);
+  })->values();
+
+  $cartItems = $items->map(function ($i) {
+    $detail = $i->detail;
+    $produk = $detail->produk ?? null;
+    $gambarUtama = $produk?->gambarUtama?->url_lengkap
+      ?? $produk?->images?->first()?->url_lengkap
+      ?? asset('images/placeholder.png');
+    return [
+      'id' => $i->keranjang_id,
+      'checked' => true,
+      'qty' => $i->jumlah ?? 1,
+      'harga' => $detail->harga ?? ($produk->harga_dasar ?? 0),
+      'stok' => $detail->stok ?? 0,
+      'nama' => $produk->nama_produk ?? ($detail->nama_produk ?? '-'),
+      'gambar' => $gambarUtama,
+    ];
+  })->filter()->values();
 @endphp
 
-<div class="space-y-6" x-data="cartPage({{ json_encode($cartData) }})">
+<div class="space-y-6">
     <div>
         <div class="text-xs font-semibold text-cyan-300">KERANJANG</div>
         <h1 class="text-2xl md:text-3xl font-black">Keranjang Belanja</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8"
+     x-data="{
+       items: @js($cartItems),
+       
+       get subtotal() {
+         return this.items
+           .filter(i => i.checked)
+           .reduce((s,i) => s + i.harga * i.qty, 0);
+       },
+       get checkedCount() {
+         return this.items.filter(i => i.checked).length;
+       },
+       get allChecked() {
+         return this.items.length > 0 && 
+           this.items.every(i => i.checked);
+       },
+       
+       toggleAll(e) {
+         this.items.forEach(i => i.checked = e.target.checked);
+       },
+       
+       async updateQty(item, val) {
+         const newQty = Math.min(Math.max(1, val), item.stok);
+         const old = item.qty;
+         item.qty = newQty;
+         const res = await fetch('{{ route('cart.update') }}', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             'X-CSRF-TOKEN': '{{ csrf_token() }}'
+           },
+           body: JSON.stringify({
+             keranjang_id: item.id, jumlah: newQty
+           })
+         });
+         const data = await res.json();
+         if (!data.success) {
+           item.qty = old;
+           showToast(data.message, 'error');
+         }
+       },
+       
+       async removeItem(id) {
+         const res = await fetch('/cart/remove/' + id, {
+           method: 'DELETE',
+           headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+         });
+         const data = await res.json();
+         if (data.success) {
+           this.items = this.items.filter(i => i.id !== id);
+           const badge = document.getElementById('cart-count');
+           if (badge) badge.textContent = data.cart_count;
+           showToast('Item dihapus dari keranjang');
+         }
+       },
+       
+       checkout() {
+         const checked = this.items
+           .filter(i => i.checked).map(i => i.id);
+         if (!checked.length) {
+           showToast('Pilih minimal 1 produk', 'warning');
+           return;
+         }
+         const f = document.createElement('form');
+         f.method = 'POST';
+         f.action = '{{ route('checkout.store') }}';
+         const csrf = document.createElement('input');
+         csrf.type = 'hidden'; 
+         csrf.name = '_token'; 
+         csrf.value = '{{ csrf_token() }}';
+         f.appendChild(csrf);
+         const ids = document.createElement('input');
+         ids.type = 'hidden'; 
+         ids.name = 'keranjang_ids';
+         ids.value = JSON.stringify(checked);
+         f.appendChild(ids);
+         document.body.appendChild(f);
+         f.submit();
+       },
+       
+       formatRp(n) {
+         return 'Rp ' + n.toLocaleString('id-ID');
+       }
+     }">
+
+  <h1 class="text-2xl font-black text-gray-900 mb-8">
+    Keranjang Belanja
+    <span class="text-gray-400 font-normal text-lg ml-2">
+      ({{ $items->count() }} item)
+    </span>
+  </h1>
+
+  @if($items->isEmpty())
+  {{-- Empty State --}}
+  <div class="flex flex-col items-center justify-center 
+              py-24 text-center">
+    <div class="w-24 h-24 bg-[#63A2BB]/10 rounded-full 
+                flex items-center justify-center mb-6">
+      <svg class="w-12 h-12 text-[#63A2BB]" 
+           fill="none" stroke="currentColor" 
+           viewBox="0 0 24 24">
+        <path stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="1.5"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-700 mb-2">
+      Keranjang masih kosong
+    </h2>
+    <p class="text-gray-400 mb-8">
+      Yuk tambahkan produk favoritmu!
+    </p>
+    <a href="/" class="btn-primary">
+      Mulai Belanja
+    </a>
+  </div>
+  
+  @else
+  
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    {{-- KIRI: List Item --}}
+    <div class="lg:col-span-8 space-y-3">
+      
+      {{-- Header Pilih Semua --}}
+      <div class="bg-white rounded-2xl px-5 py-4 
+                  shadow-sm flex items-center gap-3">
+        <input type="checkbox" 
+               id="pilih-semua"
+               :checked="allChecked"
+               @change="toggleAll($event)"
+               class="w-4 h-4 rounded accent-[#63A2BB] 
+                      cursor-pointer">
+        <label for="pilih-semua" 
+               class="text-sm font-semibold text-gray-700 
+                      cursor-pointer">
+          Pilih Semua
+        </label>
+        <span class="text-sm text-gray-400 ml-auto">
+          <span x-text="checkedCount"></span> 
+          dari {{ $items->count() }} dipilih
+        </span>
+      </div>
+
+      {{-- Cart Items --}}
+      @foreach($items as $item)
+      <div id="cart-item-{{ $item->keranjang_id }}"
+           class="bg-white rounded-2xl p-4 md:p-5 
+                  shadow-sm flex gap-4 transition-all">
+        
+        {{-- Checkbox --}}
+        <input type="checkbox"
+               x-model="items.find(
+                 i => i.id === {{ $item->keranjang_id }})
+                 .checked"
+               class="w-4 h-4 mt-2 rounded 
+                      accent-[#63A2BB] cursor-pointer 
+                      flex-shrink-0">
+        
+        {{-- Info --}}
+        <a href="{{ route('product.show', $item->detail->produk->slug) }}"
+           class="flex-shrink-0">
+          <img src="{{ $item->detail->produk->gambarUtama?->url_lengkap ?? $item->detail->produk->images->first()?->url_lengkap ?? asset('images/placeholder.png') }}"
+               alt="{{ $item->detail->produk->nama_produk }}"
+               class="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover">
+        </a>
+
+        <div class="flex-1 min-w-0">
+          <a href="{{ route('product.show', 
+                      $item->detail->produk->slug) }}"
+             class="font-semibold text-gray-800 
+                    hover:text-[#63A2BB] line-clamp-2 
+                    text-sm transition">
+            {{ $item->detail->produk->nama_produk }}
+          </a>
+          
+          <div class="flex flex-wrap gap-2 mt-2">
+            @if($item->detail->ukuran)
+            <span class="text-xs bg-gray-100 
+                         text-gray-600 px-2.5 py-1 
+                         rounded-full font-medium">
+              Size: {{ $item->detail->ukuran }}
+            </span>
+            @endif
+            @if($item->detail->warna)
+            <span class="text-xs bg-gray-100 
+                         text-gray-600 px-2.5 py-1 
+                         rounded-full font-medium 
+                         flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full"
+                    style="background: {{ $item->detail->warna->kode_hex ?? '#ccc' }}">
+              </span>
+              {{ $item->detail->warna->nama_warna }}
+            </span>
+            @endif
+          </div>
+
+          <div class="flex items-center 
+                      justify-between mt-3 gap-3">
+            
+            {{-- Harga --}}
+            <span class="text-base font-black 
+                         text-[#63A2BB]">
+              Rp {{ number_format(
+                $item->detail->harga,0,',','.') }}
+            </span>
+
+            {{-- Qty Control --}}
+            <div class="flex items-center gap-1">
+              <button @click="updateQty(
+                        items.find(i => i.id === 
+                          {{ $item->keranjang_id }}), 
+                        items.find(i => i.id === 
+                          {{ $item->keranjang_id }}).qty - 1)"
+                      class="w-8 h-8 rounded-xl border-2 
+                             border-gray-200 flex items-center 
+                             justify-center text-gray-500 
+                             hover:border-[#63A2BB] 
+                             hover:text-[#63A2BB] 
+                             font-bold transition text-sm">
+                −
+              </button>
+              <span x-text="items.find(
+                      i => i.id === {{ $item->keranjang_id }})
+                      ?.qty ?? {{ $item->jumlah }}"
+                    class="w-10 text-center font-bold 
+                           text-sm text-gray-800">
+              </span>
+              <button @click="updateQty(
+                        items.find(i => i.id === 
+                          {{ $item->keranjang_id }}), 
+                        items.find(i => i.id === 
+                          {{ $item->keranjang_id }}).qty + 1)"
+                      class="w-8 h-8 rounded-xl border-2 
+                             border-gray-200 flex items-center 
+                             justify-center text-gray-500 
+                             hover:border-[#63A2BB] 
+                             hover:text-[#63A2BB] 
+                             font-bold transition text-sm">
+                +
+              </button>
+            </div>
+
+            {{-- Hapus --}}
+            <button @click="removeItem(
+                      {{ $item->keranjang_id }})"
+                    class="p-2 text-gray-400 
+                           hover:text-red-500 
+                           hover:bg-red-50 rounded-xl 
+                           transition">
+              <svg class="w-4 h-4" fill="none" 
+                   stroke="currentColor" 
+                   viewBox="0 0 24 24">
+                <path stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 
+                         21H7.862a2 2 0 01-1.995-1.858L5 
+                         7m5 4v6m4-6v6m1-10V4a1 1 0 00-1
+                         -1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      @endforeach
     </div>
 
-    <template x-if="items.length === 0">
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
-            <img src="{{ asset('images/cart-empty.svg') }}" alt="Keranjang kosong" class="mx-auto mb-6 h-48 w-48 object-contain">
-            <h2 class="text-2xl font-bold">Keranjang kamu masih kosong</h2>
-            <p class="mt-2 text-sm text-slate-300">Mulai pilih produk favoritmu sekarang.</p>
-            <a href="{{ route('home') }}" class="mt-6 inline-flex rounded-full bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-400">
-                Mulai Belanja
-            </a>
+    {{-- KANAN: Ringkasan --}}
+    <div class="lg:col-span-4">
+      <div class="bg-white rounded-3xl p-6 shadow-sm 
+                  sticky top-20">
+        <h3 class="font-bold text-gray-800 mb-5 text-base">
+          Ringkasan Belanja
+        </h3>
+        
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between text-gray-600">
+            <span>
+              Subtotal 
+              (<span x-text="checkedCount"></span> produk)
+            </span>
+            <span x-text="formatRp(subtotal)" 
+                  class="font-semibold text-gray-800">
+            </span>
+          </div>
+          <div class="flex justify-between text-gray-400">
+            <span>Estimasi ongkir</span>
+            <span>Dihitung saat checkout</span>
+          </div>
         </div>
-    </template>
 
-    <template x-if="items.length > 0">
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <div class="lg:col-span-8 rounded-3xl border border-white/10 bg-white/5 p-5">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-                    <label class="flex items-center gap-3 text-sm font-semibold text-slate-200">
-                        <input type="checkbox" class="h-4 w-4 rounded border-slate-600 text-cyan-500" x-model="selectAll">
-                        <span>Pilih Semua</span>
-                    </label>
-                    <button type="button" @click="removeSelected()" class="text-sm font-semibold text-rose-300 hover:text-rose-200">
-                        Hapus yang dipilih
-                    </button>
-                </div>
-
-                <div class="mt-5 space-y-4">
-                    <template x-for="item in items" :key="item.keranjang_id">
-                        <div class="rounded-3xl border border-white/10 bg-black/20 p-4 transition" :class="{'opacity-60': item.removing}">
-                            <div class="flex items-start gap-4">
-                                <input type="checkbox" class="mt-2 h-4 w-4 rounded border-slate-600 text-cyan-500" x-model="item.checked" @change="syncSelection()">
-                                <img :src="item.image" :alt="item.nama_produk" class="h-24 w-24 rounded-2xl object-cover">
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                                        <div class="min-w-0">
-                                            <a :href="'/product/' + item.slug" class="block truncate text-base font-bold text-white hover:text-cyan-300" x-text="item.nama_produk"></a>
-                                            <div class="mt-2 space-y-1 text-sm text-slate-300">
-                                                <div>Size: <span class="font-semibold" x-text="item.ukuran"></span></div>
-                                                <div>Warna: <span class="font-semibold" x-text="item.warna_nama || '-' "></span></div>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div class="text-lg font-black text-white" x-text="fmt(item.harga)"></div>
-                                            <button type="button" @click="remove(item)" class="mt-2 inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-rose-300 hover:bg-rose-500/10">
-                                                🗑 Hapus
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                        <div class="inline-flex items-center overflow-hidden rounded-2xl border border-white/10">
-                                            <button type="button" @click="decrease(item)" class="px-4 py-2 text-lg font-bold hover:bg-white/5">−</button>
-                                            <input type="number" min="1" :max="item.stok" x-model.number="item.jumlah" @change="persistQty(item)" class="w-16 border-x border-white/10 bg-transparent py-2 text-center text-sm outline-none">
-                                            <button type="button" @click="increase(item)" class="px-4 py-2 text-lg font-bold hover:bg-white/5">+</button>
-                                        </div>
-                                        <div class="text-sm text-slate-300">
-                                            Subtotal: <span class="font-bold text-white" x-text="fmt(item.harga * item.jumlah)"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <div class="lg:col-span-4">
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5 lg:sticky lg:top-24">
-                    <h2 class="text-lg font-bold">Ringkasan Belanja</h2>
-                    <div class="mt-4 space-y-3 text-sm">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">Subtotal</span>
-                            <span class="font-bold" x-text="fmt(subtotal)"></span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">Item dipilih</span>
-                            <span class="font-bold" x-text="selectedCount"></span>
-                        </div>
-                    </div>
-
-                    <button type="button" @click="checkout()" class="mt-6 w-full rounded-3xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-400">
-                        Checkout →
-                    </button>
-                </div>
-            </div>
+        <div class="border-t border-gray-100 my-5"></div>
+        
+        <div class="flex justify-between text-base mb-5">
+          <span class="font-bold text-gray-800">Total</span>
+          <span x-text="formatRp(subtotal)"
+                class="font-black text-[#63A2BB] text-lg">
+          </span>
         </div>
-    </template>
+
+        <button @click="checkout()"
+                :disabled="checkedCount === 0"
+                :class="checkedCount === 0 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : 'hover:-translate-y-1 hover:shadow-lg'"
+                class="w-full bg-[#63A2BB] text-white 
+                       py-4 rounded-2xl font-bold text-sm 
+                       flex items-center justify-center 
+                       gap-2 transition-all duration-200">
+          Checkout
+          (<span x-text="checkedCount"></span> item)
+          <svg class="w-4 h-4" fill="none" 
+               stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" 
+                  stroke-linejoin="round" 
+                  stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+
+        <a href="/"
+           class="mt-3 w-full block text-center 
+                  text-[#63A2BB] text-sm font-medium 
+                  hover:underline">
+          ← Lanjut Belanja
+        </a>
+      </div>
+    </div>
+  </div>
+  @endif
 </div>
-@endsection
 
-@section('scripts')
-<script>
-function cartPage(initialItems) {
-    return {
-        items: initialItems.map((item) => ({
-            ...item,
-            checked: true,
-            removing: false,
-            slug: item.slug || '',
-        })),
-        get selectAll() {
-            return this.items.length > 0 && this.items.every((item) => item.checked);
-        },
-        set selectAll(value) {
-            this.items.forEach((item) => item.checked = value);
-        },
-        get selectedItems() {
-            return this.items.filter((item) => item.checked);
-        },
-        get subtotal() {
-            return this.selectedItems.reduce((sum, item) => sum + (item.harga * item.jumlah), 0);
-        },
-        get selectedCount() {
-            return this.selectedItems.length;
-        },
-        fmt(value) {
-            return 'Rp ' + new Intl.NumberFormat('id-ID').format(value || 0);
-        },
-        syncSelection() {},
-        decrease(item) {
-            if (item.jumlah <= 1) return;
-            item.jumlah -= 1;
-            this.persistQty(item);
-        },
-        increase(item) {
-            if (item.jumlah >= item.stok) return;
-            item.jumlah += 1;
-            this.persistQty(item);
-        },
-        async persistQty(item) {
-            const jumlah = Math.max(1, Math.min(item.jumlah, item.stok || item.jumlah));
-            item.jumlah = jumlah;
-
-            try {
-                const response = await fetch('/cart/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        keranjang_id: item.keranjang_id,
-                        jumlah: jumlah,
-                    }),
-                });
-
-                const data = await response.json();
-                if (!data.success) {
-                    alert(data.message || 'Gagal memperbarui jumlah');
-                } else {
-                    window.dispatchEvent(new Event('cart-updated'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        },
-        async remove(item) {
-            if (!confirm('Hapus item ini dari keranjang?')) return;
-            item.removing = true;
-
-            try {
-                const response = await fetch('/cart/remove/' + item.keranjang_id, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                    },
-                });
-                const data = await response.json();
-                if (data.success) {
-                    this.items = this.items.filter((current) => current.keranjang_id !== item.keranjang_id);
-                    window.dispatchEvent(new Event('cart-updated'));
-                } else {
-                    item.removing = false;
-                    alert(data.message || 'Gagal menghapus item');
-                }
-            } catch (error) {
-                item.removing = false;
-                alert('Error: ' + error.message);
-            }
-        },
-        async removeSelected() {
-            if (this.selectedItems.length === 0) {
-                alert('Tidak ada item dipilih');
-                return;
-            }
-
-            if (!confirm('Hapus item yang dipilih?')) return;
-            for (const item of [...this.selectedItems]) {
-                await this.remove(item);
-            }
-        },
-        checkout() {
-            const selected = this.selectedItems.map((item) => item.keranjang_id);
-            if (selected.length === 0) {
-                alert('Pilih minimal 1 item untuk checkout');
-                return;
-            }
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route('checkout.store') }}';
-
-            const token = document.createElement('input');
-            token.type = 'hidden';
-            token.name = '_token';
-            token.value = document.querySelector('meta[name="csrf-token"]').content;
-            form.appendChild(token);
-
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'keranjang_ids';
-            input.value = JSON.stringify(selected);
-            form.appendChild(input);
-
-            document.body.appendChild(form);
-            form.submit();
-        },
-    };
-}
-</script>
 @endsection

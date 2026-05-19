@@ -903,6 +903,265 @@ class DemoFashionSeeder extends Seeder
                     ['sku' => 'MOVR-WSHORT-KY3169-PINK-M', 'label' => 'Pink - M', 'ukuran' => 'M', 'warna' => 'Pink', 'harga' => 189000, 'stok' => 8, 'berat_gram' => 220, 'image' => null],
                 ],
             ],
+            [
+                'slug' => 'man-audi-revolut-f1-team-geist-shorts-black',
+                'nama_produk' => 'AUDI REVOLUT F1 TEAM TEAMGEIST Shorts Black',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Shorts motorsport dengan gaya teamgeist.',
+                'harga_dasar' => 299000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/4dfb0c7b407b4ba7aab13caecf3c5f03_9366/AUDI_REVOLUT_F1_TEAM_TEAMGEIST_SHORTS_Black_KQ8631_HM1.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/dc205a525f4c4eb1b173998380f3e7b4_faec/AUDI_REVOLUT_F1_TEAM_TEAMGEIST_SHORTS_Black_KQ8631_HM3_hover.tiff.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5bda9c8f2142440aa9794e4f557f1a70_9366/AUDI_REVOLUT_F1_TEAM_TEAMGEIST_SHORTS_Black_KQ8631_HM4.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MSHORT-KQ8631-BLACK-M2', 'label' => 'Black - M', 'ukuran' => 'M', 'warna' => 'Black', 'harga' => 299000, 'stok' => 5, 'berat_gram' => 230, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'man-jacket-entire-studios-training-mid-layer-beige',
+                'nama_produk' => 'adidas x entire studios Training Mid Layer Jacket Beige',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Mid layer jacket dengan tone beige untuk pria.',
+                'harga_dasar' => 559000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/3c04ae02795246a59a7c424c318fa994_9366/adidas_x_entire_studios_Training_Mid_layer_Jacket_Beige_KD6091_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/e9b5bd18fdd44e0da6949fdc148c038b_9366/adidas_x_entire_studios_Training_Mid_layer_Jacket_Beige_KD6091_22_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/2e60f6a18afe49fcb91b737368cc212e_9366/adidas_x_entire_studios_Training_Mid_layer_Jacket_Beige_KD6091_23_hover_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MJACKET-KD6091-BEIGE-M', 'label' => 'Beige - M', 'ukuran' => 'M', 'warna' => 'Beige', 'harga' => 559000, 'stok' => 4, 'berat_gram' => 700, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'man-jacket-denim-blue',
+                'nama_produk' => 'DENIM Jacket Blue',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Jaket denim klasik warna blue untuk pria.',
+                'harga_dasar' => 529000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5c2065c81662432296a163b522cb4324_9366/DENIM_JACKET_Blue_KR5042_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/304646d856ce4ae8a59d7caef9f1989f_9366/DENIM_JACKET_Blue_KR5042_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/f65f90651f6a40e79dac2a88512c1c3c_9366/DENIM_JACKET_Blue_KR5042_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MJACKET-KR5042-BLUE-M', 'label' => 'Blue - M', 'ukuran' => 'M', 'warna' => 'Blue', 'harga' => 529000, 'stok' => 3, 'berat_gram' => 720, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'man-shorts-print-seersucker-white',
+                'nama_produk' => 'PRINTED SEERSUCKER Shorts White',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Shorts seersucker ringan untuk cuaca panas.',
+                'harga_dasar' => 179000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/638855057e3a40c5a7b76a02e9e87316_9366/PRINTED_SEERSUCKER_SHORTS_White_KX1229_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/42b4d64fd4494ddcbb1dd63e04b981d0_9366/PRINTED_SEERSUCKER_SHORTS_White_KX1229_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/1c4afe3d416246ce9cdae8d6799f3d11_9366/PRINTED_SEERSUCKER_SHORTS_White_KX1229_01_laydown.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MSHORT-KX1229-WHITE-M', 'label' => 'White - M', 'ukuran' => 'M', 'warna' => 'White', 'harga' => 179000, 'stok' => 10, 'berat_gram' => 210, 'image' => null],
+                    ['sku' => 'MOVR-MSHORT-KX1228-BLUE-L', 'label' => 'Blue - L', 'ukuran' => 'L', 'warna' => 'Blue', 'harga' => 179000, 'stok' => 7, 'berat_gram' => 210, 'image' => 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/aff1f1ee3ce248638621d3d4354ec0e1_9366/PRINTED_SEERSUCKER_SHORTS_Blue_KX1228_21_model.jpg'],
+                ],
+            ],
+            [
+                'slug' => 'man-shorts-loose-engineered-black',
+                'nama_produk' => '3-Stripes Loose Engineered Shorts Black',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Shorts casual loose fit untuk aktifitas harian.',
+                'harga_dasar' => 199000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/cf5d11c2bae2456eaffea145fea84f1d_9366/3-STRIPES_LOOSE_ENGINEERED_SHORTS_Black_KE3594_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/12096701657c4869857a380a0651ef7c_9366/3-STRIPES_LOOSE_ENGINEERED_SHORTS_Black_KE3594_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/cc34a690deb84d1c87bd3f08c6bca6b2_9366/3-STRIPES_LOOSE_ENGINEERED_SHORTS_Black_KE3594_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MSHORT-KE3594-BLACK-M', 'label' => 'Black - M', 'ukuran' => 'M', 'warna' => 'Black', 'harga' => 199000, 'stok' => 9, 'berat_gram' => 240, 'image' => null],
+                    ['sku' => 'MOVR-MSHORT-KE3590-BLUE-L2', 'label' => 'Blue - L', 'ukuran' => 'L', 'warna' => 'Blue', 'harga' => 199000, 'stok' => 8, 'berat_gram' => 240, 'image' => 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/0a17f40b0a994630ace3501901d83818_9366/3-STRIPES_LOOSE_ENGINEERED_SHORTS_Blue_KE3590_21_model.jpg'],
+                ],
+            ],
+            [
+                'slug' => 'women-summer-glow-mesh-graphics-long-sleeve-white-alt',
+                'nama_produk' => 'ADIDAS Originals Summer Glow Mesh Graphics Long Sleeve White Alt',
+                'kategori_slug' => 'women-clothing',
+                'deskripsi' => 'Long sleeve mesh graphics untuk gaya layer.',
+                'harga_dasar' => 229000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/1f56c37da36644f78967a5fb52688eab_9366/ADIDAS_ORIGINALS_SUMMER_GLOW_MESH_GRAPHICS_LONG_SLEEVE_White_KY8138_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/effed0d5433a4c7c98d5720f05a2763d_9366/ADIDAS_ORIGINALS_SUMMER_GLOW_MESH_GRAPHICS_LONG_SLEEVE_White_KY8138_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/55b8f11611a34127afd9345611396b96_9366/ADIDAS_ORIGINALS_SUMMER_GLOW_MESH_GRAPHICS_LONG_SLEEVE_White_KY8138_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WLS-KY8138-WHITE-S2', 'label' => 'White - S', 'ukuran' => 'S', 'warna' => 'White', 'harga' => 229000, 'stok' => 6, 'berat_gram' => 195, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'women-originals-cashmere-sweater-blue-alt',
+                'nama_produk' => 'Originals Cashmere Sweater Blue Alt',
+                'kategori_slug' => 'women-clothing',
+                'deskripsi' => 'Cashmere sweater lembut untuk women.',
+                'harga_dasar' => 609000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/66119cef3a4144e6a33d83b09b69b9ee_9366/Originals_Cashmere_Sweater_Blue_JY5291_HM1.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/1881674ca2034768a41a69081e826ff6_9366/Originals_Cashmere_Sweater_Blue_JY5291_HM3_hover.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/8095bbe86e3b4775a0ba257828d3b688_9366/Originals_Cashmere_Sweater_Blue_JY5291_HM4.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WSWEATER-JY5291-BLUE-M2', 'label' => 'Blue - M', 'ukuran' => 'M', 'warna' => 'Blue', 'harga' => 609000, 'stok' => 3, 'berat_gram' => 520, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'women-hoodie-adi365-cheering-purple',
+                'nama_produk' => 'adi365 Cheering Hoodie Purple Women',
+                'kategori_slug' => 'women-clothing',
+                'deskripsi' => 'Hoodie women dengan varian white.',
+                'harga_dasar' => 449000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/a933b9dc11da4cf2a24ca0222f16f132_9366/adi365_Cheering_Hoodie_Purple_KA0160_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/0d97ca8d932d4f18895d4f2c21db39cf_9366/adi365_Cheering_Hoodie_Purple_KA0160_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/04bdfd5bd6c745049313b11385689d3b_9366/adi365_Cheering_Hoodie_Purple_KA0160_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WHOODIE-KA0160-PURPLE-M', 'label' => 'Purple - M', 'ukuran' => 'M', 'warna' => 'Purple', 'harga' => 449000, 'stok' => 6, 'berat_gram' => 610, 'image' => null],
+                    ['sku' => 'MOVR-WHOODIE-KA0331-WHITE-S2', 'label' => 'White - S', 'ukuran' => 'S', 'warna' => 'White', 'harga' => 449000, 'stok' => 5, 'berat_gram' => 610, 'image' => 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/c0a8f222d8f7482f9776effa741ac46d_9366/adi365_Cheering_Hoodie_White_KA0331_21_model.jpg'],
+                ],
+            ],
+            [
+                'slug' => 'man-jacket-zne-woven-bomber-white',
+                'nama_produk' => 'ADIDAS Z.N.E. Woven Bomber White',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Bomber jacket ringan untuk style modern.',
+                'harga_dasar' => 599000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/e55d46d78e454dd99c659c310a4b1b2a_9366/ADIDAS_Z.N.E._WOVEN_BOMBER_White_KD8507_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5d17f749e3a545e69ab907a68bf769d4_9366/ADIDAS_Z.N.E._WOVEN_BOMBER_White_KD8507_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/5f40899fcc494ee59842d515937cec9f_9366/ADIDAS_Z.N.E._WOVEN_BOMBER_White_KD8507_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MJACKET-KD8507-WHITE-L', 'label' => 'White - L', 'ukuran' => 'L', 'warna' => 'White', 'harga' => 599000, 'stok' => 4, 'berat_gram' => 680, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'man-hoodie-jude-bellingham-black',
+                'nama_produk' => 'Jude Bellingham Hoodie Black',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Hoodie signature dengan style sporty.',
+                'harga_dasar' => 479000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/66a0d7ee4ed841918af0dc928d28101a_9366/Jude_Bellingham_Hoodie_Black_KD6519_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/4dc03ac01a204f0182c16c76ce7df2b7_9366/Jude_Bellingham_Hoodie_Black_KD6519_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/86ebeef63aa84907812b66a1a49ed1f9_9366/Jude_Bellingham_Hoodie_Black_KD6519_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MHOODIE-KD6519-BLACK-L', 'label' => 'Black - L', 'ukuran' => 'L', 'warna' => 'Black', 'harga' => 479000, 'stok' => 4, 'berat_gram' => 630, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'women-accessory-pet-shoulder-bag-carrier-brown',
+                'nama_produk' => 'PET Shoulder Bag Carrier Brown',
+                'kategori_slug' => 'women-accessories',
+                'deskripsi' => 'Shoulder bag carrier untuk penggunaan harian.',
+                'harga_dasar' => 199000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/f11691d4081d407db0fdf5c3ea70976e_9366/PET_SHOULDER_BAG_CARRIER_Brown_KY8726_01_00_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/36b6324044ea46ff93da0abb8c9c3691_9366/PET_SHOULDER_BAG_CARRIER_Brown_KY8726_04_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/45d05df146d0487090bd897e252ec09b_9366/PET_SHOULDER_BAG_CARRIER_Brown_KY8726_05_hover_standard.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WBAG-KY8726-BROWN-OS', 'label' => 'Brown - OS', 'ukuran' => 'OS', 'warna' => 'Brown', 'harga' => 199000, 'stok' => 9, 'berat_gram' => 180, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'women-accessory-tiro-graphic-organizer-blue',
+                'nama_produk' => 'adidas Tiro Graphic Organizer Blue',
+                'kategori_slug' => 'women-accessories',
+                'deskripsi' => 'Organizer bag untuk kebutuhan harian.',
+                'harga_dasar' => 179000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/57c6c3f819634d47babe2e59ba0199af_9366/adidas_Tiro_Graphic_Organizer_Blue_KE6849_01_00_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/50d405de54dd460a8b5ad170a1dc0d22_9366/adidas_Tiro_Graphic_Organizer_Blue_KE6849_02_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/8510ec63c31f45779baf2bf9f50c4295_9366/adidas_Tiro_Graphic_Organizer_Blue_KE6849_04_standard.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WBAG-KE6849-BLUE-OS2', 'label' => 'Blue - OS', 'ukuran' => 'OS', 'warna' => 'Blue', 'harga' => 179000, 'stok' => 10, 'berat_gram' => 160, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'man-accessory-unisex-aop-cart-golf-bag-black',
+                'nama_produk' => 'UNISEX AOP Cart Golf Bag Black',
+                'kategori_slug' => 'man-accessories',
+                'deskripsi' => 'Cart golf bag berukuran besar.',
+                'harga_dasar' => 499000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/23cc0f9e36b7488593aeafa54772a5d0_9366/UNISEX_AOP_CART_GOLF_BAG_Black_KA4948_01_00_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/51211e7b6bc647c29e0df29be16bd501_9366/UNISEX_AOP_CART_GOLF_BAG_Black_KA4948_02_standard_hover.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/0813f420a1b6403ba4fea7db05386108_9366/UNISEX_AOP_CART_GOLF_BAG_Black_KA4948_05_hover_standard.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MBAG-KA4948-BLACK-OS', 'label' => 'Black - OS', 'ukuran' => 'OS', 'warna' => 'Black', 'harga' => 499000, 'stok' => 3, 'berat_gram' => 1200, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'women-hoodie-adi365-cheering-purple-alt',
+                'nama_produk' => 'adi365 Cheering Hoodie Purple Alt',
+                'kategori_slug' => 'women-clothing',
+                'deskripsi' => 'Hoodie women tambahan dengan varian white.',
+                'harga_dasar' => 449000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/a933b9dc11da4cf2a24ca0222f16f132_9366/adi365_Cheering_Hoodie_Purple_KA0160_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/0d97ca8d932d4f18895d4f2c21db39cf_9366/adi365_Cheering_Hoodie_Purple_KA0160_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/04bdfd5bd6c745049313b11385689d3b_9366/adi365_Cheering_Hoodie_Purple_KA0160_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WHOODIE-KA0160-PURPLE-M2', 'label' => 'Purple - M', 'ukuran' => 'M', 'warna' => 'Purple', 'harga' => 449000, 'stok' => 6, 'berat_gram' => 610, 'image' => null],
+                    ['sku' => 'MOVR-WHOODIE-KA0331-WHITE-S3', 'label' => 'White - S', 'ukuran' => 'S', 'warna' => 'White', 'harga' => 449000, 'stok' => 5, 'berat_gram' => 610, 'image' => 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/c0a8f222d8f7482f9776effa741ac46d_9366/adi365_Cheering_Hoodie_White_KA0331_21_model.jpg'],
+                ],
+            ],
+            [
+                'slug' => 'man-y3-ft-hoodie-brown-alt',
+                'nama_produk' => 'Y-3 FT Hoodie Brown Alt',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Hoodie Y-3 FT warna brown dari daftar asli.',
+                'harga_dasar' => 459000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/340e096532c244e684dc36f5f63ce6f0_9366/Y-3_FT_Hoodie_Brown_KS5430_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/3e7c17f69224450fad455869f70c947a_9366/Y-3_FT_Hoodie_Brown_KS5430_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/79418cbe6e974465a565af7e8fea7299_9366/Y-3_FT_Hoodie_Brown_KS5430_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MHOODIE-KS5430-BROWN-M', 'label' => 'Brown - M', 'ukuran' => 'M', 'warna' => 'Brown', 'harga' => 459000, 'stok' => 6, 'berat_gram' => 620, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'man-d4t-workout-full-zip-hoodie-blue',
+                'nama_produk' => 'D4T Workout Full-Zip Hoodie Blue',
+                'kategori_slug' => 'man-clothing',
+                'deskripsi' => 'Hoodie full zip untuk training pria.',
+                'harga_dasar' => 499000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/c392460a8a1d4453a790fe9a3c0c838f_9366/D4T_WORKOUT_FULL-ZIP_HOODIE_Blue_KA4822_21_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/aac9a8d12bb7438eb38c4a184915f90b_9366/D4T_WORKOUT_FULL-ZIP_HOODIE_Blue_KA4822_23_hover_model.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/7e4b9ba2fdf847ce94827127192a983a_9366/D4T_WORKOUT_FULL-ZIP_HOODIE_Blue_KA4822_25_model.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-MHOODIE-KA4822-BLUE-M2', 'label' => 'Blue - M', 'ukuran' => 'M', 'warna' => 'Blue', 'harga' => 499000, 'stok' => 5, 'berat_gram' => 610, 'image' => null],
+                ],
+            ],
+            [
+                'slug' => 'women-unisex-synthetic-leather-cart-bag-grey',
+                'nama_produk' => 'Unisex Synthetic Leather Cart Bag Grey',
+                'kategori_slug' => 'women-accessories',
+                'deskripsi' => 'Cart bag sintetis untuk kebutuhan golf atau travel.',
+                'harga_dasar' => 529000,
+                'images' => [
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/3db6ed420b2840128a780a27091074e9_9366/Unisex_Synthetic_Leather_Cart_Bag_Grey_JZ4376_01_00_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/2f7eba3f63ab4bb984d597581b349e62_9366/Unisex_Synthetic_Leather_Cart_Bag_Grey_JZ4376_02_standard.jpg',
+                    'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/11aab51e3c664f2ea7ba40158f5ba286_9366/Unisex_Synthetic_Leather_Cart_Bag_Grey_JZ4376_05_hover_standard.jpg',
+                ],
+                'variants' => [
+                    ['sku' => 'MOVR-WBAG-JZ4376-GREY-OS2', 'label' => 'Grey - OS', 'ukuran' => 'OS', 'warna' => 'Grey', 'harga' => 529000, 'stok' => 3, 'berat_gram' => 1250, 'image' => null],
+                ],
+            ],
         ];
 
         $detailIdBySku = [];

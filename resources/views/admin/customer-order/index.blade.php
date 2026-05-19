@@ -56,7 +56,7 @@
                         <tr class="border-t border-slate-100 hover:bg-slate-50 text-xs">
                             <td class="px-4 py-3 font-mono font-medium">{{ $order->kode_transaksi }}</td>
                             <td class="px-4 py-3">{{ $order->pengguna?->nama_pengguna ?? '-' }}</td>
-                            <td class="px-4 py-3">{{ $order->tanggal?->format('Y-m-d') ?? '-' }}</td>
+                            <td class="px-4 py-3">{{ !empty($order->tanggal) ? \Carbon\Carbon::parse($order->tanggal)->format('Y-m-d') : '-' }}</td>
                             <td class="px-4 py-3 font-semibold">Rp {{ number_format($order->total_harga ?? 0, 0, ',', '.') }}</td>
                             <td class="px-4 py-3">
                                 @php
@@ -91,7 +91,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 space-x-2">
-                                <a href="{{ route('admin.customer-order.show', $order->transaksi_id) }}" class="text-blue-600 hover:underline">👁️</a>
+                                <a href="{{ route('admin.customer-order.show', $order->kode_transaksi) }}" class="text-blue-600 hover:underline">👁️</a>
                             </td>
                         </tr>
                     @empty

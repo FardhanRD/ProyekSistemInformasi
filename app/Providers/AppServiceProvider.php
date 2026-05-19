@@ -55,6 +55,11 @@ class AppServiceProvider extends ServiceProvider
         SupplierOrder::observe(AdminActivityObserver::class);
         SupplierOrderDetail::observe(AdminActivityObserver::class);
 
+        // Skip view/database bootstrap during CLI commands (e.g., artisan serve).
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
         // Share top-level active categories (with children) to all views
         try {
             View::composer('layouts.admin', function ($view) {

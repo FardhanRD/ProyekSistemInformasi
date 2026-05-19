@@ -101,12 +101,13 @@ class CartController extends Controller
         }
 
         try {
+            // Ambil detail produk
             if ($request->detail_produk_id) {
                 $detail = DetailProduk::findOrFail($request->detail_produk_id);
             } else {
                 $detail = DetailProduk::where('produk_id', $request->product_id)->firstOrFail();
             }
-            
+
             // Validasi stok
             if ($detail->stok < $request->input('jumlah', 1)) {
                 return response()->json([
@@ -115,38 +116,23 @@ class CartController extends Controller
                 ], 422);
             }
 
-            $penggunaId = auth()->user()->pengguna_id;
-            
-            // Update atau create cart item
-            // Menjumlahkan jumlah jika sudah ada di keranjang
-            $existing = Keranjang::where('pengguna_id', $penggunaId)
-                ->where('detail_produk_id', $detail->detail_produk_id)
-                ->first();
+            // Security: pastikan user terautentikasi dan owner sesuai
+            $user = auth()->user();
+            $penggunaId = $user->pengguna_id ?? null;
+            $ownerColumn = Keranjang::ownerColumn();
+            $ownerId = Keranjang::resolveOwnerId($user);
 
-            if ($existing) {
-                $newJumlah = $existing->jumlah + $request->input('jumlah', 1);
-                if ($detail->stok < $newJumlah) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Stok tidak cukup untuk tambahan jumlah ini'
-                    ], 422);
-                }
-                $existing->jumlah = $newJumlah;
-                $existing->save();
-                $cart = $existing;
-            } else {
-                $cart = Keranjang::create([
-                    'pengguna_id' => $penggunaId,
-                    'detail_produk_id' => $detail->detail_produk_id,
-                    'jumlah' => $request->input('jumlah', 1)
-                ]);
-            }
+            // Gunakan ownerColumn/ownerId untuk update/create
+            $cart = Keranjang::updateOrCreate(
+                [$ownerColumn => $ownerId, 'detail_produk_id' => $detail->detail_produk_id],
+                ['jumlah' => $request->input('jumlah', 1)]
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Produk berhasil ditambahkan ke keranjang',
                 'cart' => $cart
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -160,7 +146,6 @@ class CartController extends Controller
         $request->validate([
             'jumlah' => 'required|integer|min:1'
         ]);
-
         if (!auth()->check()) {
             return response()->json([
                 'success' => false,
@@ -170,11 +155,12 @@ class CartController extends Controller
 
         try {
             $cart = Keranjang::findOrFail($id);
-            if ($cart->pengguna_id != auth()->user()->pengguna_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized'
-                ], 403);
+
+            // Security: pastikan owner cocok
+            $ownerColumn = Keranjang::ownerColumn();
+            $ownerId = Keranjang::resolveOwnerId(auth()->user());
+            if ($cart->{$ownerColumn} != $ownerId) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
             $detail = DetailProduk::findOrFail($cart->detail_produk_id);
@@ -192,7 +178,7 @@ class CartController extends Controller
                 'success' => true,
                 'message' => 'Jumlah produk diperbarui',
                 'cart' => $cart
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -219,6 +205,9 @@ class CartController extends Controller
                 ], 403);
             }
 
+            $ownerColumn = Keranjang::ownerColumn();
+            $ownerId = Keranjang::resolveOwnerId(auth()->user());
+            if ($cart->{$ownerColumn} != $ownerId) return response()->json(['success'=>false,'message'=>'Unauthorized'],403);
             $cart->delete();
 
             return response()->json([

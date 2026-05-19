@@ -54,7 +54,20 @@
 </head>
 <body class="min-h-screen">
 
-    <div x-data="movrHeader()" class="bg-transparent text-slate-800">
+    @php
+        use App\Models\Wishlist;
+        use App\Models\Keranjang;
+        $isLoggedIn = auth()->check();
+        $wishlistOwnerColumn = Wishlist::ownerColumn();
+        $wishlistOwnerId = $isLoggedIn ? Wishlist::resolveOwnerId(auth()->user()) : null;
+        $wishlistCount = $wishlistOwnerId ? Wishlist::where($wishlistOwnerColumn, $wishlistOwnerId)->count() : 0;
+
+        $cartOwnerColumn = Keranjang::ownerColumn();
+        $cartOwnerId = $isLoggedIn ? Keranjang::resolveOwnerId(auth()->user()) : null;
+        $cartCount = $cartOwnerId ? Keranjang::where($cartOwnerColumn, $cartOwnerId)->distinct()->count('detail_produk_id') : 0;
+    @endphp
+
+    <div x-data="movrHeader()" x-init="init()" class="bg-transparent text-slate-800">
         {{-- Mobile Drawer --}}
         <div class="fixed inset-0 z-50" aria-hidden="true" x-show="drawerOpen" x-cloak>
             <div class="absolute inset-0 bg-[#63a2bb]/30" @click="drawerOpen=false"></div>
@@ -180,9 +193,11 @@
 
                         <a href="{{ route('wishlist.index') }}" class="relative rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-3 py-2 text-sm hover:bg-[#63a2bb]/20">
                             ♡
+                            <span data-wishlist-badge x-text="counts.wishlist" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center" x-bind:class="{'hidden': counts.wishlist == 0}"></span>
                         </a>
                         <a href="{{ route('cart.index') }}" class="relative rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-3 py-2 text-sm hover:bg-[#63a2bb]/20">
                             🛒
+                            <span data-cart-badge x-text="counts.cart" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center" x-bind:class="{'hidden': counts.cart == 0}"></span>
                         </a>
 
                         <div class="relative hidden sm:block">
@@ -241,6 +256,21 @@
                 categoryHover: false,
                 profileOpen: false,
                 toast: { show: false, title: '', message: '', timeout: null },
+                // counts initialized from server-side values via Blade
+                counts: { wishlist: {{ $wishlistCount }}, cart: {{ $cartCount }} },
+                refreshCounts(){
+                    fetch('/api/wishlist-count').then(r=>r.json()).then(j=>{ this.counts.wishlist = j.count || 0 }).catch(()=>{});
+                    fetch('/api/cart-count').then(r=>r.json()).then(j=>{ this.counts.cart = j.count || 0 }).catch(()=>{});
+                    // update any DOM fallback badges used by scripts
+                    const wb = document.querySelector('[data-wishlist-badge]'); if(wb) wb.textContent = this.counts.wishlist;
+                    const cb = document.querySelector('[data-cart-badge]'); if(cb) cb.textContent = this.counts.cart;
+                },
+                init(){
+                    // initial refresh and event listeners
+                    this.refreshCounts();
+                    window.addEventListener('cart-updated', ()=>{ this.refreshCounts() });
+                    window.addEventListener('wishlist-updated', ()=>{ this.refreshCounts() });
+                },
                 showToast(title, message) {
                     this.toast.title = title;
                     this.toast.message = message;

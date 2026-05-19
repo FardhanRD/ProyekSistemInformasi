@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/pay/{kode_transaksi}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{kode_transaksi}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payment.upload_proof');
+    Route::post('/payment/{kode_transaksi}/confirm', [PaymentController::class, 'confirmByBuyer'])->name('payment.confirm');
 
     Route::get('/profile/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
     Route::get('/profile/alamat/create', [ProfileController::class, 'createAddress'])->name('profile.alamat.create');
@@ -236,8 +237,11 @@ Route::get('/api/cart-count', function (Request $request) {
     if (!auth()->check()) {
         return response()->json(['count' => 0]);
     }
-    $penggunaId = auth()->user()->pengguna_id ?? auth()->user()->id;
-    $count = \App\Models\Keranjang::where('pengguna_id', $penggunaId)->distinct()->count('detail_produk_id');
+    $ownerColumn = \App\Models\Keranjang::ownerColumn();
+    $ownerId = \App\Models\Keranjang::resolveOwnerId(auth()->user());
+    $count = $ownerId
+        ? \App\Models\Keranjang::where($ownerColumn, $ownerId)->distinct()->count('detail_produk_id')
+        : 0;
     return response()->json(['count' => $count]);
 });
 

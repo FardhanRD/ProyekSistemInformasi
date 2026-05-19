@@ -105,4 +105,41 @@ class PaymentController extends Controller
             return back()->with('error', 'Gagal mengunggah bukti pembayaran: ' . $e->getMessage());
         }
     }
+
+    public function confirmByBuyer(Request $request, $kodeTransaksi)
+    {
+        $transaksi = Transaksi::with('pembayaran', 'buyer')
+            ->where('kode_transaksi', $kodeTransaksi)
+            ->firstOrFail();
+
+        if ($transaksi->buyer->pengguna_id !== Auth::user()->pengguna_id) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        if ($transaksi->status !== 'menunggu_pembayaran') {
+            return redirect()->route('order.tracking', ['kode_transaksi' => $transaksi->kode_transaksi])
+                ->with('info', 'Pembayaran untuk transaksi ini sudah diproses.');
+        }
+
+        $pembayaran = $transaksi->pembayaran;
+        if (! $pembayaran) {
+            return back()->with('error', 'Data pembayaran tidak ditemukan.');
+        }
+
+        if ($pembayaran->expired_at && now()->gt($pembayaran->expired_at)) {
+            return back()->with('error', 'Waktu pembayaran untuk transaksi ini sudah habis.');
+        }
+
+        DB::transaction(function () use ($transaksi, $pembayaran) {
+            $pembayaran->update([
+                'status_pembayaran' => 'berhasil',
+                'tanggal_pembayaran' => $pembayaran->tanggal_pembayaran ?: now(),
+            ]);
+
+            $transaksi->update(['status' => 'pembayaran_dikonfirmasi']);
+        });
+
+        return redirect()->route('order.tracking', ['kode_transaksi' => $transaksi->kode_transaksi])
+            ->with('success', 'Pembayaran berhasil dikonfirmasi.');
+    }
 }

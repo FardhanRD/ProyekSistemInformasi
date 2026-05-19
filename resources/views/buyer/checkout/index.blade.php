@@ -1,9 +1,10 @@
 @extends('layouts.buyer')
 
-@section('title', 'MOVR | Checkout')
+@section('title', 'Checkout — MOVR')
 
 @section('content')
 @php
+    $cartItems = collect($cart ?? collect());
     $metodesFlat = collect($metodes ?? collect());
     if ($metodesFlat->isNotEmpty() && $metodesFlat->first() instanceof \Illuminate\Support\Collection) {
         $metodesFlat = $metodesFlat->flatten(1);
@@ -29,96 +30,143 @@
     ];
 @endphp
 
-<div class="space-y-6" x-data='checkoutPage(@json($checkoutState))'>
-    <div>
-        <div class="text-xs font-semibold text-cyan-300">CHECKOUT</div>
-        <h1 class="text-2xl md:text-3xl font-black">Selesaikan Pembelian</h1>
+<div class="section-shell py-8 sm:py-10" x-data='checkoutPage(@json($checkoutState))'>
+    <div class="mb-6 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('cart.index.alias') }}" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all duration-200 hover:scale-105 hover:border-[#63A2BB] hover:text-[#63A2BB] hover:shadow-lg hover:shadow-[#63A2BB]/20">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Checkout</p>
+                    <h1 class="mt-2 text-3xl font-black text-slate-900">Selesaikan Pembelian</h1>
+                    <p class="mt-1 text-sm text-slate-500">Lengkapi data pengiriman, layanan, dan pembayaran.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-[#63A2BB]/10 px-3 py-1 text-[#63A2BB]">1. Keranjang</span>
+                <span class="rounded-full bg-[#63A2BB] px-3 py-1 text-white">2. Checkout</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">3. Pembayaran</span>
+            </div>
+        </div>
     </div>
 
-    @if(($cart ?? collect())->isEmpty())
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
-            <p class="text-slate-300">Item checkout belum dipilih.</p>
-            <a href="{{ route('cart.index.alias') }}" class="mt-6 inline-flex rounded-full bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-400">
-                Kembali ke Keranjang
-            </a>
+    @if($cartItems->isEmpty())
+        <div class="card-surface p-10 text-center">
+            <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#63A2BB]/10 text-[#63A2BB]">
+                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.7 3.4A1 1 0 007.2 18h9.6M7 13h10m0 0l1.2 6M7.2 18a1.8 1.8 0 103.6 0m6 0a1.8 1.8 0 103.6 0"/>
+                </svg>
+            </div>
+            <h2 class="mt-5 text-xl font-black text-slate-900">Item checkout belum dipilih</h2>
+            <p class="mt-2 text-sm text-slate-500">Silakan kembali ke keranjang untuk memilih produk yang akan dibayar.</p>
+            <a href="{{ route('cart.index.alias') }}" class="btn-primary mt-6 inline-flex items-center justify-center px-6 py-3">Kembali ke Keranjang</a>
         </div>
     @else
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div class="lg:col-span-8 space-y-6">
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                    <h2 class="font-bold text-lg">A. Informasi Penerima</h2>
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
-                            <div class="text-xs text-slate-400">Nama Lengkap</div>
-                            <div class="font-semibold">{{ auth()->user()->nama_pengguna ?? '-' }}</div>
+                <div class="card-surface p-6">
+                    <div class="mb-5 flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">A</div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">Informasi Penerima</h2>
+                            <p class="text-sm text-slate-500">Pastikan data penerima sudah benar.</p>
                         </div>
-                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
-                            <div class="text-xs text-slate-400">No. Telepon</div>
-                            <div class="font-semibold">{{ auth()->user()->no_telepon ?? '-' }}</div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-200/70">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Nama Lengkap</p>
+                            <p class="mt-2 font-semibold text-slate-800">{{ auth()->user()->nama_pengguna ?? '-' }}</p>
+                        </div>
+                        <div class="rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-200/70">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">No. Telepon</p>
+                            <p class="mt-2 font-semibold text-slate-800">{{ auth()->user()->no_telepon ?? '-' }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <h2 class="font-bold text-lg">B. Pilih Alamat Pengiriman</h2>
-                        <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="text-sm font-semibold text-cyan-300 hover:text-cyan-200">Tambah Alamat Baru</a>
+                <div class="card-surface p-6">
+                    <div class="mb-5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">B</div>
+                            <div>
+                                <h2 class="text-lg font-black text-slate-900">Alamat Pengiriman</h2>
+                                <p class="text-sm text-slate-500">Pilih alamat yang akan digunakan untuk pengiriman.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="inline-flex items-center gap-1 rounded-full bg-[#63A2BB]/10 px-4 py-2 text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:scale-105 hover:bg-[#63A2BB] hover:text-white">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Tambah
+                        </a>
                     </div>
 
-                    <div class="mt-4 space-y-3">
+                    <div class="space-y-3">
                         @forelse($addresses as $address)
-                            <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <input type="radio" name="alamat_id" value="{{ $address->alamat_id }}" x-model="selectedAddress" class="mt-1 accent-cyan-400">
-                                <div class="flex-1">
-                                    <div class="font-semibold">{{ $address->label }} — {{ $address->nama_penerima }}</div>
-                                    <div class="mt-1 text-sm text-slate-300">{{ $address->alamat_lengkap }}</div>
-                                    <div class="mt-2 text-xs text-slate-400">{{ $address->kota }}, {{ $address->provinsi }}</div>
-                                    <div class="mt-1 text-xs text-slate-400">{{ $address->no_telepon }}</div>
-                                    @if((int) ($address->is_utama ?? 0) === 1)
-                                        <div class="mt-2 inline-flex rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">Utama</div>
-                                    @endif
+                            <label class="flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all duration-200" x-bind:class="selectedAddress === {{ $address->alamat_id }} ? 'border-[#63A2BB] bg-[#63A2BB]/5 shadow-sm shadow-[#63A2BB]/10' : 'border-slate-200 bg-white hover:border-[#63A2BB]/40'">
+                                <input type="radio" name="alamat_id" value="{{ $address->alamat_id }}" x-model="selectedAddress" class="mt-1 accent-[#63A2BB]">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-semibold text-slate-800">{{ $address->label }} — {{ $address->nama_penerima }}</span>
+                                        @if((int) ($address->is_utama ?? 0) === 1)
+                                            <span class="rounded-full bg-[#63A2BB]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#63A2BB]">Utama</span>
+                                        @endif
+                                    </div>
+                                    <p class="mt-2 text-sm leading-relaxed text-slate-500">{{ $address->alamat_lengkap }}, {{ $address->kecamatan }}, {{ $address->kota }}, {{ $address->provinsi }} {{ $address->kode_pos }}</p>
+                                    <p class="mt-2 text-xs text-slate-400">{{ $address->no_telepon }}</p>
                                 </div>
                             </label>
                         @empty
-                            <div class="rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-center text-sm text-slate-300">
-                                Belum ada alamat tersimpan.
+                            <div class="rounded-2xl border border-dashed border-slate-200 bg-[#F8FAFB] p-8 text-center">
+                                <p class="text-sm font-semibold text-slate-700">Belum ada alamat tersimpan.</p>
+                                <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="btn-primary mt-4 inline-flex px-5 py-3 text-sm">Tambah Alamat</a>
                             </div>
                         @endforelse
                     </div>
                 </div>
 
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                    <h2 class="font-bold text-lg">C. Pilihan Ekspedisi & Layanan</h2>
-                    <div class="mt-4 space-y-3">
-                        @forelse($ekspedisis as $exp)
-                            <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <input type="radio" name="ekspedisi_id" value="{{ $exp->ekspedisi_id }}" x-model="selectedEkspedisi" class="mt-1 accent-cyan-400" {{ $loop->first ? 'checked' : '' }}>
+                <div class="card-surface p-6">
+                    <div class="mb-5 flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">C</div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">Ekspedisi & Layanan</h2>
+                            <p class="text-sm text-slate-500">Pilih layanan pengiriman yang sesuai.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        @forelse($ekspedisis as $i => $eks)
+                            <label class="flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-200" x-bind:class="selectedEkspedisi === {{ $eks->ekspedisi_id }} ? 'border-[#63A2BB] bg-[#63A2BB]/5 shadow-sm shadow-[#63A2BB]/10' : 'border-slate-200 bg-white hover:border-[#63A2BB]/40'">
+                                <input type="radio" name="ekspedisi_id" value="{{ $eks->ekspedisi_id }}" x-model="selectedEkspedisi" @change="setOngkir({{ $eks->ongkir_flat ?? 0 }})" {{ $i === 0 ? 'checked' : '' }} class="accent-[#63A2BB]">
                                 <div class="flex-1">
-                                    <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-start justify-between gap-4">
                                         <div>
-                                            <div class="flex items-center gap-2 font-semibold">
-                                                @if(!empty($exp->logo_url))
-                                                    <img src="{{ $exp->logo_url }}" alt="{{ $exp->nama_ekspedisi }}" class="h-6 w-6 rounded object-cover">
-                                                @endif
-                                                {{ $exp->nama_ekspedisi }} — {{ $exp->jenis_layanan }}
-                                            </div>
-                                            <div class="mt-1 text-sm text-slate-300">Estimasi {{ $exp->estimasi_hari }} hari</div>
+                                            <p class="font-semibold text-slate-800">{{ $eks->nama_ekspedisi }} — {{ $eks->jenis_layanan }}</p>
+                                            <p class="mt-1 text-sm text-slate-500">Estimasi {{ $eks->estimasi_hari }} hari</p>
                                         </div>
-                                        <div class="text-sm font-bold text-white">{{ 'Rp ' . number_format((int) ($exp->ongkir_flat ?? 0), 0, ',', '.') }}</div>
+                                        <div class="text-sm font-black text-[#63A2BB]">Rp {{ number_format((int) ($eks->ongkir_flat ?? 0), 0, ',', '.') }}</div>
                                     </div>
                                 </div>
                             </label>
                         @empty
-                            <div class="rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-center text-sm text-slate-300">
-                                Ekspedisi belum tersedia.
-                            </div>
+                            <div class="rounded-2xl border border-dashed border-slate-200 bg-[#F8FAFB] p-8 text-center text-sm text-slate-500">Ekspedisi belum tersedia.</div>
                         @endforelse
                     </div>
                 </div>
 
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                    <h2 class="font-bold text-lg">D. Metode Pembayaran</h2>
-                    <div class="mt-4 space-y-5 text-sm">
+                <div class="card-surface p-6">
+                    <div class="mb-5 flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">D</div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">Metode Pembayaran</h2>
+                            <p class="text-sm text-slate-500">Pilih metode pembayaran yang akan digunakan.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
                         @foreach(['Transfer Bank', 'E-Wallet', 'QRIS', 'COD'] as $jenisLabel)
                             @php
                                 $items = $metodesFlat->filter(function ($metode) use ($jenisLabel) {
@@ -145,77 +193,78 @@
                                 });
                             @endphp
 
-                            <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                <div class="font-bold">{{ $jenisLabel }}</div>
-                                <div class="mt-3 space-y-2">
+                            <div class="rounded-3xl border border-slate-200 bg-[#F8FAFB] p-4">
+                                <div class="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-slate-500">{{ $jenisLabel }}</div>
+                                <div class="space-y-2">
                                     @forelse($items as $metode)
-                                        <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
-                                            <input type="radio" name="metode_id" value="{{ $metode->metode_id }}" x-model="selectedMetode" class="mt-1 accent-cyan-400" {{ $loop->first && $jenisLabel === 'Transfer Bank' ? 'checked' : '' }}>
-                                            <div class="flex items-start gap-3">
+                                        <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200" x-bind:class="selectedMetode === {{ $metode->metode_id }} ? 'border-[#63A2BB] bg-[#63A2BB]/5 shadow-sm shadow-[#63A2BB]/10' : 'hover:border-[#63A2BB]/40'">
+                                            <input type="radio" name="metode_id" value="{{ $metode->metode_id }}" x-model="selectedMetode" class="accent-[#63A2BB]">
+                                            <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-[#63A2BB]/10 text-xs font-black text-[#63A2BB]">
                                                 @if(!empty($metode->logo_url))
-                                                    <img src="{{ $metode->logo_url }}" alt="{{ $metode->metode }}" class="h-10 w-10 rounded-xl object-cover">
+                                                    <img src="{{ $metode->logo_url }}" alt="{{ $metode->metode }}" class="h-full w-full object-cover">
                                                 @else
-                                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xs font-bold text-white">{{ strtoupper(substr($metode->metode ?? 'PM', 0, 2)) }}</div>
+                                                    {{ strtoupper(substr($metode->metode ?? 'PM', 0, 2)) }}
                                                 @endif
-                                                <div>
-                                                    <div class="font-semibold">{{ $metode->metode }}</div>
-                                                    <div class="mt-1 text-xs text-slate-400">{{ $metode->instruksi ?? $metode->jenis ?? '' }}</div>
-                                                </div>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="font-semibold text-slate-800">{{ $metode->metode }}</p>
+                                                <p class="mt-1 text-xs text-slate-500">{{ $metode->instruksi ?? $metode->jenis ?? '' }}</p>
                                             </div>
                                         </label>
                                     @empty
-                                        <div class="text-xs text-slate-400">Tidak tersedia</div>
+                                        <div class="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-xs text-slate-500">Tidak tersedia</div>
                                     @endforelse
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                    <div class="mt-4 text-xs text-slate-400">Pilih metode pembayaran untuk melanjutkan.</div>
                 </div>
 
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5" x-data="voucherWidget()">
-                    <h2 class="font-bold text-lg">E. Kode Voucher</h2>
-                    <form method="post" action="{{ route('checkout.apply_voucher') }}" @submit.prevent="apply()" class="mt-4 flex gap-3">
-                        @csrf
-                        <input type="text" x-model="kode" class="flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-2 text-sm outline-none focus:border-cyan-400" placeholder="Masukkan kode voucher">
-                        <button type="submit" class="rounded-2xl bg-cyan-500 px-5 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-400" :disabled="loading">Pakai</button>
-                    </form>
-                    <div class="mt-3 text-sm">
-                        <div class="text-emerald-300" x-show="valid" x-text="message"></div>
-                        <div class="text-rose-300" x-show="!valid && message" x-text="message"></div>
+                <div class="card-surface p-6" x-data="voucherWidget()">
+                    <div class="mb-5 flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">E</div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">Kode Voucher</h2>
+                            <p class="text-sm text-slate-500">Masukkan kode untuk mendapatkan diskon.</p>
+                        </div>
                     </div>
+
+                    <div class="flex flex-col gap-3 sm:flex-row">
+                        <input type="text" x-model="kode" placeholder="Masukkan kode voucher" class="h-12 flex-1 rounded-full border border-slate-200 bg-[#F8FAFB] px-5 text-sm uppercase tracking-wide outline-none transition-all duration-200 focus:border-[#63A2BB] focus:ring-4 focus:ring-[#63A2BB]/20">
+                        <button type="button" @click="apply()" class="btn-primary h-12 px-6 text-sm" :disabled="loading">Pakai Voucher</button>
+                    </div>
+                    <p x-show="message" x-cloak class="mt-3 text-sm font-medium" :class="valid ? 'text-emerald-600' : 'text-rose-500'" x-text="message"></p>
                 </div>
             </div>
 
             <div class="lg:col-span-4">
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-5 lg:sticky lg:top-24">
-                    <h2 class="font-bold text-lg">Ringkasan Pesanan</h2>
+                <div class="card-surface p-6 lg:sticky lg:top-24">
+                    <h2 class="text-lg font-black text-slate-900">Ringkasan Pesanan</h2>
 
-                    <div class="mt-4 space-y-3">
-                        @foreach($cart as $item)
+                    <div class="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1">
+                        @foreach($cartItems as $item)
                             @php
                                 $produk = $item->detail->produk ?? null;
-                                $image = optional(optional($produk)->images->first())->url_lengkap ?? (optional(optional($produk)->images->first())->url_gambar ? asset('storage/' . $produk->images->first()->url_gambar) : asset('images/default-product.svg'));
+                                $gambar = $produk?->gambarUtama?->url_lengkap ?? $produk?->images?->first()?->url_lengkap ?? asset('images/placeholder.png');
                                 $qty = (int) ($item->jumlah ?? 1);
                                 $harga = (float) ($item->detail->harga ?? 0);
                                 $line = $harga * $qty;
                             @endphp
-                            <div class="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-3">
-                                <img src="{{ $image }}" alt="{{ $item->detail->nama_produk ?? 'Produk' }}" class="h-16 w-16 rounded-xl object-cover">
-                                <div class="flex-1">
-                                    <div class="font-semibold text-sm">{{ $item->detail->nama_produk ?? optional($produk)->nama_produk ?? '-' }}</div>
-                                    <div class="mt-1 text-xs text-slate-400">Size: {{ $item->detail->ukuran ?? '-' }}</div>
-                                    <div class="text-xs text-slate-400">Warna: {{ optional($item->detail->warna)->nama_warna ?? '-' }}</div>
-                                    <div class="mt-1 text-xs text-slate-400">Qty: {{ $qty }}</div>
+                            <div class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-[#F8FAFB] p-3">
+                                <img src="{{ $gambar }}" alt="{{ $item->detail->nama_produk ?? 'Produk' }}" class="h-16 w-16 rounded-2xl object-cover ring-1 ring-slate-200">
+                                <div class="min-w-0 flex-1">
+                                    <p class="line-clamp-2 text-sm font-semibold text-slate-800">{{ $item->detail->nama_produk ?? optional($produk)->nama_produk ?? '-' }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">Size: {{ $item->detail->ukuran ?? '-' }} · Qty: {{ $qty }}</p>
+                                    <p class="mt-1 text-xs text-slate-400">Warna: {{ optional($item->detail->warna)->nama_warna ?? '-' }}</p>
                                 </div>
-                                <div class="text-sm font-bold">Rp {{ number_format((int) $line, 0, ',', '.') }}</div>
+                                <div class="text-sm font-black text-[#63A2BB]">Rp {{ number_format((int) $line, 0, ',', '.') }}</div>
                             </div>
                         @endforeach
                     </div>
 
                     @php
                         $stokWarnings = [];
-                        foreach ($cart as $item) {
+                        foreach ($cartItems as $item) {
                             $stok = (int) ($item->detail->stok ?? 0);
                             $qty = (int) ($item->jumlah ?? 1);
                             $produkNama = $item->detail->nama_produk ?? optional($item->detail->produk)->nama_produk ?? 'Produk';
@@ -226,43 +275,47 @@
                     @endphp
 
                     @if(!empty($stokWarnings))
-                    <div class="mt-4 rounded-2xl border border-rose-300/50 bg-rose-50/20 p-4 backdrop-blur-sm">
-                        <div class="flex items-start gap-3">
-                            <div class="text-rose-500 text-lg mt-0.5">⚠️</div>
-                            <div>
-                                <div class="font-semibold text-rose-400">Stok Produk Tidak Cukup</div>
-                                <div class="mt-2 space-y-1 text-xs text-rose-300/80">
-                                    @foreach($stokWarnings as $warning)
-                                        <div>• {{ $warning }}</div>
-                                    @endforeach
-                                </div>
-                                <div class="mt-3 text-xs text-rose-300">
-                                    Silakan kembali ke keranjang dan sesuaikan jumlah pembelian.
-                                </div>
+                        <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                            <div class="font-bold">Stok Produk Tidak Cukup</div>
+                            <div class="mt-2 space-y-1 text-xs leading-relaxed">
+                                @foreach($stokWarnings as $warning)
+                                    <div>• {{ $warning }}</div>
+                                @endforeach
                             </div>
                         </div>
-                    </div>
                     @endif
 
-                    <div class="mt-5 space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-slate-300">Subtotal Produk</span><span class="font-bold">Rp <span x-text="fmt(subtotalProduk)">{{ number_format((int) $subtotalServer, 0, ',', '.') }}</span></span></div>
-                        <div class="flex justify-between"><span class="text-slate-300">Ongkos Kirim</span><span class="font-bold">Rp <span x-text="fmt(ongkir)">{{ number_format((int) $ongkirServer, 0, ',', '.') }}</span></span></div>
-                        <div class="flex justify-between"><span class="text-slate-300">Biaya Layanan</span><span class="font-bold">Rp <span x-text="fmt(biayaLayanan)">{{ number_format((int) $biayaLayananServer, 0, ',', '.') }}</span></span></div>
-                        <div class="flex justify-between" x-show="voucherDiscount > 0"><span class="text-slate-300">Diskon Voucher</span><span class="font-bold">-Rp <span x-text="fmt(voucherDiscount)">{{ number_format((int) $voucherDiscountServer, 0, ',', '.') }}</span></span></div>
-                        <div class="border-t border-white/10 pt-3 flex justify-between">
-                            <span class="text-slate-200 font-semibold">Total</span>
-                            <span class="font-black text-xl">Rp <span x-text="fmt(grandTotal)">{{ number_format((int) max(0, $subtotalServer + $ongkirServer + $biayaLayananServer - $voucherDiscountServer), 0, ',', '.') }}</span></span>
+                    <div class="mt-5 space-y-3 border-t border-slate-200 pt-5 text-sm">
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Subtotal Produk</span>
+                            <span class="font-semibold">Rp <span x-text="fmt(subtotalProduk)">{{ number_format((int) $subtotalServer, 0, ',', '.') }}</span></span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Ongkos Kirim</span>
+                            <span class="font-semibold">Rp <span x-text="fmt(ongkir)">{{ number_format((int) $ongkirServer, 0, ',', '.') }}</span></span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Biaya Layanan</span>
+                            <span class="font-semibold">Rp <span x-text="fmt(biayaLayanan)">{{ number_format((int) $biayaLayananServer, 0, ',', '.') }}</span></span>
+                        </div>
+                        <div class="flex items-center justify-between text-emerald-600" x-show="voucherDiscount > 0" x-cloak>
+                            <span>Diskon Voucher</span>
+                            <span class="font-semibold">-Rp <span x-text="fmt(voucherDiscount)">{{ number_format((int) $voucherDiscountServer, 0, ',', '.') }}</span></span>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-slate-200 pt-3">
+                            <span class="text-base font-bold text-slate-900">Total</span>
+                            <span class="text-xl font-black text-[#63A2BB]">Rp <span x-text="fmt(grandTotal)">{{ number_format((int) max(0, $subtotalServer + $ongkirServer + $biayaLayananServer - $voucherDiscountServer), 0, ',', '.') }}</span></span>
                         </div>
                     </div>
 
-                    <form method="post" action="{{ route('checkout.process') }}" @submit.prevent="submitCheckout($event)" class="mt-5">
+                    <form method="post" action="{{ route('checkout.process') }}" @submit.prevent="submitCheckout($event)" class="mt-6">
                         @csrf
                         <input type="hidden" name="alamat_id" x-ref="alamat">
                         <input type="hidden" name="ekspedisi_id" x-ref="ekspedisi">
                         <input type="hidden" name="metode_id" x-ref="metode">
                         <input type="hidden" name="voucher_id" x-ref="voucher" value="{{ $voucher->voucher_id ?? '' }}">
-                        <button type="submit" {{ !empty($stokWarnings) ? 'disabled' : '' }} class="w-full rounded-3xl px-6 py-3 text-sm font-bold text-slate-950 transition-all {{ !empty($stokWarnings) ? 'bg-slate-400 cursor-not-allowed opacity-50' : 'bg-cyan-500 hover:bg-cyan-400' }}">Bayar Sekarang</button>
-                        <div class="mt-2 text-xs text-slate-400">{{ empty($stokWarnings) ? 'Pastikan alamat, ekspedisi, dan metode pembayaran dipilih.' : 'Selesaikan masalah stok untuk melanjutkan.' }}</div>
+                        <button type="submit" {{ !empty($stokWarnings) ? 'disabled' : '' }} class="btn-primary w-full justify-center px-6 py-4 text-sm {{ !empty($stokWarnings) ? 'cursor-not-allowed opacity-50' : '' }}">Bayar Sekarang <span class="ml-1" x-text="'(' + fmt(grandTotal) + ')'">({{ number_format((int) max(0, $subtotalServer + $ongkirServer + $biayaLayananServer - $voucherDiscountServer), 0, ',', '.') }})</span></button>
+                        <p class="mt-3 text-center text-xs text-slate-400">{{ empty($stokWarnings) ? 'Pastikan alamat, ekspedisi, dan metode pembayaran dipilih.' : 'Selesaikan masalah stok untuk melanjutkan.' }}</p>
                     </form>
                 </div>
             </div>
@@ -300,6 +353,10 @@ function checkoutPage(state) {
         },
         fmt(value) {
             return new Intl.NumberFormat('id-ID').format(Number(value || 0));
+        },
+        setOngkir(val) {
+            this.selectedEkspedisi = Number(this.selectedEkspedisi || 0);
+            this.shippingMap[this.selectedEkspedisi] = Number(val || 0);
         },
         submitCheckout(event) {
             if (!this.selectedAddress) {

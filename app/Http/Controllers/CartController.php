@@ -12,10 +12,22 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $items = [];
-        if ($user) {
+        $items = collect();
+
+        // Security: pastikan user terautentikasi
+        if (! $user) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
+                return response()->json(['success' => true, 'data' => []]);
+            }
+            return view('buyer.cart.index', compact('items'));
+        }
+
+        // Ambil ownerColumn/ownerId dan gunakan untuk mengambil keranjang
+        $ownerColumn = Keranjang::ownerColumn();
+        $ownerId = Keranjang::resolveOwnerId($user);
+        if ($ownerId) {
             $items = Keranjang::with(['detail.produk.images'])
-                ->where('pengguna_id', $user->pengguna_id)
+                ->where($ownerColumn, $ownerId)
                 ->get();
         }
 
@@ -75,8 +87,12 @@ class CartController extends Controller
             $detail = DetailProduk::where('produk_id', $request->product_id)->firstOrFail();
         }
 
+        // Security + owner resolution
+        $ownerColumn = Keranjang::ownerColumn();
+        $ownerId = Keranjang::resolveOwnerId($user);
+
         $cart = Keranjang::updateOrCreate(
-            ['pengguna_id' => $user->pengguna_id, 'detail_produk_id' => $detail->detail_produk_id],
+            [$ownerColumn => $ownerId, 'detail_produk_id' => $detail->detail_produk_id],
             ['jumlah' => $request->input('jumlah',1)]
         );
 
@@ -104,7 +120,11 @@ class CartController extends Controller
         }
 
         $item = Keranjang::with('detail')->findOrFail($cartId);
-        if ((int) $item->pengguna_id !== (int) $user->pengguna_id) {
+
+        // Security: pastikan owner cocok
+        $ownerColumn = Keranjang::ownerColumn();
+        $ownerId = Keranjang::resolveOwnerId($user);
+        if ((int) $item->{$ownerColumn} !== (int) $ownerId) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -132,7 +152,9 @@ class CartController extends Controller
         }
 
         $item = Keranjang::findOrFail($id);
-        if ($item->pengguna_id != $user->pengguna_id) {
+        $ownerColumn = Keranjang::ownerColumn();
+        $ownerId = Keranjang::resolveOwnerId($user);
+        if ($item->{$ownerColumn} != $ownerId) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

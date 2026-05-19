@@ -2,9 +2,13 @@
     use App\Models\Wishlist;
     use App\Models\Keranjang;
     $isLoggedIn = auth()->check();
-    $penggunaId = $isLoggedIn ? auth()->user()->id : null;
-    $wishlistCount = $isLoggedIn ? Wishlist::where('pengguna_id', $penggunaId)->count() : 0;
-    $cartCount = $isLoggedIn ? Keranjang::where('pengguna_id', $penggunaId)->distinct()->count('detail_produk_id') : 0;
+    $wishlistOwnerColumn = Wishlist::ownerColumn();
+    $wishlistOwnerId = $isLoggedIn ? Wishlist::resolveOwnerId(auth()->user()) : null;
+    $wishlistCount = $wishlistOwnerId ? Wishlist::where($wishlistOwnerColumn, $wishlistOwnerId)->count() : 0;
+
+    $cartOwnerColumn = Keranjang::ownerColumn();
+    $cartOwnerId = $isLoggedIn ? Keranjang::resolveOwnerId(auth()->user()) : null;
+    $cartCount = $cartOwnerId ? Keranjang::where($cartOwnerColumn, $cartOwnerId)->distinct()->count('detail_produk_id') : 0;
 @endphp
 
 <header class="bg-white shadow">
@@ -46,6 +50,7 @@
 
         {{-- Search + actions --}}
         <div class="flex items-center gap-4 flex-1 mx-6" x-data="searchComponent()">
+        <div class="flex items-center gap-4 flex-1 mx-6" x-data="searchComponent()" x-init="init()">
             <form action="{{ route('product.search') }}" method="GET" class="flex-1">
                 <div class="relative">
                     <input x-model="q" @input.debounce="onInput" name="q" type="text" placeholder="Cari produk, brand, kategori..." class="w-full border rounded px-4 py-2" autocomplete="off">
