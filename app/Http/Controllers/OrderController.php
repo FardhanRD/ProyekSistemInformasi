@@ -59,7 +59,6 @@ class OrderController extends Controller
     {
         $user = Auth::user();
         if (! $user) return redirect('/login');
-
         $transaksi = Transaksi::with([
             'details.detailProduk.produk.images' => fn($q) => $q->where('urutan', 0),
             'pembayaran.metode',
@@ -84,7 +83,18 @@ class OrderController extends Controller
                                 ->pluck('produk_id')
                                 ->toArray();
 
-        return view('buyer.order.detail', compact('transaksi', 'reviewedProductIds'));
+        // Ambil tracking logs untuk status pengiriman di halaman detail
+        $trackingLogs = collect();
+        if ($transaksi->relationLoaded('pesanan') && $transaksi->pesanan && $transaksi->pesanan->count() > 0) {
+            $pesananFirst = $transaksi->pesanan->first();
+            if ($pesananFirst && $pesananFirst->pesanan_id) {
+                $trackingLogs = \App\Models\TrackingLog::where('pesanan_id', $pesananFirst->pesanan_id)
+                    ->orderBy('waktu_update', 'desc')
+                    ->get();
+            }
+        }
+
+        return view('buyer.order.detail', compact('transaksi', 'reviewedProductIds', 'trackingLogs'));
     }
 
     // Metode untuk rating produk dan toko akan dipindahkan ke API atau controller terpisah

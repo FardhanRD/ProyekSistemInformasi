@@ -11,8 +11,7 @@ use Carbon\Carbon;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
-    {
+    public function index(Request $request){
         // --- Data untuk Filter ---
         $filterData = [
             'categories' => Kategori::whereNull('parent_id')->with('children.children')->orderBy('nama_kategori')->get(),
@@ -99,9 +98,8 @@ class ProductController extends Controller
         $products = $query->paginate(20)->withQueryString();
         return view('buyer.category.index', compact('products', 'filterData'));
     }
+    public function show(string $slug): \Illuminate\View\View{
 
-    public function show($slug)
-    {
         $product = Produk::with([
             'images' => fn($q) => $q->orderBy('urutan', 'ASC'),
             'details' => fn($q) => $q->where('is_active', 1)->with('warna'),
@@ -178,8 +176,8 @@ class ProductController extends Controller
     }
 
     public function search(Request $request)
-    {
-        // Ambil query pencarian dari parameter 'q'
+{
+        // Ambil parameter 'q'
         $q = $request->input('q', '');
 
         // --- Data untuk Filter ---

@@ -177,7 +177,7 @@
       </h3>
     </div>
     <div class="p-8 space-y-4">
-      @forelse($pesanan->details ?? [] as $detail)
+@forelse($pesanan->details ?? [] as $detail)
         <div class="flex gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
           @php
             $img = $detail->detailProduk->produk->gambarUtama;
@@ -216,13 +216,29 @@
         </p>
       @endforelse
 
+@php
+        $details = collect($pesanan->details ?? []);
+        $totalDetail = $details->count();
+        $totalBarang = (int) $details->sum('jumlah');
+      @endphp
+
       @if($pesanan)
         <div class="pt-4 border-t-2 border-gray-100 mt-4">
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-gray-900">Total Pesanan</span>
-            <span class="text-2xl font-black text-[#63A2BB]">
-              Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}
-            </span>
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-gray-900">Total Produk</span>
+              <span class="text-xl font-black text-[#63A2BB]">{{ $totalBarang }} barang</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-semibold text-gray-700">Jumlah Item / Baris Produk</span>
+              <span class="text-sm font-bold text-gray-900">{{ $totalDetail }} baris</span>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+              <span class="font-bold text-gray-900">Total Pesanan</span>
+              <span class="text-2xl font-black text-[#63A2BB]">
+                Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}
+              </span>
+            </div>
           </div>
         </div>
       @endif

@@ -34,9 +34,25 @@
                             'selesai' => 'bg-green-100 text-green-800',
                             'dibatalkan' => 'bg-red-100 text-red-800',
                         ];
+                        // status pengiriman (tracking)
+                        $latestTracking = isset($trackingLogs) ? $trackingLogs->first() : null;
+                        $pengirimanStatus = $latestTracking?->status;
+                        // fallback ke status transaksi
+                        $pengirimanStatusLabel = $pengirimanStatus ?? $transaksi->status;
+                        $trackingStatusColors = [
+                            'menunggu_konfirmasi' => 'bg-yellow-100 text-yellow-800',
+                            'dikemas' => 'bg-blue-100 text-blue-800',
+                            'siap_kirim' => 'bg-blue-100 text-blue-800',
+                            'diserahkan_ke_kurir' => 'bg-purple-100 text-purple-800',
+                            'dalam_pengiriman' => 'bg-purple-100 text-purple-800',
+                            'tiba_di_tujuan' => 'bg-green-100 text-green-800',
+                            'diterima' => 'bg-green-100 text-green-800',
+                            'bermasalah' => 'bg-red-100 text-red-800',
+                        ];
+                        $pengirimanPillClass = $trackingStatusColors[$pengirimanStatus] ?? ($statusColors[$transaksi->status] ?? 'bg-gray-100 text-gray-800');
                     @endphp
-                    <span class="px-4 py-1.5 text-sm font-semibold rounded-full {{ $statusColors[$transaksi->status] ?? 'bg-gray-100 text-gray-800' }}">
-                        {{ ucfirst(str_replace('_', ' ', $transaksi->status)) }}
+                    <span class="px-4 py-1.5 text-sm font-semibold rounded-full {{ $pengirimanPillClass }}">
+                        {{ ucfirst(str_replace('_', ' ', $pengirimanStatusLabel)) }}
                     </span>
                 </div>
             </div>
@@ -55,6 +71,17 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     <!-- Info Pengiriman -->
+                        @if(isset($trackingLogs) && $trackingLogs->count() > 0)
+                        <div class="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800 mb-1">Status Pengiriman (Terakhir)</p>
+                                    <p class="text-sm text-gray-600">{{ $trackingLogs->first()->status }} — {{ $trackingLogs->first()->deskripsi }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ \Carbon\Carbon::parse($trackingLogs->first()->waktu_update)->locale('id')->format('d M Y — H:i') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     <div>
                         <h3 class="font-bold text-gray-800 border-b pb-2 mb-4">Informasi Pengiriman</h3>
                         <div class="space-y-3 text-sm">
@@ -67,7 +94,7 @@
                                 <span class="text-gray-500 block">No. Resi</span>
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-blue-600">{{ $transaksi->pesanan->no_resi }}</span>
-                                    <a href="{{ route('tracking.show', $transaksi->kode_transaksi) }}" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded transition">Lacak</a>
+                                    <a href="{{ route('orders.show', $transaksi->kode_transaksi) }}" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded transition">Lacak</a>
                                 </div>
                             </div>
                             @endif

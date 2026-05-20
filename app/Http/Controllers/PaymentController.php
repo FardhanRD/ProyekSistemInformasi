@@ -65,7 +65,7 @@ class PaymentController extends Controller
                     }
                 }
             }
-        } catch (\Throwable $e) {
+    } catch (\Throwable $e) {
             // jangan ganggu alur bila ada masalah dengan skema db
         }
 
@@ -179,7 +179,7 @@ class PaymentController extends Controller
         }
 
         if ($transaksi->status !== 'menunggu_pembayaran') {
-            return redirect()->route('order.tracking', ['kode_transaksi' => $transaksi->kode_transaksi])
+            return redirect()->route('orders.index')
                 ->with('info', 'Pembayaran untuk transaksi ini sudah diproses.');
         }
 
@@ -201,7 +201,7 @@ class PaymentController extends Controller
             $transaksi->update(['status' => 'pembayaran_dikonfirmasi']);
         });
 
-        return redirect()->route('order.tracking', ['kode_transaksi' => $transaksi->kode_transaksi])
+        return redirect()->route('orders.index')
             ->with('success', 'Pembayaran berhasil dikonfirmasi.');
     }
 }

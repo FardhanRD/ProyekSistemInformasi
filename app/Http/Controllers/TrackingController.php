@@ -34,14 +34,26 @@ class TrackingController extends Controller
 
         if (Schema::hasTable('pesanan')) {
             // Mengambil pesanan berdasarkan transaksi_id dari objek transaksi yang sudah dimuat
-            $pesanan = $transaksi->pesanan;
-            
+            $pesanan = $transaksi->pesanan()->with([
+                // Pesanan tidak punya detail di model, jadi yang kita butuhkan adalah detail produk dari transaksi.
+                // View tracking akan membaca $pesanan->details, sehingga kita isi secara runtime.
+            ])->first();
+
+            if ($transaksi->relationLoaded('details')) {
+                $pesanan->setAttribute('details', $transaksi->details);
+            } else {
+                $pesanan->setAttribute('details', $transaksi->details()->get());
+            }
+
             if ($pesanan && Schema::hasTable('tracking_log')) {
                 $trackingLogs = TrackingLog::where('pesanan_id', $pesanan->pesanan_id)
                     ->orderBy('waktu_update', 'desc') // Urutkan terbaru dulu
                     ->get();
+
+                // Biar view bisa akses $trackingLogs->status/deskripsi/lokasi dengan aman
             }
         }
+
         
 
         // Get ekspedisi info

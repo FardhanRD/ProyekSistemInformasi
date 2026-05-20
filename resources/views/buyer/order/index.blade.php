@@ -229,7 +229,7 @@
           </span>
           @endif
           
-          <a href="{{ route('orders.show', $t->kode_transaksi) }}"
+          <a href="{{ route('tracking.show', $t->kode_transaksi) }}"
              class="px-4 py-2 bg-white border-2 
                     border-gray-200 text-gray-500 
                     text-xs font-semibold rounded-full 

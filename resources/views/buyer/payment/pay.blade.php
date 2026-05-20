@@ -263,9 +263,9 @@
                             @csrf
                             <button type="submit" class="btn-primary inline-flex w-full justify-center px-5 py-3 text-sm">Konfirmasi Pembayaran</button>
                         </form>
-                        <p class="mt-2 text-center text-xs text-slate-400">Klik untuk menyelesaikan pembayaran dan lanjut ke tracking.</p>
+                        <p class="mt-2 text-center text-xs text-slate-400">Klik untuk menyelesaikan pembayaran dan lanjut ke pesanan Anda.</p>
                     @elseif($pembayaran->status_pembayaran === 'berhasil')
-                        <a href="{{ route('order.tracking', $transaksi->kode_transaksi) }}" class="btn-primary mt-5 inline-flex w-full justify-center px-5 py-3 text-sm">Lihat Tracking Pesanan</a>
+                        <a href="{{ route('orders.index') }}" class="btn-primary mt-5 inline-flex w-full justify-center px-5 py-3 text-sm">Lihat Pesanan</a>
                     @endif
                 </div>
             </div>
