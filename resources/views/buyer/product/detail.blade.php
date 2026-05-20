@@ -3,16 +3,39 @@
 @section('content')
 
 @php
-  $galleryImages = ($product->gambarProduk ?? collect())
+  $galleryImages = collect($product->images ?? $product->gambarProduk ?? [])
     ->map(function ($img) {
-      return $img->url_safe;
+      return $img->url_lengkap ?? $img->url_safe ?? null;
     })
     ->filter()
     ->values()
-    ->toArray();
+    ->all();
 
-  $activeImage = optional($product->gambarUtama)->url_safe;
-  $detailProduk = ($product->detailProduk ?? collect())->values();
+  $activeImage = $galleryImages[0]
+    ?? optional($product->gambarUtama)->url_lengkap
+    ?? optional($product->gambarUtama)->url_safe
+    ?? asset('images/placeholder.png');
+
+  $variantItems = collect($product->details ?? $product->detailProduk ?? [])
+    ->map(function ($detail) {
+      return [
+        'detail_produk_id' => $detail->detail_produk_id,
+        'warna_id' => $detail->warna_id,
+        'nama_warna' => $detail->warna?->nama_warna,
+        'kode_hex' => $detail->warna?->kode_hex,
+        'ukuran' => $detail->ukuran,
+        'stok' => (int) ($detail->stok ?? 0),
+        'harga' => (float) ($detail->harga ?? 0),
+      ];
+    })
+    ->values();
+
+  $warnaOptions = $variantItems
+    ->filter(fn ($item) => !is_null($item['warna_id']))
+    ->unique('warna_id')
+    ->values();
+
+  $hasWarna = $warnaOptions->isNotEmpty();
 @endphp
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -37,25 +60,23 @@
   </div>
 
   {{-- Product Detail Grid --}}
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12 items-start">
     {{-- Left: Gallery --}}
-    <div class="lg:col-span-2"
+    <div class="lg:col-span-1"
          x-data="{
            images: @js($galleryImages),
            activeImage: @js($activeImage),
            init() {
-             if (!this.activeImage && $this.images.length > 0) {
-               this.activeImage = $this.images[0];
+             if (!this.activeImage && this.images.length > 0) {
+               this.activeImage = this.images[0];
              }
            }
          }">
       {{-- Main Image --}}
-      <div class="mb-6 bg-gradient-to-br from-gray-50 to-gray-100 
-                  rounded-3xl overflow-hidden aspect-square 
-                  flex items-center justify-center relative group">
-        <img :src="activeImage" 
+      <div class="relative bg-[#F8FAFB] rounded-2xl overflow-hidden h-[380px] sm:h-[460px] md:h-[520px] flex items-center justify-center group">
+        <img :src="activeImage"
              :alt="@json($product->nama_produk)"
-             class="w-full h-full object-cover">
+             class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500">
         
         {{-- Badge --}}
         @if($product->is_featured)
@@ -108,80 +129,24 @@
         </div>
       </div>
 
-      {{-- Thumbnails --}}
-      <div class="flex gap-3 overflow-x-auto pb-2">
+      <div class="grid grid-cols-4 gap-2 mt-3">
         <template x-for="(img, idx) in images" :key="idx">
-          <button @click="activeImage = img"
-                  :class="{ 
-                    'ring-2 ring-[#63A2BB]': activeImage === img 
+          <button type="button"
+                  @click="activeImage = img"
+                  :class="{
+                    'ring-2 ring-[#63A2BB] border-[#63A2BB]': activeImage === img
                   }"
-                  class="flex-shrink-0 w-20 h-20 rounded-2xl 
-                         border-2 border-gray-200 overflow-hidden
-                         hover:border-[#63A2BB] transition">
-            <img :src="img" 
-                 class="w-full h-full object-cover">
+                  class="h-16 rounded-xl overflow-hidden bg-gray-50 border-2 border-gray-200 hover:border-[#63A2BB] transition">
+            <img :src="img"
+                 class="w-full h-full object-cover object-center">
           </button>
         </template>
       </div>
     </div>
 
     {{-- Right: Info & Checkout --}}
-    <div x-data="{
-      details: @js($detailProduk),
-      selectedWarna: null,
-      selectedUkuran: null,
-      selectedDetail: null,
-      qty: 1,
-      maxQty: 1,
-      loading: false,
-      get warnas() {
-        return [...new Map(this.details.map(d => [d.warna?.warna_id, d.warna])).values()].filter(Boolean);
-      },
-      get ukurans() {
-        if (!this.selectedWarna) return [];
-        return this.details
-          .filter(d => d.warna?.warna_id === this.selectedWarna)
-          .map(d => ({ ...d, id: d.detail_produk_id }));
-      },
-      selectWarna(warnaId) {
-        this.selectedWarna = warnaId;
-        this.selectedUkuran = null;
-        this.selectedDetail = null;
-      },
-      selectUkuran(detailId) {
-        this.selectedDetail = this.details.find(d => d.detail_produk_id === detailId);
-        this.maxQty = this.selectedDetail?.stok ?? 0;
-        this.qty = Math.min(1, this.maxQty);
-      },
-      async addToCart() {
-        if (!this.selectedDetail) {
-          alert('Pilih varian terlebih dahulu');
-          return;
-        }
-        this.loading = true;
-        const res = await fetch('{{ route('cart.add') }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-          },
-          body: JSON.stringify({
-            detail_produk_id: this.selectedDetail.detail_produk_id,
-            jumlah: this.qty
-          })
-        });
-        const data = await res.json();
-        this.loading = false;
-        if (data.success) {
-          showToast('Ditambahkan ke keranjang');
-          this.qty = 1;
-          window.dispatchEvent(new Event('cart-updated'));
-        } else {
-          alert(data.message || 'Gagal ditambahkan');
-        }
-      }
-    }">
+    <div class="lg:col-span-1 flex flex-col gap-4"
+         x-data="productDetailState(@js($variantItems), @js($warnaOptions), @js($hasWarna))">
       {{-- Product Name --}}
       <div>
         <h1 class="text-2xl sm:text-3xl font-black text-gray-900 mb-2">
@@ -245,11 +210,14 @@
       </div>
 
       {{-- Color Selection --}}
-      @if($product->detailProduk->groupBy('warna.warna_id')->count() > 1)
+      @if($hasWarna)
       <div class="py-4 border-b-2 border-gray-100">
-        <h3 class="text-sm font-bold text-gray-900 mb-3">
+        <h3 class="text-sm font-bold text-gray-900 mb-1">
           Pilih Warna
         </h3>
+        <p class="text-xs text-gray-500 mb-3">
+          Pilih varian yang tersedia sebelum menentukan ukuran.
+        </p>
         <div class="flex gap-3 flex-wrap">
           <template x-for="warna in warnas" :key="warna.warna_id">
             <button @click="selectWarna(warna.warna_id)"
@@ -269,73 +237,84 @@
 
       {{-- Size Selection --}}
       <div class="py-4 border-b-2 border-gray-100">
-        <h3 class="text-sm font-bold text-gray-900 mb-3">
+        <h3 class="text-sm font-bold text-gray-900 mb-1">
           Pilih Ukuran
         </h3>
+        <p class="text-xs text-gray-500 mb-3">
+          Stok per ukuran ditampilkan di bawah nama ukuran.
+        </p>
         <div class="flex gap-2 flex-wrap">
           <template x-for="ukuran in ukurans" :key="ukuran.detail_produk_id">
             <button @click="selectUkuran(ukuran.detail_produk_id)"
                     :disabled="ukuran.stok === 0"
                     :class="{ 
-                      'bg-[#63A2BB] text-white ring-2 ring-[#63A2BB]': selectedDetail?.detail_produk_id === ukuran.detail_produk_id,
+                      'bg-[#63A2BB] text-white ring-2 ring-[#63A2BB]': selectedDetail && selectedDetail.detail_produk_id === ukuran.detail_produk_id,
                       'opacity-50 cursor-not-allowed': ukuran.stok === 0
                     }"
-                    class="px-4 py-2.5 border-2 border-gray-200 rounded-lg
-                           text-sm font-bold hover:border-[#63A2BB] transition">
+                    class="min-w-[76px] px-4 py-2.5 border-2 border-gray-200 rounded-lg
+                           text-sm font-bold hover:border-[#63A2BB] transition flex flex-col items-center leading-tight">
               <span x-text="ukuran.ukuran"></span>
-              <span x-show="ukuran.stok === 0" class="text-xs">
-                (Habis)
-              </span>
+              <span class="text-xs font-medium mt-1" x-text="ukuran.stok > 0 ? `${ukuran.stok} stok` : 'Habis'"></span>
             </button>
           </template>
         </div>
       </div>
 
-      {{-- Quantity --}}
-      <div class="py-4 border-b-2 border-gray-100">
-        <h3 class="text-sm font-bold text-gray-900 mb-3">
+      <div class="py-4 border-b-2 border-gray-100" x-show="selectedDetail !== null" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <h3 class="text-sm font-bold text-gray-700 mb-3">
           Jumlah
         </h3>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center border-2 border-gray-200 rounded-lg">
-            <button @click="qty = Math.max(1, qty - 1)"
-                    :disabled="qty <= 1"
-                    class="px-3 py-2 text-gray-600 hover:bg-gray-50 transition">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
+            <button type="button" @click="qty = Math.max(1, qty - 1)"
+                    class="w-11 h-11 flex items-center justify-center text-gray-500 hover:bg-[#63A2BB]/10 hover:text-[#63A2BB] font-bold text-xl transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    :disabled="qty <= 1">
               −
             </button>
-            <input type="number" x-model.number="qty" 
-                   :max="maxQty" min="1"
-                   class="w-12 text-center border-l border-r 
-                          border-gray-200 py-2 focus:outline-none 
-                          focus:ring-2 focus:ring-[#63A2BB]/20">
-            <button @click="qty = Math.min(maxQty, qty + 1)"
-                    :disabled="qty >= maxQty"
-                    class="px-3 py-2 text-gray-600 hover:bg-gray-50 transition">
+            <span x-text="qty" class="w-12 text-center font-bold text-gray-800 text-base"></span>
+            <button type="button" @click="qty = Math.min(maxQty, qty + 1)"
+                    class="w-11 h-11 flex items-center justify-center text-gray-500 hover:bg-[#63A2BB]/10 hover:text-[#63A2BB] font-bold text-xl transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    :disabled="qty >= maxQty">
               +
             </button>
           </div>
-          <span class="text-xs text-gray-500">
-            Stok: <span x-text="maxQty"></span>
+          <span class="text-sm text-gray-400">
+            Maks <span x-text="maxQty" class="font-semibold"></span> pcs
           </span>
         </div>
       </div>
 
       {{-- Action Buttons --}}
-      <div class="flex gap-3 pt-6">
-        <button @click="addToCart()"
-                :disabled="loading || !selectedDetail || maxQty === 0"
-                class="flex-1 bg-[#63A2BB] text-white font-bold py-3.5 
-                       rounded-2xl hover:shadow-lg hover:-translate-y-1 
-                       transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-          <span x-show="!loading">Tambah ke Keranjang</span>
-          <span x-show="loading">Menambahkan...</span>
+      <div class="flex gap-3 mt-6">
+        <button type="button"
+                @click="addToCart()"
+                :disabled="!selectedDetail || loading"
+                :class="(!selectedDetail || loading)
+                  ? 'opacity-60 cursor-not-allowed bg-[#63A2BB]'
+                  : 'bg-[#63A2BB] hover:-translate-y-1 hover:shadow-lg hover:shadow-[#63A2BB]/30 hover:bg-[#4A8BA3]'"
+                class="flex-1 text-white py-4 px-6 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200">
+          <svg x-show="loading" class="animate-spin w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <svg x-show="!loading" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+          <span x-text="loading ? 'Menambahkan...' : 'Tambah ke Keranjang'"></span>
         </button>
-        <a href="{{ route('checkout.index') }}"
-           class="flex-1 border-2 border-[#63A2BB] text-[#63A2BB] 
-                  font-bold py-3.5 rounded-2xl hover:bg-[#63A2BB]/5 
-                  transition text-center">
+
+        <button type="button"
+                @click="buyNow()"
+                :disabled="!selectedDetail || loading"
+                :class="(!selectedDetail || loading)
+                  ? 'opacity-60 cursor-not-allowed'
+                  : 'hover:-translate-y-1 hover:shadow-lg hover:bg-gray-800'"
+                class="flex-1 bg-gray-900 text-white py-4 px-6 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
           Beli Sekarang
-        </a>
+        </button>
       </div>
     </div>
   </div>
@@ -471,6 +450,122 @@
 
 @section('scripts')
 <script>
+  window.productDetailState = function (variantItems, warnaOptions, hasWarna) {
+    return {
+      variantItems: variantItems,
+      warnaOptions: warnaOptions,
+      hasWarna: hasWarna,
+      selectedWarna: null,
+      selectedUkuran: null,
+      selectedDetail: null,
+      qty: 1,
+      maxQty: 1,
+      loading: false,
+
+      init() {
+        if (this.hasWarna && this.warnaOptions.length > 0) {
+          this.selectedWarna = this.warnaOptions[0].warna_id;
+        } else {
+          this.selectedWarna = '__no_color__';
+        }
+
+        this.$nextTick(() => {
+          if (this.ukurans.length === 1) {
+            this.selectUkuran(this.ukurans[0].detail_produk_id);
+          }
+        });
+      },
+
+      get warnas() {
+        return this.warnaOptions;
+      },
+
+      get ukurans() {
+        if (!this.hasWarna || this.selectedWarna === '__no_color__') return this.variantItems;
+        if (!this.selectedWarna) return [];
+        return this.variantItems.filter(item => item.warna_id === this.selectedWarna);
+      },
+
+      selectWarna(warnaId) {
+        this.selectedWarna = warnaId;
+        this.selectedUkuran = null;
+        this.selectedDetail = null;
+        this.qty = 1;
+        this.maxQty = 1;
+      },
+
+      selectUkuran(detailId) {
+        this.selectedDetail = this.variantItems.find(item => item.detail_produk_id === detailId);
+        this.selectedUkuran = this.selectedDetail && this.selectedDetail.ukuran ? this.selectedDetail.ukuran : null;
+        this.maxQty = this.selectedDetail && this.selectedDetail.stok ? this.selectedDetail.stok : 1;
+        this.qty = Math.max(1, Math.min(this.qty, this.maxQty || 1));
+      },
+
+      get selectedVariantText() {
+        if (!this.selectedDetail) return 'Pilih ukuran';
+        const parts = [];
+        if (this.hasWarna && this.selectedDetail.nama_warna) {
+          parts.push(this.selectedDetail.nama_warna);
+        }
+        if (this.selectedDetail.ukuran) {
+          parts.push(this.selectedDetail.ukuran);
+        }
+        return parts.length ? parts.join(' / ') : 'Varian terpilih';
+      },
+
+      get totalStock() {
+        return this.variantItems.reduce((sum, item) => sum + (Number(item.stok) || 0), 0);
+      },
+
+      async addToCart() {
+        if (!this.selectedDetail) {
+          showToast('Pilih ukuran dulu', 'warning');
+          return false;
+        }
+
+        this.loading = true;
+        try {
+          const res = await fetch('{{ route('cart.add') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+              detail_produk_id: this.selectedDetail.detail_produk_id,
+              jumlah: this.qty
+            })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            showToast('Ditambahkan ke keranjang');
+            window.dispatchEvent(new Event('cart-updated'));
+            return true;
+          }
+
+          alert(data.message || 'Gagal ditambahkan');
+          return false;
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      async buyNow() {
+        if (!this.selectedDetail) {
+          showToast('Pilih ukuran dulu', 'warning');
+          return;
+        }
+
+        const added = await this.addToCart();
+        if (added) {
+          window.location.href = '{{ route('cart.index') }}';
+        }
+      }
+    };
+  };
+
     // Event listener untuk update cart badge
     window.addEventListener('cart-updated', () => {
         // Reload cart count badge di header

@@ -50,12 +50,74 @@ class PaymentController extends Controller
             });
         }
 
+        // Generate VA jika belum ada dan metode adalah transfer (cek kolom agar tidak error bila belum ditambahkan)
+        try {
+            if (Schema::hasColumn('pembayaran', 'nomor_va')) {
+                $metodeObj = $pembayaran->metode ?? null;
+                $jenis = (string) ($metodeObj->jenis ?? $pembayaran->metodePembayaran->jenis ?? '');
+                if (empty($pembayaran->nomor_va) && str_contains(strtolower($jenis), 'transfer')) {
+                    $buyerId = $transaksi->buyer->pengguna_id ?? null;
+                    $noVA = $this->generateVA($metodeObj->metode ?? ($pembayaran->metodePembayaran->metode ?? ''), $buyerId, $transaksi->transaksi_id);
+                    if ($noVA) {
+                        $pembayaran->update(['nomor_va' => $noVA]);
+                        // refresh model
+                        $pembayaran->refresh();
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // jangan ganggu alur bila ada masalah dengan skema db
+        }
+
         // Ambil info rekening bank dari config (jika ada) atau dari tabel
         $akunPembayaran = AkunPembayaran::where('is_active', true)
             ->where('metode_id', $pembayaran->metode_id)
             ->first();
 
-        return view('buyer.payment.pay', compact('transaksi', 'pembayaran', 'isExpired', 'akunPembayaran'));
+        // Format nomor VA dengan dash untuk display
+        $nomorVAFormatted = $pembayaran->nomor_va ? $this->formatVAForDisplay($pembayaran->nomor_va) : null;
+
+        return view('buyer.payment.pay', compact('transaksi', 'pembayaran', 'isExpired', 'akunPembayaran', 'nomorVAFormatted'));
+    }
+
+    /**
+     * Generate Virtual Account number for transfer methods.
+     * Format: [prefix(4)][buyerPart(6)][transPart(4)] = 14 digits total
+     */
+    private function generateVA($metode, $buyerId, $transaksiId)
+    {
+        $metode = (string) ($metode ?? '');
+        $lower = strtolower($metode);
+
+        $prefix = '9999';
+        if (str_contains($lower, 'bca')) {
+            $prefix = '1234';
+        } elseif (str_contains($lower, 'mandiri')) {
+            $prefix = '8888';
+        } elseif (str_contains($lower, 'bni')) {
+            $prefix = '8888';
+        } elseif (str_contains($lower, 'bri')) {
+            $prefix = '0088';
+        }
+
+        $buyerPart = str_pad((int) ($buyerId ?? 0), 6, '0', STR_PAD_LEFT);
+        $transPart = str_pad(((int) $transaksiId) % 10000, 4, '0', STR_PAD_LEFT);
+
+        return $prefix . $buyerPart . $transPart;
+    }
+
+    /**
+     * Format VA number for display with dashes.
+     * Example: 12340000030001 -> 1234-000003-0001
+     */
+    private function formatVAForDisplay($noVA)
+    {
+        $clean = preg_replace('/[^0-9]/', '', (string) $noVA);
+        if (strlen($clean) < 14) {
+            return $clean; // Return as-is if not long enough
+        }
+        // Format: PREFIX(4) - BUYER(6) - TRANS(4)
+        return substr($clean, 0, 4) . '-' . substr($clean, 4, 6) . '-' . substr($clean, 10, 4);
     }
 
     public function uploadProof(Request $request, $kodeTransaksi)

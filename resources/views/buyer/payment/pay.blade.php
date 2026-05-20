@@ -18,7 +18,7 @@
                     <p class="mt-1 text-sm text-slate-500">Kode transaksi: {{ $transaksi->kode_transaksi }}</p>
                 </div>
             </div>
-            <a href="{{ route('order.index') }}" class="btn-outline inline-flex items-center justify-center px-5 py-3 text-sm">Lihat Pesanan</a>
+            <a href="{{ route('orders.index') }}" class="btn-outline inline-flex items-center justify-center px-5 py-3 text-sm">Lihat Pesanan</a>
         </div>
     </div>
 
@@ -79,23 +79,71 @@
                             </h3>
 
                             <div class="space-y-4">
-                                @if(optional($metode)->jenis === 'transfer')
-                                    <div class="rounded-3xl border border-slate-200 bg-[#F8FAFB] p-5">
-                                        <p class="text-sm text-slate-500">Silakan transfer tepat sesuai nominal di atas ke rekening berikut:</p>
-                                        <div class="mt-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Bank Tujuan</p>
-                                            <p class="mt-1 font-bold text-slate-900">{{ optional($metode)->metode ?? '—' }}</p>
-                                            <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Nomor Rekening</p>
-                                            <div class="mt-2 flex items-center justify-between gap-3">
-                                                <p class="font-mono text-xl font-black text-slate-900">1234567890</p>
-                                                <button type="button" onclick="navigator.clipboard.writeText('1234567890').then(() => showToast('Nomor rekening disalin!'))" class="text-sm font-semibold text-[#63A2BB] hover:underline">Salin</button>
-                                            </div>
-                                            <p class="mt-3 text-xs text-slate-400">a.n. MOVR Indonesia</p>
-                                        </div>
-                                        <div class="mt-4 rounded-2xl border border-[#63A2BB]/20 bg-[#63A2BB]/5 p-4 text-sm text-slate-600">
-                                            Pastikan nominal transfer sesuai agar verifikasi otomatis berjalan lancar.
-                                        </div>
-                                    </div>
+                                                                @if(str_contains(optional($metode)->jenis ?? '', 'transfer'))
+
+                                                                        {{-- Header VA --}}
+                                                                        <div class="bg-gradient-to-r from-[#63A2BB] to-[#4A8BA3] rounded-2xl p-5 mb-4">
+                                                                            <div class="flex items-center justify-between mb-3">
+                                                                                <div class="flex items-center gap-2">
+                                                                                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                                                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                                                        </svg>
+                                                                                    </div>
+                                                                                    <span class="text-white font-bold text-sm">{{ $metode->metode ?? ($pembayaran->metodePembayaran->metode ?? 'Virtual Account') }}</span>
+                                                                                </div>
+                                                                                <span class="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">Virtual Account</span>
+                                                                            </div>
+                                      
+                                                                            {{-- Nomor VA --}}
+                                                                            <p class="text-white/70 text-xs mb-1">Nomor Virtual Account</p>
+                                                                            <div class="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
+                                                                                <span class="text-white font-black text-xl font-mono tracking-widest" id="nomor-va">{{ $nomorVAFormatted ?? '----' }}</span>
+                                                                                <button onclick="navigator.clipboard.writeText('{{ str_replace('-', '', $nomorVAFormatted ?? '') }}').then(() => showToast('✅ Nomor VA disalin!'))" class="bg-white text-[#63A2BB] text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-gray-100 transition flex items-center gap-1.5">
+                                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                                                                    </svg>
+                                                                                    Salin
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {{-- Total Bayar --}}
+                                                                        <div class="bg-[#63A2BB]/5 border border-[#63A2BB]/20 rounded-2xl p-4 mb-4">
+                                                                            <p class="text-xs text-gray-400 mb-1">Total Transfer</p>
+                                                                            <div class="flex items-center justify-between">
+                                                                                <span class="font-black text-[#63A2BB] text-2xl">Rp {{ number_format($pembayaran->jumlah_pembayaran,0,',','.') }}</span>
+                                                                                <button onclick="navigator.clipboard.writeText('{{ $pembayaran->jumlah_pembayaran }}').then(() => showToast('✅ Nominal disalin!'))" class="text-xs text-[#63A2BB] font-semibold flex items-center gap-1 hover:underline">
+                                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                                                                    </svg>
+                                                                                    Salin
+                                                                                </button>
+                                                                            </div>
+                                                                            <p class="text-xs text-gray-400 mt-1">Transfer tepat sesuai nominal agar terkonfirmasi otomatis</p>
+                                                                        </div>
+
+                                                                        {{-- Langkah Pembayaran --}}
+                                                                        <div class="space-y-2">
+                                                                            <p class="text-sm font-bold text-gray-700 mb-3">Cara Bayar:</p>
+                                                                            @foreach([
+                                                                                'Buka aplikasi/ATM '.($metode->metode ?? ($pembayaran->metodePembayaran->metode ?? 'bank')),
+                                                                                'Pilih menu Transfer / Virtual Account',
+                                                                                'Masukkan nomor VA: '.($nomorVAFormatted ?? '----'),
+                                                                                'Masukkan nominal: Rp '.number_format($pembayaran->jumlah_pembayaran,0,',','.'),
+                                                                                'Konfirmasi dan selesaikan pembayaran',
+                                                                                'Pembayaran otomatis terkonfirmasi dalam 1-5 menit',
+                                                                            ] as $i => $step)
+                                                                            <div class="flex items-start gap-3">
+                                                                                <div class="w-6 h-6 rounded-full bg-[#63A2BB]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                                                    <span class="text-[#63A2BB] font-bold text-xs">{{ $i + 1 }}</span>
+                                                                                </div>
+                                                                                <p class="text-sm text-gray-600 flex-1">{{ $step }}</p>
+                                                                            </div>
+                                                                            @endforeach
+                                                                        </div>
+
+                                                                @elseif(optional($metode)->jenis === 'ewallet')
                                 @elseif(optional($metode)->jenis === 'ewallet')
                                     <div class="rounded-3xl border border-slate-200 bg-[#F8FAFB] p-5">
                                         <p class="text-sm text-slate-500">Silakan transfer menggunakan {{ optional($metode)->metode ?? 'metode pembayaran' }} ke nomor berikut:</p>

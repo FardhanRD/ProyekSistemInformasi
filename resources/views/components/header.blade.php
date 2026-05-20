@@ -89,7 +89,7 @@
 
                     <div x-show="open" x-cloak class="absolute right-0 mt-2 bg-white border rounded shadow-lg w-48">
                         <a href="{{ route('profile.index') }}" class="block px-4 py-2 hover:bg-gray-50">Profil Saya</a>
-                        <a href="{{ route('order.index') }}" class="block px-4 py-2 hover:bg-gray-50">Pesanan Saya</a>
+                        <a href="{{ route('orders.index') }}" class="block px-4 py-2 hover:bg-gray-50">Pesanan Saya</a>
                         <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 hover:bg-gray-50">Wishlist</a>
                         <form id="logout-form" method="POST" action="{{ route('logout') }}">
                             @csrf

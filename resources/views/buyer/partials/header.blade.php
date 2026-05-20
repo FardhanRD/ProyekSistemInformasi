@@ -104,7 +104,7 @@
                                 <p class="text-xs text-slate-500 truncate">{{ $userEmail }}</p>
                             </div>
                             <a href="{{ route('profile.index') }}" class="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-[#63A2BB]/5 hover:text-[#63A2BB]">Profil Saya</a>
-                            <a href="{{ route('order.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-[#63A2BB]/5 hover:text-[#63A2BB]">Pesanan Saya</a>
+                            <a href="{{ route('orders.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-[#63A2BB]/5 hover:text-[#63A2BB]">Pesanan Saya</a>
                             <a href="{{ route('wishlist.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-[#63A2BB]/5 hover:text-[#63A2BB]">Wishlist</a>
                             <form method="POST" action="{{ route('logout') }}" class="mt-1 border-t border-slate-100 pt-2">
                                 @csrf

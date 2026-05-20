@@ -5,7 +5,7 @@
     <div class="max-w-4xl mx-auto">
         <!-- Breadcrumb -->
         <div class="mb-6 flex items-center text-sm text-gray-500">
-            <a href="{{ route('order.index') }}" class="hover:text-blue-600 flex items-center gap-1">
+            <a href="{{ route('orders.index') }}" class="hover:text-blue-600 flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>

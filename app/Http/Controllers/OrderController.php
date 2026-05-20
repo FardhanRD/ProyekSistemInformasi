@@ -17,39 +17,42 @@ class OrderController extends Controller
         $user = Auth::user();
         if (! $user) return redirect('/login');
 
-        $buyer = Buyer::where('pengguna_id', $user->pengguna_id)->first();
-
-        $query = Transaksi::with([
-            'details.detailProduk.produk.images' => fn($q) => $q->where('urutan', 0),
-            'pembayaran',
-            'ekspedisi'
-        ]);
-        
-        if ($buyer) {
-            $query->where('pengguna_id', $user->pengguna_id);
-        } else {
-            $query->whereRaw('1=0'); // Return empty result
+        $buyer = $user->buyer;
+        if (!$buyer) {
+            return view('buyer.order.index', [
+                'transaksis' => collect(),
+                'orderCounts' => [],
+            ]);
         }
 
-        // Filter status
-        $currentStatus = $request->input('status', 'all');
-        if ($currentStatus !== 'all') {
+        // Get order counts for each status
+        $allStatuses = ['', 'menunggu_pembayaran', 'pembayaran_dikonfirmasi', 'diproses', 'dikirim', 'selesai', 'dibatalkan'];
+        $orderCounts = [];
+        
+        foreach ($allStatuses as $status) {
+            $query = Transaksi::where('pengguna_id', $user->pengguna_id);
+            if ($status !== '') {
+                $query->where('status', $status);
+            }
+            $orderCounts[$status] = $query->count();
+        }
+
+        // Get filtered orders
+        $query = Transaksi::where('pengguna_id', $user->pengguna_id)
+            ->with([
+                'details.detailProduk.produk.gambarUtama',
+                'pembayaran.metode',
+                'ekspedisi'
+            ]);
+        
+        $currentStatus = $request->input('status', '');
+        if ($currentStatus !== '') {
             $query->where('status', $currentStatus);
         }
 
-        // Filter tanggal
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('tanggal', [$request->start_date, $request->end_date]);
-        }
+        $transaksis = $query->orderBy('tanggal', 'desc')->get();
 
-        // Search kode transaksi
-        if ($request->filled('search')) {
-            $query->where('kode_transaksi', 'like', '%' . $request->search . '%');
-        }
-
-        $orders = $query->orderBy('tanggal', 'desc')->paginate(10); // Pagination 10 items per page
-
-        return view('buyer.order.index', compact('orders', 'currentStatus'));
+        return view('buyer.order.index', compact('transaksis', 'orderCounts'));
     }
 
     public function show($kode_transaksi)

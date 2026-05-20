@@ -83,10 +83,14 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile/alamat/{id}/utama', [ProfileController::class, 'setPrimaryAddress'])->name('alamat.utama');
 
     // Order & Tracking
-    Route::get('/orders', [OrderController::class, 'index'])->name('order.index');
-    Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('order.show');
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/tracking/{kode_transaksi}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/orders/{kode_transaksi}/tracking', [TrackingController::class, 'show'])->name('order.tracking');
+
+    // Rating for completed orders
+    Route::get('/orders/{kode_transaksi}/rating', [RatingController::class, 'show'])->name('orders.rating');
+    Route::post('/orders/{kode_transaksi}/rating', [RatingController::class, 'store'])->name('orders.rating.store');
 
     Route::get('/rating/produk/{produkId}', [RatingController::class, 'form'])->name('order.rating.produk');
     Route::post('/rating/produk/{produkId}', [RatingController::class, 'submit'])->name('rating.product.submit');

@@ -14,6 +14,22 @@
     $alamatUtama = $addresses->firstWhere('is_utama', 1) ?? $addresses->first();
     $metodeDefault = $metodesFlat->first();
 
+    $shippingGroups = $ekspedisis->groupBy('nama_ekspedisi')->map(function ($items, $namaEkspedisi) {
+        return [
+            'nama_ekspedisi' => $namaEkspedisi,
+            'items' => $items->values()->map(function ($e) {
+                return [
+                    'ekspedisi_id' => (int) ($e->ekspedisi_id ?? 0),
+                    'jenis_layanan' => (string) ($e->jenis_layanan ?? ''),
+                    'estimasi_hari' => (string) ($e->estimasi_hari ?? ''),
+                    'ongkir_flat' => (int) ($e->ongkir_flat ?? 0),
+                    'logo_url' => (string) ($e->logo_url ?? ''),
+                ];
+            })->all(),
+        ];
+    })->values();
+    $selectedShippingFirst = $shippingGroups->first()['items'][0] ?? null;
+
     $shippingMap = $ekspedisis->mapWithKeys(fn ($e) => [$e->ekspedisi_id => (float) ($e->ongkir_flat ?? 0)])->toArray();
     $subtotalServer = (float) ($subtotalProduk ?? 0);
     $ongkirServer = (float) ($shippingMap[$ekspedisiFirst->ekspedisi_id ?? 0] ?? 0);
@@ -22,7 +38,9 @@
     $checkoutState = [
         'subtotalProduk' => $subtotalServer,
         'shippingMap' => $shippingMap,
-        'selectedEkspedisi' => (int) ($ekspedisiFirst->ekspedisi_id ?? 0),
+        'shippingGroups' => $shippingGroups,
+        'selectedShippingGroupIndex' => 0,
+        'selectedShippingId' => (int) ($selectedShippingFirst['ekspedisi_id'] ?? ($ekspedisiFirst->ekspedisi_id ?? 0)),
         'selectedMetode' => (int) ($metodeDefault->metode_id ?? 0),
         'selectedAddress' => (int) ($alamatUtama->alamat_id ?? 0),
         'voucherId' => (int) (session('applied_voucher_id') ?? ($voucher->voucher_id ?? 0)),
@@ -138,22 +156,66 @@
                     </div>
 
                     <div class="space-y-3">
-                        @forelse($ekspedisis as $i => $eks)
-                            <label class="flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-200" x-bind:class="selectedEkspedisi === {{ $eks->ekspedisi_id }} ? 'border-[#63A2BB] bg-[#63A2BB]/5 shadow-sm shadow-[#63A2BB]/10' : 'border-slate-200 bg-white hover:border-[#63A2BB]/40'">
-                                <input type="radio" name="ekspedisi_id" value="{{ $eks->ekspedisi_id }}" x-model="selectedEkspedisi" @change="setOngkir({{ $eks->ongkir_flat ?? 0 }})" {{ $i === 0 ? 'checked' : '' }} class="accent-[#63A2BB]">
-                                <div class="flex-1">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div>
-                                            <p class="font-semibold text-slate-800">{{ $eks->nama_ekspedisi }} — {{ $eks->jenis_layanan }}</p>
-                                            <p class="mt-1 text-sm text-slate-500">Estimasi {{ $eks->estimasi_hari }} hari</p>
-                                        </div>
-                                        <div class="text-sm font-black text-[#63A2BB]">Rp {{ number_format((int) ($eks->ongkir_flat ?? 0), 0, ',', '.') }}</div>
-                                    </div>
+                        <details class="rounded-2xl border border-slate-200 bg-[#F8FAFB] p-4">
+                            <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
+                                <div>
+                                    <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Ekspedisi</div>
+                                    <div class="mt-1 font-semibold text-slate-900" x-text="selectedShippingGroupLabel || 'Pilih ekspedisi'"></div>
                                 </div>
-                            </label>
-                        @empty
-                            <div class="rounded-2xl border border-dashed border-slate-200 bg-[#F8FAFB] p-8 text-center text-sm text-slate-500">Ekspedisi belum tersedia.</div>
-                        @endforelse
+                                <svg class="h-5 w-5 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </summary>
+
+                            <div class="mt-4 space-y-2 border-t border-slate-200 pt-4">
+                                <template x-for="(group, groupIndex) in shippingGroups" :key="group.nama_ekspedisi">
+                                    <button type="button"
+                                            class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-[#63A2BB]/50 hover:bg-[#63A2BB]/5"
+                                            :class="selectedShippingGroupIndex === groupIndex ? 'border-[#63A2BB] bg-[#63A2BB]/5' : ''"
+                                            @click="selectShippingGroup(groupIndex)">
+                                        <div>
+                                            <div class="font-semibold text-slate-800" x-text="group.nama_ekspedisi"></div>
+                                            <div class="mt-1 text-xs text-slate-500" x-text="group.items.length + ' layanan tersedia'"></div>
+                                        </div>
+                                        <span class="text-xs font-bold text-[#63A2BB]">Pilih</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </details>
+
+                        <details class="rounded-2xl border border-slate-200 bg-[#F8FAFB] p-4">
+                            <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
+                                <div>
+                                    <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Layanan</div>
+                                    <div class="mt-1 font-semibold text-slate-900" x-text="selectedServiceLabel || 'Pilih layanan'"></div>
+                                </div>
+                                <svg class="h-5 w-5 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </summary>
+
+                            <div class="mt-4 space-y-2 border-t border-slate-200 pt-4">
+                                <template x-for="service in selectedShippingServices" :key="service.ekspedisi_id">
+                                    <button type="button"
+                                            class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-[#63A2BB]/50 hover:bg-[#63A2BB]/5"
+                                            :class="selectedShippingId === service.ekspedisi_id ? 'border-[#63A2BB] bg-[#63A2BB]/5' : ''"
+                                            @click="selectShippingService(service)">
+                                        <div class="flex items-start gap-3">
+                                            <template x-if="service.logo_url">
+                                                <img :src="service.logo_url" class="h-10 w-10 rounded-xl object-cover" alt="logo">
+                                            </template>
+                                            <div>
+                                                <div class="font-semibold text-slate-800">
+                                                    <span x-text="service.jenis_layanan"></span>
+                                                </div>
+                                                <div class="mt-1 text-xs text-slate-500">Estimasi <span x-text="service.estimasi_hari"></span> hari</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-sm font-black text-[#63A2BB]">Rp <span x-text="fmt(service.ongkir_flat)"></span></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </details>
                     </div>
                 </div>
 
@@ -167,13 +229,13 @@
                     </div>
 
                     <div class="space-y-5">
-                        @foreach(['Transfer Bank', 'E-Wallet', 'QRIS', 'COD'] as $jenisLabel)
+                        @foreach(['Virtual Account', 'E-Wallet', 'QRIS', 'COD'] as $jenisLabel)
                             @php
                                 $items = $metodesFlat->filter(function ($metode) use ($jenisLabel) {
                                     $jenis = strtolower((string) ($metode->jenis ?? ''));
                                     $nama = strtolower((string) ($metode->metode ?? ''));
 
-                                    if ($jenisLabel === 'Transfer Bank') {
+                                    if ($jenisLabel === 'Virtual Account') {
                                         return str_contains($jenis, 'transfer') || in_array($nama, ['bca', 'mandiri', 'bni']);
                                     }
 
@@ -330,14 +392,31 @@ function checkoutPage(state) {
     return {
         subtotalProduk: state.subtotalProduk,
         shippingMap: state.shippingMap || {},
-        selectedEkspedisi: state.selectedEkspedisi || 0,
+        shippingGroups: state.shippingGroups || [],
+        shippingOpen: false,
+        serviceOpen: false,
+        selectedShippingGroupIndex: Number(state.selectedShippingGroupIndex || 0),
+        selectedShippingId: Number(state.selectedShippingId || 0),
         selectedMetode: state.selectedMetode || 0,
         selectedAddress: state.selectedAddress || 0,
         biayaLayanan: 1000,
         voucherId: state.voucherId || 0,
         voucherDiscount: state.voucherDiscount || 0,
+        get selectedShippingGroup() {
+            return this.shippingGroups[this.selectedShippingGroupIndex] || null;
+        },
+        get selectedShippingServices() {
+            return this.selectedShippingGroup ? (this.selectedShippingGroup.items || []) : [];
+        },
+        get selectedShippingGroupLabel() {
+            return this.selectedShippingGroup ? this.selectedShippingGroup.nama_ekspedisi : '';
+        },
+        get selectedServiceLabel() {
+            const service = this.selectedShippingServices.find((item) => Number(item.ekspedisi_id) === Number(this.selectedShippingId));
+            return service ? service.jenis_layanan : '';
+        },
         get ongkir() {
-            return Number(this.shippingMap[this.selectedEkspedisi] || 0);
+            return Number(this.shippingMap[this.selectedShippingId] || 0);
         },
         get grandTotal() {
             return Math.max(0, (Number(this.subtotalProduk) + Number(this.ongkir) + Number(this.biayaLayanan)) - Number(this.voucherDiscount || 0));
@@ -350,20 +429,43 @@ function checkoutPage(state) {
                     this.$refs.voucher.value = this.voucherId || '';
                 }
             });
+
+            const initialGroupIndex = this.shippingGroups.findIndex((group) => {
+                return (group.items || []).some((item) => Number(item.ekspedisi_id) === Number(this.selectedShippingId));
+            });
+            this.selectedShippingGroupIndex = initialGroupIndex >= 0 ? initialGroupIndex : 0;
+            if (!this.selectedShippingId) {
+                const currentGroup = this.shippingGroups[this.selectedShippingGroupIndex];
+                const firstItem = currentGroup && currentGroup.items && currentGroup.items.length ? currentGroup.items[0] : null;
+                if (firstItem) {
+                    this.selectedShippingId = Number(firstItem.ekspedisi_id);
+                }
+            }
         },
         fmt(value) {
             return new Intl.NumberFormat('id-ID').format(Number(value || 0));
         },
-        setOngkir(val) {
-            this.selectedEkspedisi = Number(this.selectedEkspedisi || 0);
-            this.shippingMap[this.selectedEkspedisi] = Number(val || 0);
+        selectShippingGroup(index) {
+            this.selectedShippingGroupIndex = Number(index);
+            const group = this.shippingGroups[this.selectedShippingGroupIndex];
+            const firstItem = group && group.items && group.items.length ? group.items[0] : null;
+            if (firstItem) {
+                this.selectedShippingId = Number(firstItem.ekspedisi_id);
+            }
+            this.shippingOpen = false;
+            this.serviceOpen = true;
+        },
+        selectShippingService(service) {
+            this.selectedShippingId = Number(service.ekspedisi_id);
+            this.shippingOpen = false;
+            this.serviceOpen = false;
         },
         submitCheckout(event) {
             if (!this.selectedAddress) {
                 alert('Silakan pilih alamat pengiriman');
                 return;
             }
-            if (!this.selectedEkspedisi) {
+            if (!this.selectedShippingId) {
                 alert('Silakan pilih ekspedisi');
                 return;
             }
@@ -373,7 +475,7 @@ function checkoutPage(state) {
             }
 
             this.$refs.alamat.value = this.selectedAddress;
-            this.$refs.ekspedisi.value = this.selectedEkspedisi;
+            this.$refs.ekspedisi.value = this.selectedShippingId;
             this.$refs.metode.value = this.selectedMetode;
             this.$refs.voucher.value = this.voucherId || '';
             event.target.submit();
@@ -402,7 +504,7 @@ function voucherWidget() {
                     },
                     body: new URLSearchParams({
                         kode_voucher: this.kode,
-                        ekspedisi_id: document.querySelector('input[name="ekspedisi_id"]:checked')?.value || ''
+                        ekspedisi_id: this.selectedShippingId || ''
                     }),
                 });
 

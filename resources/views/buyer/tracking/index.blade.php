@@ -5,7 +5,7 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
   {{-- Breadcrumb --}}
   <div class="flex items-center gap-2 text-sm text-gray-400 mb-8">
-    <a href="{{ route('order.index') }}" 
+    <a href="{{ route('orders.index') }}" 
        class="flex items-center gap-1 hover:text-[#63A2BB] transition">
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M7.707 7.293a1 1 0 010 1.414L5.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"/>

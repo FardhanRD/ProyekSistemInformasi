@@ -18,6 +18,7 @@ class Pembayaran extends Model
         'tanggal_pembayaran',
         'bukti_pembayaran',
         'expired_at',
+        'nomor_va',
     ];
 
     public function transaksi()

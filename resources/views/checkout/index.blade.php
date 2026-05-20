@@ -22,6 +22,21 @@
             return $carry + ((float)($item->detail->harga ?? 0) * (int)($item->jumlah ?? 1));
         }, 0);
         $ekspedisiPertama = $ekspedisis->first();
+        $shippingGroups = $ekspedisis->groupBy('nama_ekspedisi')->map(function ($items, $namaEkspedisi) {
+            return [
+                'nama_ekspedisi' => $namaEkspedisi,
+                'items' => $items->values()->map(function ($e) {
+                    return [
+                        'ekspedisi_id' => (int) ($e->ekspedisi_id ?? 0),
+                        'jenis_layanan' => (string) ($e->jenis_layanan ?? ''),
+                        'estimasi_hari' => (string) ($e->estimasi_hari ?? ''),
+                        'ongkir_flat' => (int) ($e->ongkir_flat ?? 0),
+                        'logo_url' => (string) ($e->logo_url ?? ''),
+                    ];
+                })->all(),
+            ];
+        })->values();
+        $selectedShippingFirst = $shippingGroups->first()['items'][0] ?? null;
 
         // alias lebih ringkas untuk view yang mengharapkan 'subtotal'
         $subtotal = $subtotalProduk;
@@ -89,38 +104,72 @@
             <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
                 <h2 class="font-bold text-lg">C. Pilihan Ekspedisi & Layanan</h2>
 
-                @php
-                    // Pastikan ekpedisi termurah berada di urutan pertama
-                    $ekspedisisSorted = $ekspedisis; // Sudah diurutkan di controller
-                @endphp
-
                 <div class="mt-4 space-y-3">
-                    @foreach($ekspedisisSorted as $i => $e)
-                        <label class="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 cursor-pointer">
-                            <input type="radio"
-                                   name="ekspedisi_id"
-                                   value="{{ $e->ekspedisi_id }}"
-                                   x-model="selectedEkspedisi"
-                                   class="mt-1 accent-cyan-400"
-                                   {{ $i === 0 ? 'checked' : '' }} />
-                            <div class="flex-1">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <div class="font-semibold flex items-center gap-2">
-                                            @if(!empty($e->logo_url))
-                                                <img src="{{ $e->logo_url }}" class="w-6 h-6 rounded object-cover" alt="logo" />
-                                            @endif
-                                            {{ $e->nama_ekspedisi }} — {{ $e->jenis_layanan }}
-                                        </div>
-                                        <div class="text-sm text-slate-300 mt-1">Estimasi {{ $e->estimasi_hari }} hari</div>
-                                    </div>
-                                    <div class="text-sm font-bold text-white">
-                                        Rp {{ number_format((int)($e->ongkir_flat ?? 0),0,',','.') }}
-                                    </div>
-                                </div>
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <button type="button"
+                                class="flex w-full items-center justify-between gap-3 text-left"
+                                @click="shippingOpen = !shippingOpen; serviceOpen = false">
+                            <div>
+                                <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Ekspedisi</div>
+                                <div class="mt-1 font-semibold text-white" x-text="selectedShippingGroupLabel || 'Pilih ekspedisi'"></div>
                             </div>
-                        </label>
-                    @endforeach
+                            <svg class="h-5 w-5 text-slate-300 transition-transform" :class="shippingOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div x-show="shippingOpen" x-cloak class="mt-4 space-y-2 border-t border-white/10 pt-4">
+                            <template x-for="(group, groupIndex) in shippingGroups" :key="group.nama_ekspedisi">
+                                <button type="button"
+                                        class="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-cyan-400/50 hover:bg-cyan-400/10"
+                                        :class="selectedShippingGroupIndex === groupIndex ? 'border-cyan-400 bg-cyan-400/10' : ''"
+                                        @click="selectShippingGroup(groupIndex)">
+                                    <div>
+                                        <div class="font-semibold text-white" x-text="group.nama_ekspedisi"></div>
+                                        <div class="mt-1 text-xs text-slate-400" x-text="group.items.length + ' layanan tersedia'"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-cyan-300">Pilih</span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <button type="button"
+                                class="flex w-full items-center justify-between gap-3 text-left"
+                                @click="serviceOpen = !serviceOpen"
+                                :disabled="!selectedShippingGroup">
+                            <div>
+                                <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Layanan</div>
+                                <div class="mt-1 font-semibold text-white" x-text="selectedServiceLabel || 'Pilih layanan'"></div>
+                            </div>
+                            <svg class="h-5 w-5 text-slate-300 transition-transform" :class="serviceOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div x-show="serviceOpen && selectedShippingGroup" x-cloak class="mt-4 space-y-2 border-t border-white/10 pt-4">
+                            <template x-for="service in selectedShippingServices" :key="service.ekspedisi_id">
+                                <button type="button"
+                                        class="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-cyan-400/50 hover:bg-cyan-400/10"
+                                        :class="selectedShippingId === service.ekspedisi_id ? 'border-cyan-400 bg-cyan-400/10' : ''"
+                                        @click="selectShippingService(service)">
+                                    <div class="flex items-start gap-3">
+                                        <template x-if="service.logo_url">
+                                            <img :src="service.logo_url" class="h-10 w-10 rounded-xl object-cover" alt="logo">
+                                        </template>
+                                        <div>
+                                            <div class="font-semibold text-white">
+                                                <span x-text="service.jenis_layanan"></span>
+                                            </div>
+                                            <div class="mt-1 text-xs text-slate-400">Estimasi <span x-text="service.estimasi_hari"></span> hari</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-bold text-white">Rp <span x-text="fmt(service.ongkir_flat)"></span></div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -291,16 +340,33 @@
             // Data dari PHP
             subtotalProduk: subtotalProduk,
             ekspedisiList: {!! $ekspedisis->mapWithKeys(fn($e) => [$e->ekspedisi_id => (int)$e->ongkir_flat])->toJson() !!},
+            shippingGroups: {!! $shippingGroups->toJson() !!},
 
             // State reaktif
-            selectedEkspedisi: initialEkspedisiId,
+            shippingOpen: false,
+            serviceOpen: false,
+            selectedShippingGroupIndex: 0,
+            selectedShippingId: initialEkspedisiId,
             diskonVoucher: 0,
             voucherId: null,
             biayaLayanan: 1000,
 
             // Computed properties
+            get selectedShippingGroup() {
+                return this.shippingGroups[this.selectedShippingGroupIndex] || null;
+            },
+            get selectedShippingServices() {
+                return this.selectedShippingGroup ? (this.selectedShippingGroup.items || []) : [];
+            },
+            get selectedShippingGroupLabel() {
+                return this.selectedShippingGroup ? this.selectedShippingGroup.nama_ekspedisi : '';
+            },
+            get selectedServiceLabel() {
+                const service = this.selectedShippingServices.find((item) => Number(item.ekspedisi_id) === Number(this.selectedShippingId));
+                return service ? service.jenis_layanan : '';
+            },
             get ongkir() {
-                return this.ekspedisiList[this.selectedEkspedisi] || 0;
+                return this.ekspedisiList[this.selectedShippingId] || 0;
             },
             get grandTotal() {
                 return Math.max(0, (this.subtotalProduk + this.ongkir + this.biayaLayanan) - this.diskonVoucher);
@@ -309,10 +375,20 @@
             // Inisialisasi
             init() {
                 // Dengar event dari komponen voucher
-                this.$watch('selectedEkspedisi', (val) => {
+                this.$watch('selectedShippingId', (val) => {
                     // Jika ada voucher ongkir, perlu re-apply
                     console.log('Ekspedisi berubah, ongkir baru: ', this.ongkir);
                 });
+
+                const initialGroupIndex = this.shippingGroups.findIndex((group) => {
+                    return (group.items || []).some((item) => Number(item.ekspedisi_id) === Number(initialEkspedisiId));
+                });
+                this.selectedShippingGroupIndex = initialGroupIndex >= 0 ? initialGroupIndex : 0;
+                const currentGroup = this.shippingGroups[this.selectedShippingGroupIndex];
+                const firstItem = currentGroup && currentGroup.items && currentGroup.items.length ? currentGroup.items[0] : null;
+                if (!this.selectedShippingId && firstItem) {
+                    this.selectedShippingId = firstItem.ekspedisi_id;
+                }
 
                 // baca nilai voucher awal dari hidden input bila ada
                 this.voucherId = document.querySelector('input[name="voucher_id"]')?.value || null;
@@ -327,18 +403,34 @@
             fmt(n) { return formatRupiah(n); },
 
             // Aksi
+            selectShippingGroup(index) {
+                this.selectedShippingGroupIndex = Number(index);
+                const group = this.shippingGroups[this.selectedShippingGroupIndex];
+                const firstItem = group && group.items && group.items.length ? group.items[0] : null;
+                if (firstItem) {
+                    this.selectedShippingId = Number(firstItem.ekspedisi_id);
+                }
+                this.shippingOpen = false;
+                this.serviceOpen = true;
+            },
+
+            selectShippingService(service) {
+                this.selectedShippingId = Number(service.ekspedisi_id);
+                this.shippingOpen = false;
+                this.serviceOpen = false;
+            },
+
             submitCheckout(event) {
                 const alamat = document.querySelector('input[name="alamat_id"]:checked');
-                const ekspedisi = document.querySelector('input[name="ekspedisi_id"]:checked');
                 const metode = document.querySelector('input[name="metode_id"]:checked');
 
                 if (!alamat) { alert('Silakan pilih alamat pengiriman'); return; }
-                if (!ekspedisi) { alert('Silakan pilih ekspedisi'); return; }
+                if (!this.selectedShippingId) { alert('Silakan pilih ekspedisi'); return; }
                 if (!metode) { alert('Silakan pilih metode pembayaran'); return; }
 
                 // Sinkronkan nilai ke hidden input sebelum submit
                 this.$refs.alamat.value = alamat.value;
-                this.$refs.ekspedisi.value = ekspedisi.value;
+                this.$refs.ekspedisi.value = this.selectedShippingId;
                 this.$refs.metode.value = metode.value;
                 if(this.$refs && this.$refs.voucher) this.$refs.voucher.value = this.voucherId || '';
 
@@ -386,7 +478,7 @@
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                             'Accept':'application/json'
                         },
-                        body: new URLSearchParams({kode_voucher: this.kode, ekspedisi_id: document.querySelector('input[name="ekspedisi_id"]:checked')?.value || ''})
+                        body: new URLSearchParams({kode_voucher: this.kode, ekspedisi_id: this.selectedShippingId || ''})
                     });
                     const data = await resp.json();
                     if(!resp.ok || !data.valid){

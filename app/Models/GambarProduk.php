@@ -24,15 +24,27 @@ class GambarProduk extends Model
         return $this->belongsTo(Produk::class, 'produk_id', 'produk_id');
     }
 
-    public function getUrlLengkapAttribute()
+    protected function resolveUrlGambar(): ?string
     {
-        // Check if url_gambar is already an external URL
+        if (empty($this->url_gambar)) {
+            return null;
+        }
+
         if (str_starts_with($this->url_gambar, 'http://') || str_starts_with($this->url_gambar, 'https://')) {
             return $this->url_gambar;
         }
-        
-        // Otherwise, treat it as a local storage path
-        return Storage::url($this->url_gambar);
+
+        return Storage::url(ltrim($this->url_gambar, '/'));
+    }
+
+    public function getUrlLengkapAttribute()
+    {
+        return $this->resolveUrlGambar();
+    }
+
+    public function getUrlSafeAttribute()
+    {
+        return $this->resolveUrlGambar();
     }
 }
 

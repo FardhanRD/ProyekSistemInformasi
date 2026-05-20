@@ -28,8 +28,6 @@
 
 <div class="space-y-6">
     <div>
-        <div class="text-xs font-semibold text-cyan-300">KERANJANG</div>
-        <h1 class="text-2xl md:text-3xl font-black">Keranjang Belanja</h1>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8"
      x-data="{
        items: @js($cartItems),
