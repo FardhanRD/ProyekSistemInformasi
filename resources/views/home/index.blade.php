@@ -5,19 +5,19 @@
 
 @extends('layouts.buyer')
 
-@section('title','Home')
+@section('title', __('ui.home'))
 
 @section('content')
 <div class="p-4 p-md-5 mb-4 bg-white rounded-3 shadow-sm">
     <div class="container-fluid py-2">
-        <h1 class="display-6 fw-bold mb-2">Selamat datang di MOVR</h1>
-        <p class="col-md-8 fs-5 text-muted mb-0">Temukan produk terbaik, checkout cepat, voucher diskon, dan tracking pesanan dalam satu tempat.</p>
+        <h1 class="display-6 fw-bold mb-2">{{ __('ui.home_welcome') }}</h1>
+        <p class="col-md-8 fs-5 text-muted mb-0">{{ __('ui.home_subtitle') }}</p>
     </div>
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0">Produk Unggulan</h2>
-    <a href="{{ url('/produk') }}" class="text-decoration-none">Lihat semua</a>
+    <h2 class="h4 mb-0">{{ __('ui.featured_products') }}</h2>
+    <a href="{{ url('/produk') }}" class="text-decoration-none">{{ __('ui.view_all') }}</a>
 </div>
 
 <div class="row g-3">
@@ -41,12 +41,12 @@
         </div>
     @empty
         <div class="col-12">
-            <div class="alert alert-warning mb-0">Belum ada produk unggulan.</div>
+            <div class="alert alert-warning mb-0">{{ __('ui.no_featured_products') }}</div>
         </div>
     @endforelse
 </div>
 
-<h2>Kategori</h2>
+<h2>{{ __('ui.categories') }}</h2>
 <div class="row g-3">
     @foreach($categories as $c)
         <div class="col-6 col-md-4 col-lg-3">
@@ -54,7 +54,7 @@
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body">
                         <div class="fw-semibold">{{ $c->nama_kategori }}</div>
-                        <div class="text-muted small">Buka kategori</div>
+                        <div class="text-muted small">{{ __('ui.open_category') }}</div>
                     </div>
                 </div>
             </a>

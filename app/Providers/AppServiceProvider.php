@@ -17,7 +17,6 @@ use App\Models\SupplierOrderDetail;
 use App\Models\Transaksi;
 use App\Models\TrackingLog;
 use App\Models\Voucher;
-use App\Models\Notifikasi;
 use App\Observers\AdminActivityObserver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -62,21 +61,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Share top-level active categories (with children) to all views
         try {
-            View::composer('layouts.admin', function ($view) {
-                $notifikasi = collect();
-
-                if (auth()->check() && Schema::hasTable('notifikasi')) {
-                    $notifikasi = Notifikasi::with('pengguna')
-                        ->where('pengguna_id', auth()->user()->pengguna_id)
-                        ->where('is_read', 0)
-                        ->orderBy('created_at', 'desc')
-                        ->limit(5)
-                        ->get();
-                }
-
-                $view->with('notifikasi', $notifikasi);
-            });
-
             $menuKategori = Kategori::with(['children.children'])
                 ->whereNull('parent_id')
                 ->where('is_active', 1)

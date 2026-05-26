@@ -191,28 +191,7 @@
                             </div>
                         </div>
 
-                        @if($pembayaran->status_pembayaran === 'menunggu_konfirmasi')
-                            @if(!in_array(optional($metode)->jenis, ['cod', 'qris']))
-                                <div class="rounded-3xl border border-slate-200 bg-[#F8FAFB] p-5">
-                                    <h3 class="text-lg font-black text-slate-900">Upload Bukti Pembayaran</h3>
-                                    <p class="mt-2 text-sm text-slate-500">Silakan upload bukti pembayaran Anda untuk verifikasi.</p>
-                                    <form action="{{ route('payment.upload_proof', $transaksi->kode_transaksi) }}" method="POST" enctype="multipart/form-data" class="mt-4">
-                                        @csrf
-                                        <label class="block cursor-pointer rounded-3xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-all duration-200 hover:border-[#63A2BB] hover:shadow-lg hover:shadow-[#63A2BB]/10">
-                                            <input type="file" name="bukti_pembayaran" class="hidden" accept="image/*" required>
-                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#63A2BB]/10 text-[#63A2BB]">
-                                                <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                                </svg>
-                                            </div>
-                                            <p class="mt-3 text-sm font-semibold text-slate-700">Klik untuk memilih file bukti transfer</p>
-                                            <p class="mt-1 text-xs text-slate-400">Format JPG, JPEG, PNG. Maksimal 5MB.</p>
-                                        </label>
-                                        <button type="submit" class="btn-primary mt-4 w-full justify-center px-6 py-3 text-sm">Konfirmasi Pembayaran</button>
-                                    </form>
-                                </div>
-                            @endif
-                        @elseif($pembayaran->status_pembayaran === 'berhasil')
+                        @if($pembayaran->status_pembayaran === 'berhasil')
                             <div class="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-800">
                                 <p class="font-black">Pembayaran Berhasil</p>
                                 <p class="mt-2 text-sm">Pembayaran Anda telah dikonfirmasi. Pesanan akan segera diproses dan dikirimkan.</p>
@@ -229,7 +208,7 @@
             </div>
             <div class="lg:col-span-4">
                 <div class="card-surface p-6">
-                    <h3 class="mb-4 text-lg font-black text-slate-900">Ringkasan Pesanan</h3>
+                    <h3 class="mb-4 text-lg font-black text-slate-900">{{ __('ui.summary') }}</h3>
                     <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
                         @php $detailItems = $transaksi->transaksiDetail ?? [];
                         @endphp
@@ -250,16 +229,142 @@
                     </div>
 
                     <div class="mt-5 space-y-2 border-t border-slate-200 pt-5 text-sm">
-                        <div class="flex justify-between text-slate-600"><span>Subtotal Produk</span><span>Rp {{ number_format($transaksi->subtotal, 0, ',', '.') }}</span></div>
-                        <div class="flex justify-between text-slate-600"><span>Ongkos Kirim</span><span>Rp {{ number_format($transaksi->ongkos_kirim, 0, ',', '.') }}</span></div>
+                        <div class="flex justify-between text-slate-600"><span>{{ __('ui.cart_products_subtotal') }}</span><span>Rp {{ number_format($transaksi->subtotal, 0, ',', '.') }}</span></div>
+                        <div class="flex justify-between text-slate-600"><span>{{ __('ui.cart_shipping_cost') }}</span><span>Rp {{ number_format($transaksi->ongkos_kirim, 0, ',', '.') }}</span></div>
                         @if($transaksi->diskon_voucher > 0)
-                            <div class="flex justify-between text-emerald-600"><span>Diskon Voucher</span><span>- Rp {{ number_format($transaksi->diskon_voucher, 0, ',', '.') }}</span></div>
+                            <div class="flex justify-between text-emerald-600"><span>{{ __('ui.voucher_discount') }}</span><span>- Rp {{ number_format($transaksi->diskon_voucher, 0, ',', '.') }}</span></div>
                         @endif
                         <div class="flex justify-between border-t border-slate-200 pt-2 text-lg font-black text-slate-900"><span>Total Belanja</span><span class="text-[#63A2BB]">Rp {{ number_format($transaksi->total_harga, 0, ',', '.') }}</span></div>
                     </div>
 
-                    @if(!$isExpired && in_array($pembayaran->status_pembayaran, ['menunggu', 'menunggu_konfirmasi']))
-                        <form action="{{ route('payment.confirm', $transaksi->kode_transaksi) }}" method="POST" class="mt-5">
+                                        @if(!$isExpired && in_array($pembayaran->status_pembayaran, ['menunggu', 'menunggu_konfirmasi']))
+                                                <div class="mb-4">
+                                                        <p class="mb-3 flex items-center gap-2 text-sm font-bold text-gray-700">
+                                                                <svg class="h-4 w-4 text-[#63A2BB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                                </svg>
+                                                                Upload Bukti Pembayaran
+                                                        </p>
+
+                                                        <div x-data="{
+                                                                     preview: null,
+                                                                     fileName: '',
+                                                                     uploading: false,
+                                                                     uploaded: false,
+                                                                     handleFile(e) {
+                                                                         const f = e.target.files[0];
+                                                                         if (!f) return;
+                                                                         if (f.size > 5 * 1024 * 1024) {
+                                                                             showToast('Ukuran file maksimal 5MB', 'error');
+                                                                             return;
+                                                                         }
+                                                                         this.fileName = f.name;
+                                                                         const r = new FileReader();
+                                                                         r.onload = ev => this.preview = ev.target.result;
+                                                                         r.readAsDataURL(f);
+                                                                     },
+                                                                     async upload() {
+                                                                         if (!this.preview) return;
+                                                                         this.uploading = true;
+                                                                         const formData = new FormData();
+                                                                         formData.append('bukti_pembayaran', this.$refs.fileInput.files[0]);
+                                                                         formData.append('_token', '{{ csrf_token() }}');
+                                                                         try {
+                                                                             const res = await fetch('{{ route('payment.upload-proof', $transaksi->kode_transaksi) }}', { method: 'POST', body: formData });
+                                                                             const data = await res.json();
+                                                                             if (data.success) {
+                                                                                 this.uploaded = true;
+                                                                                 showToast('✅ Bukti pembayaran berhasil dikirim!');
+                                                                             } else {
+                                                                                 showToast(data.message ?? 'Gagal upload', 'error');
+                                                                             }
+                                                                         } catch(e) {
+                                                                             showToast('Terjadi kesalahan', 'error');
+                                                                         } finally {
+                                                                             this.uploading = false;
+                                                                         }
+                                                                     }
+                                                                 }">
+
+                                                                <div x-show="!uploaded">
+                                                                        <div @click="$refs.fileInput.click()"
+                                                                                 :class="preview ? 'border-[#63A2BB] bg-[#63A2BB]/5' : 'border-gray-200 hover:border-[#63A2BB]'"
+                                                                                 class="cursor-pointer rounded-2xl border-2 border-dashed p-4 text-center transition-all duration-200">
+
+                                                                                <input type="file"
+                                                                                             x-ref="fileInput"
+                                                                                             accept="image/jpeg,image/jpg,image/png"
+                                                                                             class="hidden"
+                                                                                             @change="handleFile($event)">
+
+                                                                                <div x-show="preview" x-cloak>
+                                                                                        <img :src="preview"
+                                                                                                 class="mx-auto mb-2 max-h-32 rounded-xl object-contain">
+                                                                                        <p x-text="fileName"
+                                                                                             class="truncate text-xs text-gray-500"></p>
+                                                                                </div>
+
+                                                                                <div x-show="!preview">
+                                                                                        <svg class="mx-auto mb-2 h-8 w-8 text-gray-300"
+                                                                                                 fill="none" stroke="currentColor"
+                                                                                                 viewBox="0 0 24 24">
+                                                                                                <path stroke-linecap="round"
+                                                                                                            stroke-linejoin="round" stroke-width="1.5"
+                                                                                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                                                        </svg>
+                                                                                        <p class="text-xs text-gray-500">
+                                                                                                Klik untuk pilih foto bukti transfer
+                                                                                        </p>
+                                                                                        <p class="mt-1 text-[11px] text-gray-400">
+                                                                                                JPG, PNG · Maks 5MB
+                                                                                        </p>
+                                                                                </div>
+                                                                        </div>
+
+                                                                        <button x-show="preview" x-cloak
+                                                                                        @click="upload()"
+                                                                                        :disabled="uploading"
+                                                                                        :class="uploading ? 'cursor-not-allowed opacity-60' : 'hover:-translate-y-0.5 hover:shadow-md'"
+                                                                                        class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#63A2BB] py-3 text-sm font-bold text-white transition-all duration-200">
+                                                                                <svg x-show="uploading"
+                                                                                         class="h-4 w-4 animate-spin"
+                                                                                         fill="none" viewBox="0 0 24 24">
+                                                                                        <circle class="opacity-25" cx="12" cy="12"
+                                                                                                        r="10" stroke="currentColor" stroke-width="4"/>
+                                                                                        <path class="opacity-75" fill="currentColor"
+                                                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                                                                </svg>
+                                                                                <svg x-show="!uploading" class="h-4 w-4"
+                                                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                    stroke-width="2"
+                                                                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                                                </svg>
+                                                                                <span x-text="uploading ? 'Mengirim...' : 'Kirim Bukti'"></span>
+                                                                        </button>
+                                                                </div>
+
+                                                                <div x-show="uploaded" x-cloak
+                                                                         class="flex items-center gap-3 rounded-2xl border-2 border-green-200 bg-green-50 p-4">
+                                                                        <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-500">
+                                                                                <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                    stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                                                </svg>
+                                                                        </div>
+                                                                        <div>
+                                                                                <p class="text-sm font-bold text-green-700">
+                                                                                        Bukti berhasil dikirim
+                                                                                </p>
+                                                                                <p class="text-xs text-green-600">
+                                                                                        Menunggu konfirmasi admin
+                                                                                </p>
+                                                                        </div>
+                                                                </div>
+                                                        </div>
+                                                </div>
+
+                                                <form action="{{ route('payment.confirm', $transaksi->kode_transaksi) }}" method="POST" class="mt-5">
                             @csrf
                             <button type="submit" class="btn-primary inline-flex w-full justify-center px-5 py-3 text-sm">Konfirmasi Pembayaran</button>
                         </form>

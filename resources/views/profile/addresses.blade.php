@@ -5,9 +5,9 @@
     <div class="row">
         <div class="col-md-8 mx-auto">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Alamat Pengiriman Saya</h2>
+                <h2>{{ __('ui.profile_addresses') }}</h2>
                 <a href="{{ route('profile.address.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Tambah Alamat
+                    <i class="fas fa-plus"></i> {{ __('ui.add_address') }}
                 </a>
             </div>
 
@@ -27,7 +27,7 @@
 
             @if($addresses->isEmpty())
                 <div class="alert alert-info text-center">
-                    <p class="mb-0">Belum ada alamat tersimpan. <a href="{{ route('profile.address.create') }}">Tambahkan alamat baru</a></p>
+                    <p class="mb-0">{{ __('ui.no_address') }} <a href="{{ route('profile.address.create') }}">{{ __('ui.add_new_address') }}</a></p>
                 </div>
             @else
                 <div class="row">
@@ -38,7 +38,7 @@
                                     <span>
                                         <strong>{{ $address->label }}</strong>
                                         @if($address->is_utama)
-                                            <span class="badge bg-success ms-2">Utama</span>
+                                            <span class="badge bg-success ms-2">{{ __('ui.default_address') }}</span>
                                         @endif
                                     </span>
                                 </div>
@@ -54,12 +54,12 @@
                                 </div>
                                 <div class="card-footer bg-light d-flex gap-2">
                                     <a href="{{ route('profile.address.edit', $address->alamat_id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i> Ubah
+                                        <i class="fas fa-edit"></i> {{ __('ui.edit') }}
                                     </a>
                                     <form action="{{ route('profile.address.delete', $address->alamat_id) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Yakin ingin menghapus alamat ini?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ __('ui.address_confirm_delete') }}')">
                                             <i class="fas fa-trash"></i> Hapus
                                         </button>
                                     </form>
@@ -72,7 +72,7 @@
 
             <div class="mt-4">
                 <a href="{{ route('profile.index') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Kembali ke Profil
+                    <i class="fas fa-arrow-left"></i> {{ __('ui.back_to_profile') }}
                 </a>
             </div>
         </div>

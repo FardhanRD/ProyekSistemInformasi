@@ -3,7 +3,7 @@
   Header + Footer wrapper sesuai spec MOVR (Tailwind + Alpine).
 --}}
 <!doctype html>
-<html lang="id">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -74,11 +74,11 @@
             <div class="relative h-full w-80 max-w-[85vw] bg-white border-r border-[#63a2bb]/30 p-4 overflow-y-auto shadow-xl">
                 <div class="flex items-center justify-between">
                     <a href="{{ route('home') }}" class="text-xl font-black tracking-wide text-[#63a2bb] no-underline">MOVR</a>
-                    <button type="button" class="rounded-full border border-[#63a2bb]/35 px-3 py-1 text-sm text-slate-700 hover:bg-[#63a2bb]/10" @click="drawerOpen=false">Tutup</button>
+                    <button type="button" class="rounded-full border border-[#63a2bb]/35 px-3 py-1 text-sm text-slate-700 hover:bg-[#63a2bb]/10" @click="drawerOpen=false">{{ __('ui.close') }}</button>
                 </div>
 
                 <div class="mt-4">
-                    <div class="text-sm font-semibold text-slate-700 mb-2">Mega Menu</div>
+                    <div class="text-sm font-semibold text-slate-700 mb-2">{{ __('ui.mega_menu') }}</div>
                     <div class="space-y-2">
                         @php
                             $level1 = \App\Models\Kategori::whereNull('parent_id')->where('level',1)->orderBy('urutan')->get();
@@ -92,26 +92,26 @@
                 </div>
 
                 <div class="mt-5">
-                    <div class="text-sm font-semibold text-slate-700 mb-2">Pencarian</div>
+                    <div class="text-sm font-semibold text-slate-700 mb-2">{{ __('ui.search') }}</div>
                     <form method="get" action="{{ url('/search') }}" class="flex gap-2">
-                        <input class="w-full rounded-xl border border-[#63a2bb]/25 bg-white px-3 py-2 text-sm outline-none focus:border-[#63a2bb]" placeholder="Cari produk..." name="q" />
-                        <button class="rounded-xl bg-[#63a2bb] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f90aa]" type="submit">Cari</button>
+                        <input class="w-full rounded-xl border border-[#63a2bb]/25 bg-white px-3 py-2 text-sm outline-none focus:border-[#63a2bb]" placeholder="{{ __('ui.search_products') }}" name="q" />
+                        <button class="rounded-xl bg-[#63a2bb] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f90aa]" type="submit">{{ __('ui.search') }}</button>
                     </form>
                 </div>
 
                 <div class="mt-5">
                     <div class="flex items-center gap-3">
-                        <a class="rounded-full border border-[#63a2bb]/35 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('wishlist.index') }}">Wishlist</a>
-                        <a class="rounded-full border border-[#63a2bb]/35 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('cart.index') }}">Keranjang</a>
+                        <a class="rounded-full border border-[#63a2bb]/35 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('wishlist.index') }}">{{ __('ui.wishlist') }}</a>
+                        <a class="rounded-full border border-[#63a2bb]/35 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('cart.index') }}">{{ __('ui.cart') }}</a>
                     </div>
                 </div>
 
                 <div class="mt-5">
                     @guest
-                        <a class="block rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('login') }}">Login</a>
-                        <a class="block rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm mt-2 hover:bg-[#63a2bb]/10" href="{{ route('register') }}">Register</a>
+                        <a class="block rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('login') }}">{{ __('ui.login') }}</a>
+                        <a class="block rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm mt-2 hover:bg-[#63a2bb]/10" href="{{ route('register') }}">{{ __('ui.register') }}</a>
                     @else
-                        <a class="block rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('profile.index') }}">Profil</a>
+                        <a class="block rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm hover:bg-[#63a2bb]/10" href="{{ route('profile.index') }}">{{ __('ui.profile') }}</a>
                         <form method="post" action="{{ route('logout') }}" class="mt-2">
                             @csrf
                             <button type="submit" class="w-full rounded-xl border border-[#63a2bb]/25 px-3 py-2 text-sm hover:bg-[#63a2bb]/10">Logout</button>
@@ -133,7 +133,7 @@
                         <div class="hidden md:block">
                             <div class="relative" @mouseleave="categoryHover=false">
                                 <button type="button" class="rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-[#63a2bb]/20" @mouseenter="categoryHover=true" @click.prevent>
-                                    Kategori
+                                    {{ __('ui.categories') }}
                                 </button>
 
                                 <div class="absolute left-0 mt-3 w-[560px] bg-white border border-[#63a2bb]/25 rounded-2xl p-4 shadow-xl" x-show="categoryHover" x-cloak>
@@ -179,8 +179,8 @@
                     {{-- Search --}}
                     <div class="hidden lg:flex items-center flex-1 justify-center px-6">
                         <form method="get" action="{{ url('/search') }}" class="w-full max-w-xl flex gap-2">
-                            <input class="w-full rounded-full border border-[#63a2bb]/25 bg-white px-4 py-2 text-sm outline-none focus:border-[#63a2bb]" name="q" placeholder="Cari nama produk..." />
-                            <button class="rounded-full bg-[#63a2bb] px-5 py-2 text-sm font-semibold text-white hover:bg-[#4f90aa]" type="submit">Cari</button>
+                            <input class="w-full rounded-full border border-[#63a2bb]/25 bg-white px-4 py-2 text-sm outline-none focus:border-[#63a2bb]" name="q" placeholder="{{ __('ui.search_placeholder') }}" />
+                            <button class="rounded-full bg-[#63a2bb] px-5 py-2 text-sm font-semibold text-white hover:bg-[#4f90aa]" type="submit">{{ __('ui.search') }}</button>
                         </form>
                     </div>
 
@@ -200,20 +200,16 @@
                             <span data-cart-badge x-text="counts.cart" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center" x-bind:class="{'hidden': counts.cart == 0}"></span>
                         </a>
 
+                        <div class="hidden sm:flex items-center rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold">
+                            <a href="{{ route('language.switch', 'id') }}" class="rounded-full px-3 py-1.5 {{ app()->getLocale() === 'id' ? 'bg-[#63a2bb] text-white' : 'text-slate-600 hover:bg-slate-100' }}">ID</a>
+                            <a href="{{ route('language.switch', 'en') }}" class="rounded-full px-3 py-1.5 {{ app()->getLocale() === 'en' ? 'bg-[#63a2bb] text-white' : 'text-slate-600 hover:bg-slate-100' }}">EN</a>
+                        </div>
+
                         <div class="relative hidden sm:block">
                             @guest
-                                <a href="{{ route('login') }}" class="rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-4 py-2 text-sm hover:bg-[#63a2bb]/20">Login</a>
+                                <a href="{{ route('login') }}" class="rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-4 py-2 text-sm hover:bg-[#63a2bb]/20">{{ __('ui.login') }}</a>
                             @else
-                                <div class="flex items-center gap-2">
-                                    <button type="button" @click="profileOpen=!profileOpen" class="rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-4 py-2 text-sm hover:bg-[#63a2bb]/20">Profil</button>
-                                    <div x-show="profileOpen" x-cloak @click.away="profileOpen=false" class="absolute right-0 mt-2 w-44 bg-white border border-[#63a2bb]/25 rounded-xl p-2 shadow-lg">
-                                        <a href="{{ route('profile.index') }}" class="block px-3 py-2 text-sm hover:bg-[#63a2bb]/10 rounded-lg">Data Diri</a>
-                                        <form method="post" action="{{ route('logout') }}">
-                                            @csrf
-                                            <button type="submit" class="w-full text-left block px-3 py-2 text-sm hover:bg-[#63a2bb]/10 rounded-lg">Logout</button>
-                                        </form>
-                                    </div>
-                                </div>
+                                <a href="{{ route('profile.index') }}" class="rounded-full border border-[#63a2bb]/35 bg-[#63a2bb]/10 px-4 py-2 text-sm hover:bg-[#63a2bb]/20">{{ __('ui.profile') }}</a>
                             @endguest
                         </div>
                     </div>

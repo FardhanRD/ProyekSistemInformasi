@@ -1,5 +1,5 @@
 @extends('layouts.buyer')
-@section('title', 'Lacak Pesanan — MOVR')
+@section('title', __('ui.tracking_title') . ' — MOVR')
 @section('content')
 
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -10,18 +10,18 @@
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M7.707 7.293a1 1 0 010 1.414L5.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"/>
       </svg>
-      Kembali
+      {{ __('ui.tracking_back') }}
     </a>
     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
       <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
     </svg>
     <span class="text-gray-700 font-medium">
-      Lacak Pesanan
+      {{ __('ui.tracking_title') }}
     </span>
   </div>
 
   <h1 class="text-3xl font-black text-gray-900 mb-8">
-    Lacak Pengiriman
+    {{ __('ui.tracking_shipping') }}
   </h1>
 
   {{-- Header Card --}}
@@ -29,9 +29,9 @@
               text-white rounded-3xl p-8 mb-8 shadow-lg">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <p class="text-sm opacity-90 mb-1">Kurir Pengiriman</p>
+        <p class="text-sm opacity-90 mb-1">{{ __('ui.tracking_courier') }}</p>
         <h2 class="text-2xl font-black mb-3">
-          {{ $ekspedisi->nama_ekspedisi ?? 'Kurir' }}
+          {{ $ekspedisi->nama_ekspedisi ?? __('ui.tracking_courier') }}
         </h2>
         <div class="space-y-2">
           @if($pesanan?->no_resi)
@@ -40,7 +40,7 @@
                         font-mono text-sm font-bold">
               {{ $pesanan->no_resi }}
             </code>
-            <button onclick="navigator.clipboard.writeText('{{ $pesanan->no_resi }}').then(() => showToast('Resi disalin'))"
+                <button onclick="navigator.clipboard.writeText('{{ $pesanan->no_resi }}').then(() => showToast(@json(__('ui.tracking_resi_copied'))))"
                     class="p-1 hover:bg-white/20 rounded transition">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -50,19 +50,19 @@
           </div>
           @endif
           <p class="text-sm opacity-90">
-            {{ $ekspedisi->jenis_layanan ?? 'Layanan Standar' }}
+            {{ $ekspedisi->jenis_layanan ?? __('ui.standard_service') }}
           </p>
         </div>
       </div>
 
       <div class="md:text-right">
-        <p class="text-sm opacity-90 mb-1">Estimasi Tiba</p>
+        <p class="text-sm opacity-90 mb-1">{{ __('ui.tracking_eta') }}</p>
         <p class="text-2xl font-black mb-3">
           {{ $pesanan?->estimasi_tiba ? \Carbon\Carbon::parse($pesanan->estimasi_tiba)->locale('id')->format('d M Y') : '-' }}
         </p>
         <span class="inline-block bg-white/20 text-white px-4 py-1.5 
                      rounded-full text-xs font-bold">
-          {{ $pesanan?->status ?? 'Dalam Proses' }}
+          {{ $pesanan?->status ?? __('ui.shipping_in_process') }}
         </span>
       </div>
     </div>
@@ -87,14 +87,14 @@
       </div>
       <div>
         <h3 class="text-sm font-bold text-gray-500 uppercase mb-2">
-          Alamat Tujuan
+          {{ __('ui.tracking_destination') }}
         </h3>
         <p class="font-bold text-gray-900 mb-1">
-          {{ $alamatTujuan?->nama_penerima ?? 'Penerima' }} 
+          {{ $alamatTujuan?->nama_penerima ?? __('ui.recipient') }} 
           ({{ $alamatTujuan?->no_telepon ?? '-' }})
         </p>
         <p class="text-gray-600 text-sm">
-          {{ $alamatTujuan?->alamat_lengkap ?? 'Alamat tidak tersedia' }}
+          {{ $alamatTujuan?->alamat_lengkap ?? __('ui.address_not_available') }}
         </p>
       </div>
     </div>
@@ -103,7 +103,7 @@
   {{-- Timeline --}}
   <div class="bg-white rounded-2xl border-2 border-gray-100 p-8 mb-8">
     <h3 class="text-lg font-black text-gray-900 mb-8">
-      Status Pengiriman
+      {{ __('ui.tracking_status') }}
     </h3>
 
     @if($trackingLogs->count() > 0)
@@ -163,7 +163,7 @@
                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <p class="text-gray-400 text-sm">
-          Belum ada pembaruan status pengiriman
+          {{ __('ui.tracking_no_updates') }}
         </p>
       </div>
     @endif
@@ -173,7 +173,7 @@
   <div class="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden">
     <div class="px-8 py-5 border-b-2 border-gray-100 bg-gray-50">
       <h3 class="font-black text-gray-900">
-        Ringkasan Produk
+        {{ __('ui.tracking_product_summary') }}
       </h3>
     </div>
     <div class="p-8 space-y-4">
@@ -212,7 +212,7 @@
         </div>
       @empty
         <p class="text-center text-gray-500 py-8">
-          Tidak ada produk untuk ditampilkan
+          {{ __('ui.no_products_to_show') }}
         </p>
       @endforelse
 
@@ -226,15 +226,15 @@
         <div class="pt-4 border-t-2 border-gray-100 mt-4">
           <div class="space-y-2">
             <div class="flex justify-between items-center">
-              <span class="font-bold text-gray-900">Total Produk</span>
+              <span class="font-bold text-gray-900">{{ __('ui.tracking_total_products') }}</span>
               <span class="text-xl font-black text-[#63A2BB]">{{ $totalBarang }} barang</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm font-semibold text-gray-700">Jumlah Item / Baris Produk</span>
+              <span class="text-sm font-semibold text-gray-700">{{ __('ui.tracking_item_lines') }}</span>
               <span class="text-sm font-bold text-gray-900">{{ $totalDetail }} baris</span>
             </div>
             <div class="flex justify-between items-center pt-2 border-t border-gray-100">
-              <span class="font-bold text-gray-900">Total Pesanan</span>
+              <span class="font-bold text-gray-900">{{ __('ui.tracking_total_order') }}</span>
               <span class="text-2xl font-black text-[#63A2BB]">
                 Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}
               </span>

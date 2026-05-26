@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
-                        {{ isset($address) ? 'Ubah Alamat' : 'Tambah Alamat Baru' }}
+                        {{ isset($address) ? __('ui.address_edit') : __('ui.address_add_new') }}
                     </h4>
                 </div>
                 <div class="card-body">
@@ -28,9 +28,9 @@
                         @endif
 
                         <div class="mb-3">
-                            <label for="label" class="form-label">Label Alamat <span class="text-danger">*</span></label>
+                            <label for="label" class="form-label">{{ __('ui.address_label') }} <span class="text-danger">*</span></label>
                             <select name="label" id="label" class="form-select @error('label') is-invalid @enderror" required>
-                                <option value="">-- Pilih Label --</option>
+                                <option value="">-- {{ __('ui.select_gender') }} --</option>
                                 <option value="Rumah" {{ isset($address) && $address->label === 'Rumah' ? 'selected' : '' }}>Rumah</option>
                                 <option value="Kantor" {{ isset($address) && $address->label === 'Kantor' ? 'selected' : '' }}>Kantor</option>
                                 <option value="Lainnya" {{ isset($address) && $address->label === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
@@ -41,7 +41,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="nama_penerima" class="form-label">Nama Penerima <span class="text-danger">*</span></label>
+                            <label for="nama_penerima" class="form-label">{{ __('ui.recipient_name') }} <span class="text-danger">*</span></label>
                             <input type="text" name="nama_penerima" id="nama_penerima" class="form-control @error('nama_penerima') is-invalid @enderror" 
                                    value="{{ isset($address) ? $address->nama_penerima : old('nama_penerima') }}" required>
                             @error('nama_penerima')
@@ -50,7 +50,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="no_telepon" class="form-label">No. Telepon <span class="text-danger">*</span></label>
+                            <label for="no_telepon" class="form-label">{{ __('ui.phone_number') }} <span class="text-danger">*</span></label>
                             <input type="text" name="no_telepon" id="no_telepon" class="form-control @error('no_telepon') is-invalid @enderror" 
                                    value="{{ isset($address) ? $address->no_telepon : old('no_telepon') }}" required>
                             @error('no_telepon')
@@ -115,14 +115,14 @@
                             <input type="checkbox" name="is_utama" id="is_utama" class="form-check-input" 
                                    {{ isset($address) && $address->is_utama ? 'checked' : '' }}>
                             <label class="form-check-label" for="is_utama">
-                                Jadikan alamat utama
+                                {{ __('ui.address_main') }}
                             </label>
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ route('profile.addresses') }}" class="btn btn-secondary">Batal</a>
+                            <a href="{{ route('profile.addresses') }}" class="btn btn-secondary">{{ __('ui.cancel') }}</a>
                             <button type="submit" class="btn btn-primary">
-                                {{ isset($address) ? 'Perbarui Alamat' : 'Simpan Alamat' }}
+                                {{ isset($address) ? __('ui.update_address') : __('ui.save_address') }}
                             </button>
                         </div>
                     </form>

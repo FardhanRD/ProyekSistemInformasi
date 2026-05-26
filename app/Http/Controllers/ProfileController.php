@@ -30,7 +30,17 @@ class ProfileController extends Controller
         if (Schema::hasTable('transaksi') && Schema::hasTable('buyer')) {
             $buyer = Buyer::where('pengguna_id', $user->pengguna_id)->first();
             if ($buyer) {
-                $orders = Transaksi::where('pengguna_id', $user->pengguna_id)->orderBy('tanggal', 'desc')->get();
+                $orders = Transaksi::with([
+                        'details.detailProduk.produk.gambarUtama',
+                        'alamat',
+                        'ekspedisi',
+                        'pembayaran.metodePembayaran',
+                        'pesanan.trackingLog',
+                        'voucher',
+                    ])
+                    ->where('pengguna_id', $user->pengguna_id)
+                    ->orderBy('tanggal', 'desc')
+                    ->get();
             }
         }
 

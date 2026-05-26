@@ -53,7 +53,7 @@
         <div class="flex items-center gap-4 flex-1 mx-6" x-data="searchComponent()" x-init="init()">
             <form action="{{ route('product.search') }}" method="GET" class="flex-1">
                 <div class="relative">
-                    <input x-model="q" @input.debounce="onInput" name="q" type="text" placeholder="Cari produk, brand, kategori..." class="w-full border rounded px-4 py-2" autocomplete="off">
+                    <input x-model="q" @input.debounce="onInput" name="q" type="text" placeholder="{{ __('ui.search_products') }}" class="w-full border rounded px-4 py-2" autocomplete="off">
 
                     <div x-show="open && suggestions.length" x-cloak class="absolute z-50 left-0 right-0 bg-white border rounded mt-1 max-h-64 overflow-auto">
                         <template x-for="item in suggestions" :key="item.produk_id">
@@ -88,18 +88,18 @@
                     </button>
 
                     <div x-show="open" x-cloak class="absolute right-0 mt-2 bg-white border rounded shadow-lg w-48">
-                        <a href="{{ route('profile.index') }}" class="block px-4 py-2 hover:bg-gray-50">Profil Saya</a>
-                        <a href="{{ route('orders.index') }}" class="block px-4 py-2 hover:bg-gray-50">Pesanan Saya</a>
-                        <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 hover:bg-gray-50">Wishlist</a>
+                        <a href="{{ route('profile.index') }}" class="block px-4 py-2 hover:bg-gray-50">{{ __('ui.my_profile') }}</a>
+                        <a href="{{ route('orders.index') }}" class="block px-4 py-2 hover:bg-gray-50">{{ __('ui.my_orders') }}</a>
+                        <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 hover:bg-gray-50">{{ __('ui.my_wishlist') }}</a>
                         <form id="logout-form" method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-50">Logout</button>
+                            <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-50">{{ __('ui.logout') }}</button>
                         </form>
                     </div>
                 @else
                     <div class="flex items-center gap-2">
-                        <a href="{{ route('login') }}" class="text-sm text-gray-700">Login</a>
-                        <a href="{{ route('register') }}" class="text-sm text-gray-700">Register</a>
+                        <a href="{{ route('login') }}" class="text-sm text-gray-700">{{ __('ui.login') }}</a>
+                        <a href="{{ route('register') }}" class="text-sm text-gray-700">{{ __('ui.register') }}</a>
                     </div>
                 @endif
             </div>
@@ -125,7 +125,7 @@
                 },
                 handleWishlist(){
                     if(!{{ $isLoggedIn ? 'true' : 'false' }}){
-                        window.location = '{{ route('login') }}?msg='+encodeURIComponent('Login untuk melihat wishlist kamu');
+                        window.location = '{{ route('login') }}?msg='+encodeURIComponent('{{ __('ui.wishlist_login_msg') }}');
                         return;
                     }
                     window.location = '{{ route('wishlist.index') }}';

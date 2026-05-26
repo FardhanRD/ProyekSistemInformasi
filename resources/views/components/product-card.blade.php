@@ -27,7 +27,7 @@
     $finalPrice = $promoDiscount > 0 ? max(0, (float) $produk->harga_dasar - $promoDiscount) : (float) $produk->harga_dasar;
 @endphp
 
-<div class="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-[#63A2BB]/15" x-data="{ isWishlisted: {{ $isInWishlist ? 'true' : 'false' }}, loading: false, async toggleWishlist() { if (!{{ $isLoggedIn ? 'true' : 'false' }}) { window.location.href = '{{ route('login') }}'; return; } this.loading = true; try { const res = await fetch('{{ route('wishlist.toggle') }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }, body: JSON.stringify({ produk_id: {{ $produk->produk_id }} }) }); const data = await res.json(); if (data.success) { const wasWishlisted = this.isWishlisted; this.isWishlisted = !this.isWishlisted; window.dispatchEvent(new Event('wishlist-updated')); if (wasWishlisted && !this.isWishlisted) { window.dispatchEvent(new CustomEvent('wishlist-removed', { detail: { produk_id: {{ $produk->produk_id }} } })); } if (typeof showToast === 'function') { showToast(this.isWishlisted ? 'Produk ditambahkan ke wishlist' : 'Produk dihapus dari wishlist', this.isWishlisted ? 'success' : 'info'); } } else if (data.message && typeof showToast === 'function') { showToast(data.message, 'error'); } } catch (error) { console.error(error); if (typeof showToast === 'function') { showToast('Gagal memperbarui wishlist', 'error'); } } finally { this.loading = false; } }, async addToCart() { if (!{{ $isLoggedIn ? 'true' : 'false' }}) { window.location.href = '{{ route('login') }}'; return; } const detailId = {{ $detailId ? (int) $detailId : 'null' }}; if (!detailId) { if (typeof showToast === 'function') { showToast('Varian produk belum tersedia', 'warning'); } return; } try { const fd = new FormData(); fd.append('detail_produk_id', detailId); fd.append('jumlah', 1); const res = await fetch('{{ route('cart.add') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }, body: fd }); const data = await res.json(); if (data.success) { window.dispatchEvent(new Event('cart-updated')); if (typeof showToast === 'function') { showToast(data.message || 'Produk ditambahkan ke keranjang', 'success'); } } else if (typeof showToast === 'function') { showToast(data.message || 'Gagal menambahkan ke keranjang', 'error'); } } catch (error) { console.error(error); if (typeof showToast === 'function') { showToast('Gagal menambahkan ke keranjang', 'error'); } } } }">
+<div class="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-xl hover:shadow-[#63A2BB]/15" x-data="{ isWishlisted: {{ $isInWishlist ? 'true' : 'false' }}, loading: false, async toggleWishlist() { if (!{{ $isLoggedIn ? 'true' : 'false' }}) { window.location.href = '{{ route('login') }}'; return; } this.loading = true; try { const res = await fetch('{{ route('wishlist.toggle') }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }, body: JSON.stringify({ produk_id: {{ $produk->produk_id }} }) }); const data = await res.json(); if (data.success) { const wasWishlisted = this.isWishlisted; this.isWishlisted = !this.isWishlisted; window.dispatchEvent(new Event('wishlist-updated')); if (wasWishlisted && !this.isWishlisted) { window.dispatchEvent(new CustomEvent('wishlist-removed', { detail: { produk_id: {{ $produk->produk_id }} } })); } if (typeof showToast === 'function') { showToast(this.isWishlisted ? '{{ __('ui.product_added_wishlist') }}' : '{{ __('ui.product_removed_wishlist') }}', this.isWishlisted ? 'success' : 'info'); } } else if (data.message && typeof showToast === 'function') { showToast(data.message, 'error'); } } catch (error) { console.error(error); if (typeof showToast === 'function') { showToast('{{ __('ui.wishlist_update_failed') }}', 'error'); } } finally { this.loading = false; } }, async addToCart() { if (!{{ $isLoggedIn ? 'true' : 'false' }}) { window.location.href = '{{ route('login') }}'; return; } const detailId = {{ $detailId ? (int) $detailId : 'null' }}; if (!detailId) { if (typeof showToast === 'function') { showToast('{{ __('ui.product_variant_unavailable') }}', 'warning'); } return; } try { const fd = new FormData(); fd.append('detail_produk_id', detailId); fd.append('jumlah', 1); const res = await fetch('{{ route('cart.add') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'), 'Accept': 'application/json' }, body: fd }); const data = await res.json(); if (data.success) { window.dispatchEvent(new Event('cart-updated')); if (typeof showToast === 'function') { showToast(data.message || '{{ __('ui.product_added_cart') }}', 'success'); } } else if (typeof showToast === 'function') { showToast(data.message || '{{ __('ui.product_add_cart_failed') }}', 'error'); } } catch (error) { console.error(error); if (typeof showToast === 'function') { showToast('{{ __('ui.product_add_cart_failed') }}', 'error'); } } } }">
     <div class="relative aspect-[3/4] overflow-hidden bg-[#F1F5F8]">
         <a href="{{ route('product.show', $produk->slug) }}" class="block h-full w-full">
             <img src="{{ $imageSource }}" alt="{{ $produk->nama_produk }}" class="h-full w-full object-cover transition-all duration-300 ease-in-out group-hover:scale-105" onerror="this.src='{{ asset('images/default-product.svg') }}';">
@@ -66,7 +66,7 @@
             </div>
             <span>({{ round($avgRating, 1) }})</span>
             <span>•</span>
-            <span>{{ $reviewCount }} ulasan</span>
+            <span>{{ $reviewCount }} {{ __('ui.review_count') }}</span>
         </div>
 
         <div class="mt-3 flex items-end justify-between gap-3">
@@ -77,20 +77,13 @@
                 <div class="text-lg font-black text-[#63A2BB]">Rp {{ number_format((float) $finalPrice, 0, ',', '.') }}</div>
             </div>
             @if(($produk->total_terjual ?? 0) > 0)
-                <div class="text-xs font-medium text-slate-400">{{ number_format((int) $produk->total_terjual) }} terjual</div>
+                <div class="text-xs font-medium text-slate-400">{{ number_format((int) $produk->total_terjual) }} {{ __('ui.products_sold') }}</div>
             @endif
         </div>
 
         <div class="mt-4 grid gap-2">
-            <button type="button" @click.prevent="addToCart()" class="btn-primary w-full px-4 py-3 text-sm">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H6.4M7 13l-1.5 3.5A1 1 0 007 18h10m-10 0a2 2 0 104 0m6 0a2 2 0 104 0" />
-                </svg>
-                Tambah ke Keranjang
-            </button>
-
             <a href="{{ route('product.show', $produk->slug) }}" class="btn-outline w-full px-4 py-3 text-sm">
-                Lihat Detail
+                {{ __('ui.view_detail') }}
             </a>
         </div>
     </div>

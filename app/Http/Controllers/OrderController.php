@@ -59,42 +59,25 @@ class OrderController extends Controller
     {
         $user = Auth::user();
         if (! $user) return redirect('/login');
-        $transaksi = Transaksi::with([
-            'details.detailProduk.produk.images' => fn($q) => $q->where('urutan', 0),
-            'pembayaran.metode',
-            'ekspedisi',
-            'alamat',
-            'pesanan.trackingLogs' => fn($q) => $q->orderBy('waktu_update', 'asc')
-        ])->where('kode_transaksi', $kode_transaksi)->firstOrFail();
-
-        $buyer = Buyer::where('pengguna_id', $user->pengguna_id)->first();
+        $buyer = $user->buyer;
         if (! $buyer) {
             abort(403, 'Akses ditolak.');
         }
 
-        // Validasi kepemilikan transaksi
-        if ($transaksi->buyer->pengguna_id !== $user->pengguna_id) {
-            abort(403, 'Akses ditolak.');
-        }
+        $transaksi = Transaksi::with([
+            'transaksiDetail.detailProduk.produk.gambarUtama',
+            'transaksiDetail.detailProduk.warna',
+            'alamat',
+            'ekspedisi',
+            'pembayaran.metodePembayaran',
+            'pesanan.trackingLog',
+            'voucher',
+        ])
+        ->where('kode_transaksi', $kode_transaksi)
+        ->where('pengguna_id', $buyer->pengguna_id)
+        ->firstOrFail();
 
-        // Cek apakah user sudah memberikan ulasan untuk produk di transaksi ini
-        $reviewedProductIds = RatingProduk::where('buyer_id', $buyer->buyer_id)
-                                ->whereIn('produk_id', $transaksi->details->pluck('detailProduk.produk_id'))
-                                ->pluck('produk_id')
-                                ->toArray();
-
-        // Ambil tracking logs untuk status pengiriman di halaman detail
-        $trackingLogs = collect();
-        if ($transaksi->relationLoaded('pesanan') && $transaksi->pesanan && $transaksi->pesanan->count() > 0) {
-            $pesananFirst = $transaksi->pesanan->first();
-            if ($pesananFirst && $pesananFirst->pesanan_id) {
-                $trackingLogs = \App\Models\TrackingLog::where('pesanan_id', $pesananFirst->pesanan_id)
-                    ->orderBy('waktu_update', 'desc')
-                    ->get();
-            }
-        }
-
-        return view('buyer.order.detail', compact('transaksi', 'reviewedProductIds', 'trackingLogs'));
+        return view('buyer.order.detail', compact('transaksi'));
     }
 
     // Metode untuk rating produk dan toko akan dipindahkan ke API atau controller terpisah

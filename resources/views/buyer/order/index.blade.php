@@ -1,10 +1,10 @@
 @extends('layouts.buyer')
-@section('title', 'Pesanan Saya — MOVR')
+@section('title', __('ui.my_orders') . ' — MOVR')
 @section('content')
 
-<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <h1 class="text-2xl font-black text-gray-900 mb-6">
-    Pesanan Saya
+    {{ __('ui.my_orders') }}
   </h1>
 
   {{-- Tab Status --}}
@@ -12,13 +12,12 @@
               scrollbar-hide -mx-4 px-4">
     @php
       $tabs = [
-        ''                      => 'Semua',
-        'menunggu_pembayaran'   => 'Belum Bayar',
-        'pembayaran_dikonfirmasi'=> 'Dikonfirmasi',
-        'diproses'              => 'Dikemas',
-        'dikirim'               => 'Dikirim',
-        'selesai'               => 'Selesai',
-        'dibatalkan'            => 'Dibatalkan',
+        ''                      => __('ui.all'),
+        'menunggu_pembayaran'   => __('ui.unpaid'),
+        'pembayaran_dikonfirmasi'=> __('ui.confirmed'),
+        'dikirim'               => __('ui.shipped'),
+        'selesai'               => __('ui.completed'),
+        'dibatalkan'            => __('ui.cancelled'),
       ];
       $activeTab = request('status', '');
     @endphp
@@ -50,12 +49,12 @@
     @forelse($transaksis as $t)
     @php
       $statusConfig = [
-        'menunggu_pembayaran'     => ['color'=>'text-amber-600','bg'=>'bg-amber-50','border'=>'border-amber-200','label'=>'Menunggu Pembayaran','icon'=>'clock'],
-        'pembayaran_dikonfirmasi' => ['color'=>'text-blue-600','bg'=>'bg-blue-50','border'=>'border-blue-200','label'=>'Pembayaran Dikonfirmasi','icon'=>'check'],
-        'diproses'                => ['color'=>'text-purple-600','bg'=>'bg-purple-50','border'=>'border-purple-200','label'=>'Sedang Dikemas','icon'=>'box'],
-        'dikirim'                 => ['color'=>'text-[#63A2BB]','bg'=>'bg-[#63A2BB]/5','border'=>'border-[#63A2BB]/30','label'=>'Dalam Pengiriman','icon'=>'truck'],
-        'selesai'                 => ['color'=>'text-green-600','bg'=>'bg-green-50','border'=>'border-green-200','label'=>'Selesai','icon'=>'check-circle'],
-        'dibatalkan'              => ['color'=>'text-red-500','bg'=>'bg-red-50','border'=>'border-red-200','label'=>'Dibatalkan','icon'=>'x'],
+        'menunggu_pembayaran'     => ['color'=>'text-amber-600','bg'=>'bg-amber-50','border'=>'border-amber-200','label'=>__('ui.status_waiting_payment'),'icon'=>'clock'],
+        'pembayaran_dikonfirmasi' => ['color'=>'text-blue-600','bg'=>'bg-blue-50','border'=>'border-blue-200','label'=>__('ui.status_payment_confirmed'),'icon'=>'check'],
+        'diproses'                => ['color'=>'text-purple-600','bg'=>'bg-purple-50','border'=>'border-purple-200','label'=>__('ui.status_packed'),'icon'=>'box'],
+        'dikirim'                 => ['color'=>'text-[#63A2BB]','bg'=>'bg-[#63A2BB]/5','border'=>'border-[#63A2BB]/30','label'=>__('ui.status_shipping'),'icon'=>'truck'],
+        'selesai'                 => ['color'=>'text-green-600','bg'=>'bg-green-50','border'=>'border-green-200','label'=>__('ui.status_completed'),'icon'=>'check-circle'],
+        'dibatalkan'              => ['color'=>'text-red-500','bg'=>'bg-red-50','border'=>'border-red-200','label'=>__('ui.status_cancelled'),'icon'=>'x'],
       ];
       $sc = $statusConfig[$t->status] ?? 
         ['color'=>'text-gray-500','bg'=>'bg-gray-50',
@@ -72,10 +71,10 @@
     @endphp
 
     <div class="bg-white rounded-3xl shadow-sm 
-                overflow-hidden border border-gray-100">
+          overflow-hidden border border-gray-100 w-full">
       
       {{-- Header --}}
-      <div class="px-5 py-4 border-b border-gray-100 
+      <div class="px-6 py-5 border-b border-gray-100 
                   flex items-center justify-between">
         <div class="flex items-center gap-3">
           {{-- Status Icon --}}
@@ -142,7 +141,7 @@
         <div class="flex items-center gap-3 
                     {{ !$loop->last ? 'mb-3' : '' }}">
           <img src="{{ $d->detailProduk->produk->gambarUtama?->url_safe ?? asset('images/placeholder.png') }}"
-               class="w-14 h-14 rounded-2xl object-cover 
+            class="w-16 h-16 rounded-2xl object-cover 
                       flex-shrink-0 bg-gray-50">
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-gray-700 
@@ -150,8 +149,8 @@
               {{ $d->nama_produk_snap }}
             </p>
             <p class="text-xs text-gray-400 mt-0.5">
-              {{ $d->ukuran_snap ?? 'No Size' }} · 
-              {{ $d->warna_snap ?? 'No Color' }} · 
+              {{ $d->ukuran_snap ?? __('ui.no_size') }} · 
+              {{ $d->warna_snap ?? __('ui.no_color') }} · 
               x{{ $d->quantity }}
             </p>
           </div>
@@ -169,12 +168,12 @@
       </div>
 
       {{-- Footer --}}
-      <div class="px-5 py-4 bg-gray-50/50 
+      <div class="px-6 py-5 bg-gray-50/50 
                   border-t border-gray-100
                   flex items-center justify-between gap-3">
         <div>
-          <p class="text-xs text-gray-400">Total</p>
-          <p class="font-black text-[#63A2BB] text-base">
+          <p class="text-xs text-gray-400">{{ __('ui.total') }}</p>
+          <p class="font-black text-[#63A2BB] text-lg">
             Rp {{ number_format($t->total_harga,0,',','.') }}
           </p>
         </div>
@@ -193,7 +192,7 @@
                     stroke-linejoin="round" stroke-width="2"
                     d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
             </svg>
-            Bayar Sekarang
+            {{ __('ui.pay_now') }}
           </a>
           
           @elseif(in_array($t->status, ['diproses','dikirim']))
@@ -209,7 +208,7 @@
                     stroke-linejoin="round" stroke-width="2"
                     d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
             </svg>
-            Lacak Paket
+            {{ __('ui.track_package') }}
           </a>
           
           @elseif($t->status === 'selesai' && !$sudahRating)
@@ -218,24 +217,24 @@
                     text-xs font-bold rounded-full 
                     hover:bg-amber-600 transition 
                     flex items-center gap-1.5">
-            ⭐ Beri Rating
+            ⭐ {{ __('ui.write_review') }}
           </a>
           
           @elseif($t->status === 'selesai' && $sudahRating)
           <span class="px-4 py-2 bg-green-50 
                        text-green-600 text-xs font-bold 
                        rounded-full flex items-center gap-1.5">
-            ✓ Sudah Dirating
+            ✓ {{ __('ui.already_rated') }}
           </span>
           @endif
           
-          <a href="{{ route('tracking.show', $t->kode_transaksi) }}"
+           <a href="{{ route('orders.show', $t->kode_transaksi) }}"
              class="px-4 py-2 bg-white border-2 
                     border-gray-200 text-gray-500 
                     text-xs font-semibold rounded-full 
                     hover:border-[#63A2BB] 
                     hover:text-[#63A2BB] transition">
-            Detail
+            {{ __('ui.view_detail') }}
           </a>
         </div>
       </div>

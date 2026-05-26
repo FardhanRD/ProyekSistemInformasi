@@ -24,7 +24,7 @@
             ])
         </div>
     @empty
-        <div class="col-12"><div class="alert alert-warning">Belum ada produk di kategori ini.</div></div>
+        <div class="col-12"><div class="alert alert-warning">{{ __('ui.no_products_to_show') }}</div></div>
     @endforelse
 </div>
 

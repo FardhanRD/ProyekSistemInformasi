@@ -1,6 +1,6 @@
 @extends('layouts.buyer')
 
-@section('title', (($q ?? request('q')) ? 'Hasil Pencarian' : 'Katalog Produk') . ' — MOVR')
+@section('title', (($q ?? request('q')) ? __('ui.product_search_results') : __('ui.catalog')) . ' — MOVR')
 
 @section('content')
 @php
@@ -14,19 +14,19 @@
     <div class="mb-8 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Katalog Produk</p>
-                <h1 class="mt-2 text-3xl font-black text-slate-900">{{ $searchQuery ? 'Hasil Pencarian' : 'Semua Produk' }}</h1>
+                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">{{ __('ui.catalog') }}</p>
+                <h1 class="mt-2 text-3xl font-black text-slate-900">{{ $searchQuery ? __('ui.product_search_results') : __('ui.all_products') }}</h1>
                 <p class="mt-2 text-sm text-slate-500">
                     @if($searchQuery)
-                        Menampilkan hasil untuk <span class="font-semibold text-slate-700">“{{ $searchQuery }}”</span>
+                        {{ __('ui.search_page_showing') }} <span class="font-semibold text-slate-700">“{{ $searchQuery }}”</span>
                     @else
-                        Temukan produk terbaik MOVR dalam tampilan yang lebih rapi dan cepat.
+                        {{ __('ui.catalog_description') }}
                     @endif
                 </p>
             </div>
 
             <div class="inline-flex items-center rounded-full bg-[#63A2BB]/10 px-4 py-2 text-sm font-semibold text-[#63A2BB]">
-                {{ $products->total() }} produk ditemukan
+                {{ $products->total() }} {{ __('ui.search_page_found') }}
             </div>
         </div>
     </div>
@@ -35,8 +35,8 @@
         <aside class="lg:col-span-3">
             <div class="card-surface sticky top-24 p-5">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-black text-slate-900">Filter</h2>
-                    <a href="{{ request()->url() }}" class="text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:text-[#4A8BA3]">Reset</a>
+                    <h2 class="text-lg font-black text-slate-900">{{ __('ui.filter') }}</h2>
+                    <a href="{{ request()->url() }}" class="text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:text-[#4A8BA3]">{{ __('ui.reset') }}</a>
                 </div>
 
                 <form action="{{ request()->url() }}" method="GET" class="mt-5 space-y-5">
@@ -45,7 +45,7 @@
                     @endif
 
                     <div>
-                        <div class="mb-2 text-sm font-semibold text-slate-700">Kategori</div>
+                        <div class="mb-2 text-sm font-semibold text-slate-700">{{ __('ui.category') }}</div>
                         <div class="max-h-56 space-y-2 overflow-auto pr-1">
                             @foreach(data_get($filterData, 'categories', []) as $category)
                                 <label class="flex items-center gap-2 rounded-xl bg-[#F8FAFB] px-3 py-2 text-sm text-slate-600 ring-1 ring-slate-200/70 transition-all duration-200 hover:ring-[#63A2BB]/40">
@@ -57,15 +57,15 @@
                     </div>
 
                     <div>
-                        <div class="mb-2 text-sm font-semibold text-slate-700">Harga</div>
+                        <div class="mb-2 text-sm font-semibold text-slate-700">{{ __('ui.price') }}</div>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="number" name="min_price" value="{{ request('min_price') }}" min="0" placeholder="Min" class="rounded-2xl border border-slate-200 bg-[#F8FAFB] px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-[#63A2BB] focus:bg-white focus:ring-4 focus:ring-[#63A2BB]/20">
-                            <input type="number" name="max_price" value="{{ request('max_price', $maxPrice) }}" min="0" placeholder="Max" class="rounded-2xl border border-slate-200 bg-[#F8FAFB] px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-[#63A2BB] focus:bg-white focus:ring-4 focus:ring-[#63A2BB]/20">
+                            <input type="number" name="min_price" value="{{ request('min_price') }}" min="0" placeholder="{{ __('ui.min') }}" class="rounded-2xl border border-slate-200 bg-[#F8FAFB] px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-[#63A2BB] focus:bg-white focus:ring-4 focus:ring-[#63A2BB]/20">
+                            <input type="number" name="max_price" value="{{ request('max_price', $maxPrice) }}" min="0" placeholder="{{ __('ui.max') }}" class="rounded-2xl border border-slate-200 bg-[#F8FAFB] px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-[#63A2BB] focus:bg-white focus:ring-4 focus:ring-[#63A2BB]/20">
                         </div>
                     </div>
 
                     <div>
-                        <div class="mb-2 text-sm font-semibold text-slate-700">Ukuran</div>
+                        <div class="mb-2 text-sm font-semibold text-slate-700">{{ __('ui.size') }}</div>
                         <div class="flex flex-wrap gap-2">
                             @foreach(data_get($filterData, 'sizes', []) as $size)
                                 <label>
@@ -77,7 +77,7 @@
                     </div>
 
                     <div>
-                        <div class="mb-2 text-sm font-semibold text-slate-700">Rating Minimum</div>
+                        <div class="mb-2 text-sm font-semibold text-slate-700">{{ __('ui.minimum_rating') }}</div>
                         <div class="space-y-2">
                             @foreach([4, 3, 2, 1] as $star)
                                 <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-[#F8FAFB] px-3 py-2 text-sm text-slate-600 ring-1 ring-slate-200/70 transition-all duration-200 hover:ring-[#63A2BB]/40">

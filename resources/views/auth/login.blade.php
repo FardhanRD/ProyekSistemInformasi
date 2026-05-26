@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, 
@@ -192,13 +192,13 @@
                      class="w-4 h-4 rounded 
                             accent-[#63A2BB]">
               <span class="text-sm text-gray-600">
-                Ingat saya
+                {{ __('ui.remember_me') }}
               </span>
             </label>
             <a href="{{ route('password.request') }}"
                class="text-sm text-[#63A2BB] 
                       font-semibold hover:underline">
-              Lupa Password?
+              {{ __('ui.forgot_password') }}?
             </a>
           </div>
         </div>
@@ -212,7 +212,7 @@
                        hover:shadow-[#63A2BB]/30 
                        transition-all duration-200 
                        flex items-center justify-center gap-2">
-          Masuk
+          {{ __('ui.login') }}
           <svg class="w-4 h-4" fill="none" 
                stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" 

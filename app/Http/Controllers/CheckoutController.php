@@ -312,6 +312,8 @@ class CheckoutController extends Controller
             DB::commit();
             session()->forget(['applied_voucher_code', 'applied_voucher_discount', 'applied_voucher_id', 'checkout_cart_ids']);
 
+                // Notifikasi dinonaktifkan
+
             return redirect()->route('payment.show', ['kode_transaksi' => $trans->kode_transaksi]);
         } catch (\Exception $e) {
             DB::rollBack();

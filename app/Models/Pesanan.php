@@ -35,5 +35,10 @@ class Pesanan extends Model
     {
         return $this->hasMany(TrackingLog::class, 'pesanan_id', 'pesanan_id');
     }
+
+    public function trackingLog()
+    {
+        return $this->hasMany(TrackingLog::class, 'pesanan_id', 'pesanan_id');
+    }
 }
 

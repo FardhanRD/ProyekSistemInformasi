@@ -10,15 +10,15 @@
             <template x-for="(banner, index) in banners" :key="index">
                 <div x-show="current === index" x-transition class="grid min-h-[360px] items-center gap-10 px-6 py-10 md:grid-cols-2 md:px-12 md:py-16">
                     <div>
-                        <p class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-white/70">New Collection</p>
-                        <h1 class="max-w-xl text-4xl font-black leading-tight md:text-6xl" x-text="banner.judul || 'Selamat datang di MOVR'"></h1>
-                        <p class="mt-4 max-w-xl text-base leading-7 text-white/80 md:text-lg" x-text="banner.sub_judul || 'Temukan produk favoritmu di sini'"></p>
+                        <p class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-white/70">{{ __('ui.hero_new_collection') }}</p>
+                        <h1 class="max-w-xl text-4xl font-black leading-tight md:text-6xl" x-text="banner.judul || @json(__('ui.hero_default_title'))"></h1>
+                        <p class="mt-4 max-w-xl text-base leading-7 text-white/80 md:text-lg" x-text="banner.sub_judul || @json(__('ui.hero_default_subtitle'))"></p>
                         <div class="mt-8 flex flex-wrap gap-3">
                             <a :href="banner.url_link || '/produk'" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-[#63A2BB] transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg">
-                                Belanja Sekarang
+                                {{ __('ui.hero_shop_now') }}
                             </a>
                             <a href="{{ route('product.index') }}" class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition-all duration-200 ease-in-out hover:bg-white/10 hover:scale-[1.02]">
-                                Lihat Katalog
+                                {{ __('ui.hero_view_catalog') }}
                             </a>
                         </div>
                     </div>
@@ -34,12 +34,12 @@
             @if(empty($banners) || (is_countable($banners) && count($banners) === 0))
                 <div class="grid min-h-[360px] items-center gap-10 px-6 py-10 md:grid-cols-2 md:px-12 md:py-16">
                     <div>
-                        <p class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-white/70">New Collection 2026</p>
+                        <p class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-white/70">{{ __('ui.hero_new_collection') }} 2026</p>
                         <h1 class="max-w-xl text-4xl font-black leading-tight md:text-6xl">Move With <span class="text-white/80">Style & Comfort</span></h1>
-                        <p class="mt-4 max-w-xl text-base leading-7 text-white/80 md:text-lg">Koleksi terbaru untuk gaya hidup aktif kamu.</p>
+                        <p class="mt-4 max-w-xl text-base leading-7 text-white/80 md:text-lg">{{ __('ui.hero_default_subtitle') }}</p>
                         <div class="mt-8 flex flex-wrap gap-3">
-                            <a href="{{ route('product.index') }}" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-[#63A2BB] transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg">Explore Collection</a>
-                            <a href="{{ route('category.show', 'all') }}" class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition-all duration-200 ease-in-out hover:bg-white/10 hover:scale-[1.02]">Lihat Semua</a>
+                            <a href="{{ route('product.index') }}" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-[#63A2BB] transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg">{{ __('ui.hero_shop_now') }}</a>
+                            <a href="{{ route('category.show', 'all') }}" class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition-all duration-200 ease-in-out hover:bg-white/10 hover:scale-[1.02]">{{ __('ui.view_all') }}</a>
                         </div>
                     </div>
                     <div class="hidden md:block">

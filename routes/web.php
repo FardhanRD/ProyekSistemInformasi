@@ -26,6 +26,15 @@ use Illuminate\Http\Request;
 
 // Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/language/{locale}', function (Request $request, string $locale) {
+    if (! in_array($locale, ['id', 'en'], true)) {
+        abort(404);
+    }
+
+    $request->session()->put('locale', $locale);
+
+    return back();
+})->name('language.switch');
 Route::get('/kategori/{slug}', [CategoryController::class, 'show'])->name('category.show');
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('category.show.alias');
 Route::get('/category/all', [ProductController::class, 'index'])->name('category.all');
@@ -52,6 +61,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
+
     // Keranjang
     Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index.alias');
@@ -74,7 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/checkout/apply-voucher', [CheckoutController::class, 'applyVoucher'])->name('checkout.apply_voucher');
 
     Route::get('/pay/{kode_transaksi}', [PaymentController::class, 'show'])->name('payment.show');
-    Route::post('/payment/{kode_transaksi}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payment.upload_proof');
+    Route::post('/payment/{kode}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payment.upload-proof')->middleware(['auth']);
     Route::post('/payment/{kode_transaksi}/confirm', [PaymentController::class, 'confirmByBuyer'])->name('payment.confirm');
 
     Route::get('/profile/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
@@ -84,7 +94,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Order & Tracking
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show')->middleware(['auth']);
     Route::get('/tracking/{kode_transaksi}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/orders/{kode_transaksi}/tracking', [TrackingController::class, 'show'])->name('order.tracking');
 
@@ -119,6 +129,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/export', [\App\Http\Controllers\Admin\DashboardExportController::class, 'export'])->name('dashboard.export');
+
+    
 
     // Master Product (admin)
     Route::get('/master-product', [\App\Http\Controllers\Admin\MasterProductController::class, 'index'])->name('master-product.index');

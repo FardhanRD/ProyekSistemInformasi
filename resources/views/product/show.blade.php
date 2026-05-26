@@ -30,7 +30,7 @@
 
     <div class="lg:col-span-1">
         <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm h-full">
-            <div class="text-brand font-bold text-sm tracking-wider uppercase mb-2">{{ $product->kategori->nama_kategori ?? 'Kategori' }}</div>
+            <div class="text-brand font-bold text-sm tracking-wider uppercase mb-2">{{ $product->kategori->nama_kategori ?? __('ui.product_category') }}</div>
             <h1 class="text-3xl font-black text-slate-800 mb-2">{{ $product->nama_produk }}</h1>
             
             <div class="flex items-center gap-3 mb-4">
@@ -38,11 +38,11 @@
                     <span>★</span>
                     <span>{{ number_format($averageRating, 1) }}</span>
                 </div>
-                <span class="text-slate-500 text-sm">({{ $product->ratings->count() }} ulasan)</span>
+                <span class="text-slate-500 text-sm">({{ $product->ratings->count() }} {{ __('ui.reviews') }})</span>
             </div>
             
             <div class="mb-4">
-                <div class="text-slate-500 text-sm font-medium">Harga</div>
+                <div class="text-slate-500 text-sm font-medium">{{ __('ui.price') }}</div>
                 <div class="text-3xl font-black text-slate-800" id="currentPrice">Rp {{ number_format($initialDetail->harga ?? $product->harga_dasar,0,',','.') }}</div>
             </div>
 
@@ -50,11 +50,11 @@
 
             <div class="bg-brand/10 border border-brand/20 rounded-xl p-3 mb-6 flex items-center gap-3 text-sm text-brand-dark">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Stok tersedia: <strong id="currentStock" class="font-black">{{ $initialDetail->stok ?? 0 }}</strong>
+                {{ __('ui.stock_available') }} <strong id="currentStock" class="font-black">{{ $initialDetail->stok ?? 0 }}</strong>
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-slate-700 mb-3">Pilih Varian (Warna / Ukuran)</label>
+                <label class="block text-sm font-semibold text-slate-700 mb-3">{{ __('ui.variant_label') }}</label>
                 <div class="flex flex-wrap gap-2">
                     @foreach($details as $detail)
                         <button
@@ -74,11 +74,11 @@
                 @csrf
                 <input type="hidden" name="detail_produk_id" id="detailProdukId" value="{{ $initialDetail->detail_produk_id ?? '' }}">
                 <div class="w-24">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Jumlah</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">{{ __('ui.qty') }}</label>
                     <input type="number" name="jumlah" value="1" min="1" class="w-full rounded-xl border border-slate-200 px-3 py-3 text-center outline-none focus:border-brand bg-slate-50">
                 </div>
                 <button type="submit" class="flex-1 rounded-xl bg-brand px-6 py-3 font-bold text-white hover:bg-brand-dark transition shadow-sm">
-                    Tambah ke Keranjang
+                    {{ __('ui.add_to_cart') }}
                 </button>
             </form>
 
@@ -87,15 +87,15 @@
                     @csrf
                     <input type="hidden" name="produk_id" value="{{ $product->produk_id }}">
                     <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand transition">
-                        <span>♡</span> Tambah ke Wishlist
+                        <span>♡</span> {{ __('ui.add_to_wishlist') }}
                     </button>
                 </form>
             </div>
 
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg text-slate-800">Ulasan Produk</h3>
+                <h3 class="font-bold text-lg text-slate-800">{{ __('ui.reviews') }}</h3>
                 <div class="flex gap-2">
-                    <a class="text-xs font-semibold text-brand bg-brand/10 px-3 py-1 rounded-lg hover:bg-brand/20" href="{{ route('order.rating.produk', $product->produk_id) }}">Beri Ulasan</a>
+                    <a class="text-xs font-semibold text-brand bg-brand/10 px-3 py-1 rounded-lg hover:bg-brand/20" href="{{ route('order.rating.produk', $product->produk_id) }}">{{ __('ui.write_review') }}</a>
                 </div>
             </div>
             
@@ -110,12 +110,12 @@
                             </div>
                             <span class="text-xs text-slate-400">{{ \Carbon\Carbon::parse($rating->created_at)->format('d M Y') }}</span>
                         </div>
-                        <div class="font-semibold text-sm text-slate-800 mb-1">{{ $rating->judul_ulasan ?? 'Ulasan Pembeli' }}</div>
+                        <div class="font-semibold text-sm text-slate-800 mb-1">{{ $rating->judul_ulasan ?? __('ui.reviewer_default') }}</div>
                         <p class="text-sm text-slate-600">{{ $rating->isi_ulasan ?? '-' }}</p>
                     </div>
                 @empty
                     <div class="rounded-2xl border border-slate-100 border-dashed bg-white p-6 text-center text-slate-500 text-sm">
-                        Belum ada ulasan untuk produk ini.
+                        {{ __('ui.no_reviews') }}
                     </div>
                 @endforelse
             </div>

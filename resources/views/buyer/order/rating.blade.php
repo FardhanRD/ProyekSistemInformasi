@@ -1,5 +1,5 @@
 @extends('layouts.buyer')
-@section('title', 'Beri Rating — MOVR')
+@section('title', __('ui.write_review') . ' — MOVR')
 @section('content')
 
 <div class="max-w-2xl mx-auto px-4 sm:px-6 py-8" x-data="ratingData()">
@@ -11,10 +11,10 @@
       <span class="text-3xl">⭐</span>
     </div>
     <h1 class="text-xl font-black text-gray-900">
-      Beri Penilaian
+      {{ __('ui.write_review') }}
     </h1>
     <p class="text-sm text-gray-400 mt-1">
-      Bagaimana pengalaman belanja kamu?
+      {{ __('ui.rating_prompt') }}
     </p>
   </div>
 
@@ -29,7 +29,7 @@
       <span x-show="step <= 1">1</span>
     </div>
     <div class="w-16 h-0.5"
-         :class="step > 1 ? 'bg-[#63A2BB]' : 'bg-gray-200'">
+            :class="step > 1 ? 'bg-[#63A2BB]' : 'bg-gray-200'">
     </div>
     <div :class="step >= 2 
            ? 'bg-[#63A2BB] text-white' 
@@ -40,8 +40,8 @@
     </div>
     <p class="text-xs text-gray-400 ml-2">
       <span x-text="step === 1 
-        ? 'Rating Produk' 
-        : 'Rating Toko'">
+        ? '{{ __('ui.product_rating') }}' 
+        : '{{ __('ui.shop_service') }}'">
       </span>
     </p>
   </div>
@@ -69,7 +69,7 @@
         {{-- Bintang --}}
         <div class="mb-4">
           <p class="text-sm font-semibold text-gray-700 mb-3">
-            Rating Produk
+            {{ __('ui.product_rating') }}
           </p>
           <div class="flex gap-2">
             <template x-for="star in [1,2,3,4,5]" :key="star">
@@ -92,7 +92,7 @@
           <input type="text"
                  x-model="item.judul"
                  placeholder="Judul ulasan (opsional)"
-                 class="w-full px-4 py-3 rounded-2xl 
+             class="w-full px-4 py-3 rounded-2xl 
                         border-2 border-gray-200 
                         focus:border-[#63A2BB] 
                         focus:outline-none text-sm 
@@ -103,7 +103,7 @@
         <textarea x-model="item.isi"
                   rows="3"
                   placeholder="Ceritakan pengalaman kamu dengan produk ini..."
-                  class="w-full px-4 py-3 rounded-2xl 
+                     class="w-full px-4 py-3 rounded-2xl 
                          border-2 border-gray-200 
                          focus:border-[#63A2BB] 
                          focus:outline-none text-sm 
@@ -116,9 +116,9 @@
     <button @click="validateAndNext()"
             type="button"
             class="w-full py-3 rounded-2xl bg-[#63A2BB] 
-                   text-white font-bold hover:bg-[#4A8BA3] 
+                  text-white font-bold hover:bg-[#4A8BA3] 
                    transition mt-6">
-      Lanjut ke Rating Toko →
+      {{ __('ui.next_shop_rating') }} →
     </button>
   </div>
 
@@ -128,7 +128,7 @@
     {{-- Pelayanan --}}
     <div class="bg-white rounded-3xl p-6 shadow-sm">
       <p class="text-sm font-semibold text-gray-700 mb-4">
-        Pelayanan Toko
+          {{ __('ui.shop_service') }}
       </p>
       <div class="flex gap-2 mb-3">
         <template x-for="star in [1,2,3,4,5]" :key="star">
@@ -148,7 +148,7 @@
     {{-- Aplikasi MOVR --}}
     <div class="bg-white rounded-3xl p-6 shadow-sm">
       <p class="text-sm font-semibold text-gray-700 mb-4">
-        Aplikasi MOVR
+          {{ __('ui.app_rating') }}
       </p>
       <div class="flex gap-2 mb-3">
         <template x-for="star in [1,2,3,4,5]" :key="star">
@@ -168,7 +168,7 @@
     {{-- Komentar --}}
     <div class="bg-white rounded-3xl p-6 shadow-sm">
       <label class="text-sm font-semibold text-gray-700 mb-3 block">
-        Komentar Tambahan (Opsional)
+          {{ __('ui.additional_comment_optional') }}
       </label>
       <textarea x-model="tokoRating.komentar"
                 rows="4"
@@ -186,16 +186,16 @@
       <button @click="step = 1"
               type="button"
               class="flex-1 py-3 rounded-2xl bg-gray-200 
-                     text-gray-700 font-bold hover:bg-gray-300 
+               text-gray-700 font-bold hover:bg-gray-300 
                      transition">
-        ← Kembali
+        ← {{ __('ui.back') }}
       </button>
       <button @click="submitAll()"
               type="button"
               class="flex-1 py-3 rounded-2xl bg-[#63A2BB] 
-                     text-white font-bold hover:bg-[#4A8BA3] 
+               text-white font-bold hover:bg-[#4A8BA3] 
                      transition">
-        ✓ Kirim Rating
+        ✓ {{ __('ui.submit_rating') }}
       </button>
     </div>
   </div>
@@ -223,7 +223,7 @@ function ratingData() {
     validateAndNext() {
       const allRated = this.produkRatings.every(p => p.bintang > 0);
       if (!allRated) {
-        showToast('Mohon berikan rating untuk semua produk', 'error');
+        showToast('{{ __('ui.rating_all_products_required') }}', 'error');
         return;
       }
       this.step = 2;
@@ -231,7 +231,7 @@ function ratingData() {
     
     async submitAll() {
       if (!this.tokoRating.pelayanan || !this.tokoRating.aplikasi) {
-        showToast('Mohon berikan rating untuk pelayanan dan aplikasi', 'error');
+        showToast('{{ __('ui.rating_shop_required') }}', 'error');
         return;
       }
 
@@ -254,6 +254,7 @@ function ratingData() {
         const data = await res.json();
         if (data.success) {
           showToast('✅ Rating berhasil dikirim! Terima kasih');
+            showToast('✅ {{ __('ui.rating_success') }}');
           setTimeout(() => {
             window.location.href = '{{ route('orders.index') }}';
           }, 1500);

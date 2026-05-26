@@ -58,15 +58,15 @@
                     </svg>
                 </a>
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Checkout</p>
-                    <h1 class="mt-2 text-3xl font-black text-slate-900">Selesaikan Pembelian</h1>
-                    <p class="mt-1 text-sm text-slate-500">Lengkapi data pengiriman, layanan, dan pembayaran.</p>
+                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">{{ __('ui.checkout') }}</p>
+                    <h1 class="mt-2 text-3xl font-black text-slate-900">{{ __('ui.complete_purchase') }}</h1>
+                    <p class="mt-1 text-sm text-slate-500">{{ __('ui.checkout_subtitle') }}</p>
                 </div>
             </div>
             <div class="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-                <span class="rounded-full bg-[#63A2BB]/10 px-3 py-1 text-[#63A2BB]">1. Keranjang</span>
-                <span class="rounded-full bg-[#63A2BB] px-3 py-1 text-white">2. Checkout</span>
-                <span class="rounded-full bg-slate-100 px-3 py-1">3. Pembayaran</span>
+                <span class="rounded-full bg-[#63A2BB]/10 px-3 py-1 text-[#63A2BB]">1. {{ __('ui.cart') }}</span>
+                <span class="rounded-full bg-[#63A2BB] px-3 py-1 text-white">2. {{ __('ui.checkout') }}</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">3. {{ __('ui.payment') }}</span>
             </div>
         </div>
     </div>
@@ -78,9 +78,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.7 3.4A1 1 0 007.2 18h9.6M7 13h10m0 0l1.2 6M7.2 18a1.8 1.8 0 103.6 0m6 0a1.8 1.8 0 103.6 0"/>
                 </svg>
             </div>
-            <h2 class="mt-5 text-xl font-black text-slate-900">Item checkout belum dipilih</h2>
-            <p class="mt-2 text-sm text-slate-500">Silakan kembali ke keranjang untuk memilih produk yang akan dibayar.</p>
-            <a href="{{ route('cart.index.alias') }}" class="btn-primary mt-6 inline-flex items-center justify-center px-6 py-3">Kembali ke Keranjang</a>
+            <h2 class="mt-5 text-xl font-black text-slate-900">{{ __('ui.checkout_empty_title') }}</h2>
+            <p class="mt-2 text-sm text-slate-500">{{ __('ui.checkout_empty_desc') }}</p>
+            <a href="{{ route('cart.index.alias') }}" class="btn-primary mt-6 inline-flex items-center justify-center px-6 py-3">{{ __('ui.back_to_cart') }}</a>
         </div>
     @else
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -89,17 +89,17 @@
                     <div class="mb-5 flex items-center gap-3">
                         <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">A</div>
                         <div>
-                            <h2 class="text-lg font-black text-slate-900">Informasi Penerima</h2>
-                            <p class="text-sm text-slate-500">Pastikan data penerima sudah benar.</p>
+                            <h2 class="text-lg font-black text-slate-900">{{ __('ui.recipient_info') }}</h2>
+                            <p class="text-sm text-slate-500">{{ __('ui.recipient_info_desc') }}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-200/70">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Nama Lengkap</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ __('ui.full_name') }}</p>
                             <p class="mt-2 font-semibold text-slate-800">{{ auth()->user()->nama_pengguna ?? '-' }}</p>
                         </div>
                         <div class="rounded-2xl bg-[#F8FAFB] p-4 ring-1 ring-slate-200/70">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">No. Telepon</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ __('ui.phone_number') }}</p>
                             <p class="mt-2 font-semibold text-slate-800">{{ auth()->user()->no_telepon ?? '-' }}</p>
                         </div>
                     </div>
@@ -110,15 +110,15 @@
                         <div class="flex items-center gap-3">
                             <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">B</div>
                             <div>
-                                <h2 class="text-lg font-black text-slate-900">Alamat Pengiriman</h2>
-                                <p class="text-sm text-slate-500">Pilih alamat yang akan digunakan untuk pengiriman.</p>
+                                <h2 class="text-lg font-black text-slate-900">{{ __('ui.shipping_address') }}</h2>
+                                <p class="text-sm text-slate-500">{{ __('ui.shipping_address_desc') }}</p>
                             </div>
                         </div>
                         <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="inline-flex items-center gap-1 rounded-full bg-[#63A2BB]/10 px-4 py-2 text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:scale-105 hover:bg-[#63A2BB] hover:text-white">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            Tambah
+                            {{ __('ui.add_address') }}
                         </a>
                     </div>
 
@@ -130,7 +130,7 @@
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="font-semibold text-slate-800">{{ $address->label }} — {{ $address->nama_penerima }}</span>
                                         @if((int) ($address->is_utama ?? 0) === 1)
-                                            <span class="rounded-full bg-[#63A2BB]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#63A2BB]">Utama</span>
+                                            <span class="rounded-full bg-[#63A2BB]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#63A2BB]">{{ __('ui.shipping_primary') }}</span>
                                         @endif
                                     </div>
                                     <p class="mt-2 text-sm leading-relaxed text-slate-500">{{ $address->alamat_lengkap }}, {{ $address->kecamatan }}, {{ $address->kota }}, {{ $address->provinsi }} {{ $address->kode_pos }}</p>
@@ -139,8 +139,8 @@
                             </label>
                         @empty
                             <div class="rounded-2xl border border-dashed border-slate-200 bg-[#F8FAFB] p-8 text-center">
-                                <p class="text-sm font-semibold text-slate-700">Belum ada alamat tersimpan.</p>
-                                <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="btn-primary mt-4 inline-flex px-5 py-3 text-sm">Tambah Alamat</a>
+                                <p class="text-sm font-semibold text-slate-700">{{ __('ui.no_address') }}</p>
+                                <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="btn-primary mt-4 inline-flex px-5 py-3 text-sm">{{ __('ui.add_address') }}</a>
                             </div>
                         @endforelse
                     </div>
@@ -150,8 +150,8 @@
                     <div class="mb-5 flex items-center gap-3">
                         <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">C</div>
                         <div>
-                            <h2 class="text-lg font-black text-slate-900">Ekspedisi & Layanan</h2>
-                            <p class="text-sm text-slate-500">Pilih layanan pengiriman yang sesuai.</p>
+                            <h2 class="text-lg font-black text-slate-900">{{ __('ui.shipping_service') }}</h2>
+                            <p class="text-sm text-slate-500">{{ __('ui.shipping_service_desc') }}</p>
                         </div>
                     </div>
 
@@ -159,8 +159,8 @@
                         <details class="rounded-2xl border border-slate-200 bg-[#F8FAFB] p-4">
                             <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
                                 <div>
-                                    <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Ekspedisi</div>
-                                    <div class="mt-1 font-semibold text-slate-900" x-text="selectedShippingGroupLabel || 'Pilih ekspedisi'"></div>
+                                    <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{{ __('ui.select_shipping') }}</div>
+                                    <div class="mt-1 font-semibold text-slate-900" x-text="selectedShippingGroupLabel || '{{ __('ui.select_shipping') }}'"></div>
                                 </div>
                                 <svg class="h-5 w-5 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -175,9 +175,9 @@
                                             @click="selectShippingGroup(groupIndex)">
                                         <div>
                                             <div class="font-semibold text-slate-800" x-text="group.nama_ekspedisi"></div>
-                                            <div class="mt-1 text-xs text-slate-500" x-text="group.items.length + ' layanan tersedia'"></div>
+                                            <div class="mt-1 text-xs text-slate-500" x-text="group.items.length + ' {{ __('ui.services_available') }}'"></div>
                                         </div>
-                                        <span class="text-xs font-bold text-[#63A2BB]">Pilih</span>
+                                        <span class="text-xs font-bold text-[#63A2BB]">{{ __('ui.select') }}</span>
                                     </button>
                                 </template>
                             </div>
@@ -186,8 +186,8 @@
                         <details class="rounded-2xl border border-slate-200 bg-[#F8FAFB] p-4">
                             <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
                                 <div>
-                                    <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Layanan</div>
-                                    <div class="mt-1 font-semibold text-slate-900" x-text="selectedServiceLabel || 'Pilih layanan'"></div>
+                                    <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{{ __('ui.select_service') }}</div>
+                                    <div class="mt-1 font-semibold text-slate-900" x-text="selectedServiceLabel || '{{ __('ui.select_service') }}'"></div>
                                 </div>
                                 <svg class="h-5 w-5 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -208,7 +208,7 @@
                                                 <div class="font-semibold text-slate-800">
                                                     <span x-text="service.jenis_layanan"></span>
                                                 </div>
-                                                <div class="mt-1 text-xs text-slate-500">Estimasi <span x-text="service.estimasi_hari"></span> hari</div>
+                                                <div class="mt-1 text-xs text-slate-500">{{ __('ui.estimate') }} <span x-text="service.estimasi_hari"></span> {{ __('ui.day') }}</div>
                                             </div>
                                         </div>
                                         <div class="text-sm font-black text-[#63A2BB]">Rp <span x-text="fmt(service.ongkir_flat)"></span></div>
@@ -223,8 +223,8 @@
                     <div class="mb-5 flex items-center gap-3">
                         <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">D</div>
                         <div>
-                            <h2 class="text-lg font-black text-slate-900">Metode Pembayaran</h2>
-                            <p class="text-sm text-slate-500">Pilih metode pembayaran yang akan digunakan.</p>
+                            <h2 class="text-lg font-black text-slate-900">{{ __('ui.payment_method_title') }}</h2>
+                            <p class="text-sm text-slate-500">{{ __('ui.choose_payment_method') }}</p>
                         </div>
                     </div>
 
@@ -274,7 +274,7 @@
                                             </div>
                                         </label>
                                     @empty
-                                        <div class="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-xs text-slate-500">Tidak tersedia</div>
+                                        <div class="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-xs text-slate-500">{{ __('ui.no_data_available') }}</div>
                                     @endforelse
                                 </div>
                             </div>
@@ -286,14 +286,14 @@
                     <div class="mb-5 flex items-center gap-3">
                         <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-sm font-black text-[#63A2BB]">E</div>
                         <div>
-                            <h2 class="text-lg font-black text-slate-900">Kode Voucher</h2>
-                            <p class="text-sm text-slate-500">Masukkan kode untuk mendapatkan diskon.</p>
+                            <h2 class="text-lg font-black text-slate-900">{{ __('ui.voucher_title') }}</h2>
+                            <p class="text-sm text-slate-500">{{ __('ui.voucher_desc') }}</p>
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-3 sm:flex-row">
-                        <input type="text" x-model="kode" placeholder="Masukkan kode voucher" class="h-12 flex-1 rounded-full border border-slate-200 bg-[#F8FAFB] px-5 text-sm uppercase tracking-wide outline-none transition-all duration-200 focus:border-[#63A2BB] focus:ring-4 focus:ring-[#63A2BB]/20">
-                        <button type="button" @click="apply()" class="btn-primary h-12 px-6 text-sm" :disabled="loading">Pakai Voucher</button>
+                        <input type="text" x-model="kode" placeholder="{{ __('ui.voucher_placeholder') }}" class="h-12 flex-1 rounded-full border border-slate-200 bg-[#F8FAFB] px-5 text-sm uppercase tracking-wide outline-none transition-all duration-200 focus:border-[#63A2BB] focus:ring-4 focus:ring-[#63A2BB]/20">
+                        <button type="button" @click="apply()" class="btn-primary h-12 px-6 text-sm" :disabled="loading">{{ __('ui.use') }}</button>
                     </div>
                     <p x-show="message" x-cloak class="mt-3 text-sm font-medium" :class="valid ? 'text-emerald-600' : 'text-rose-500'" x-text="message"></p>
                 </div>
@@ -301,7 +301,7 @@
 
             <div class="lg:col-span-4">
                 <div class="card-surface p-6 lg:sticky lg:top-24">
-                    <h2 class="text-lg font-black text-slate-900">Ringkasan Pesanan</h2>
+                    <h2 class="text-lg font-black text-slate-900">{{ __('ui.summary') }}</h2>
 
                     <div class="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1">
                         @foreach($cartItems as $item)
@@ -316,7 +316,7 @@
                                 <img src="{{ $gambar }}" alt="{{ $item->detail->nama_produk ?? 'Produk' }}" class="h-16 w-16 rounded-2xl object-cover ring-1 ring-slate-200">
                                 <div class="min-w-0 flex-1">
                                     <p class="line-clamp-2 text-sm font-semibold text-slate-800">{{ $item->detail->nama_produk ?? optional($produk)->nama_produk ?? '-' }}</p>
-                                    <p class="mt-1 text-xs text-slate-500">Size: {{ $item->detail->ukuran ?? '-' }} · Qty: {{ $qty }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">Size: {{ $item->detail->ukuran ?? '-' }} · {{ __('ui.qty') }}: {{ $qty }}</p>
                                     <p class="mt-1 text-xs text-slate-400">Warna: {{ optional($item->detail->warna)->nama_warna ?? '-' }}</p>
                                 </div>
                                 <div class="text-sm font-black text-[#63A2BB]">Rp {{ number_format((int) $line, 0, ',', '.') }}</div>
@@ -349,23 +349,23 @@
 
                     <div class="mt-5 space-y-3 border-t border-slate-200 pt-5 text-sm">
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Subtotal Produk</span>
+                            <span>{{ __('ui.cart_products_subtotal') }}</span>
                             <span class="font-semibold">Rp <span x-text="fmt(subtotalProduk)">{{ number_format((int) $subtotalServer, 0, ',', '.') }}</span></span>
                         </div>
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Ongkos Kirim</span>
+                            <span>{{ __('ui.cart_shipping_cost') }}</span>
                             <span class="font-semibold">Rp <span x-text="fmt(ongkir)">{{ number_format((int) $ongkirServer, 0, ',', '.') }}</span></span>
                         </div>
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Biaya Layanan</span>
+                            <span>{{ __('ui.cart_service_fee') }}</span>
                             <span class="font-semibold">Rp <span x-text="fmt(biayaLayanan)">{{ number_format((int) $biayaLayananServer, 0, ',', '.') }}</span></span>
                         </div>
                         <div class="flex items-center justify-between text-emerald-600" x-show="voucherDiscount > 0" x-cloak>
-                            <span>Diskon Voucher</span>
+                            <span>{{ __('ui.voucher_discount') }}</span>
                             <span class="font-semibold">-Rp <span x-text="fmt(voucherDiscount)">{{ number_format((int) $voucherDiscountServer, 0, ',', '.') }}</span></span>
                         </div>
                         <div class="flex items-center justify-between border-t border-slate-200 pt-3">
-                            <span class="text-base font-bold text-slate-900">Total</span>
+                            <span class="text-base font-bold text-slate-900">{{ __('ui.total') }}</span>
                             <span class="text-xl font-black text-[#63A2BB]">Rp <span x-text="fmt(grandTotal)">{{ number_format((int) max(0, $subtotalServer + $ongkirServer + $biayaLayananServer - $voucherDiscountServer), 0, ',', '.') }}</span></span>
                         </div>
                     </div>
@@ -376,8 +376,8 @@
                         <input type="hidden" name="ekspedisi_id" x-ref="ekspedisi">
                         <input type="hidden" name="metode_id" x-ref="metode">
                         <input type="hidden" name="voucher_id" x-ref="voucher" value="{{ $voucher->voucher_id ?? '' }}">
-                        <button type="submit" {{ !empty($stokWarnings) ? 'disabled' : '' }} class="btn-primary w-full justify-center px-6 py-4 text-sm {{ !empty($stokWarnings) ? 'cursor-not-allowed opacity-50' : '' }}">Bayar Sekarang <span class="ml-1" x-text="'(' + fmt(grandTotal) + ')'">({{ number_format((int) max(0, $subtotalServer + $ongkirServer + $biayaLayananServer - $voucherDiscountServer), 0, ',', '.') }})</span></button>
-                        <p class="mt-3 text-center text-xs text-slate-400">{{ empty($stokWarnings) ? 'Pastikan alamat, ekspedisi, dan metode pembayaran dipilih.' : 'Selesaikan masalah stok untuk melanjutkan.' }}</p>
+                        <button type="submit" {{ !empty($stokWarnings) ? 'disabled' : '' }} class="btn-primary w-full justify-center px-6 py-4 text-sm {{ !empty($stokWarnings) ? 'cursor-not-allowed opacity-50' : '' }}">{{ __('ui.pay_now') }} <span class="ml-1" x-text="'(' + fmt(grandTotal) + ')'">({{ number_format((int) max(0, $subtotalServer + $ongkirServer + $biayaLayananServer - $voucherDiscountServer), 0, ',', '.') }})</span></button>
+                        <p class="mt-3 text-center text-xs text-slate-400">{{ empty($stokWarnings) ? __('ui.ensure_selected_checkout') : __('ui.stock_issue_checkout') }}</p>
                     </form>
                 </div>
             </div>
@@ -462,7 +462,7 @@ function checkoutPage(state) {
         },
         submitCheckout(event) {
             if (!this.selectedAddress) {
-                alert('Silakan pilih alamat pengiriman');
+                alert('{{ __('ui.select_address_alert') }}');
                 return;
             }
             if (!this.selectedShippingId) {

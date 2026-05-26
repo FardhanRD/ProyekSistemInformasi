@@ -105,7 +105,7 @@
                  const data = await res.json();
                  if (data.success) {
                    this.isWishlisted = !this.isWishlisted;
-                   showToast(this.isWishlisted ? 'Ditambahkan ke wishlist' : 'Dihapus dari wishlist');
+                   showToast(this.isWishlisted ? @json(__('ui.product_added_wishlist')) : @json(__('ui.product_removed_wishlist')));
                  }
                  this.loading = false;
                }
@@ -262,7 +262,7 @@
 
       <div class="py-4 border-b-2 border-gray-100" x-show="selectedDetail !== null" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
         <h3 class="text-sm font-bold text-gray-700 mb-3">
-          Jumlah
+          {{ __('ui.qty') }}
         </h3>
         <div class="flex items-center gap-4">
           <div class="flex items-center border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
@@ -300,7 +300,7 @@
           <svg x-show="!loading" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
           </svg>
-          <span x-text="loading ? 'Menambahkan...' : 'Tambah ke Keranjang'"></span>
+          <span x-text="loading ? 'Menambahkan...' : '{{ __('ui.add_to_cart') }}'"></span>
         </button>
 
         <button type="button"

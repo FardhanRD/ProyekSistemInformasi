@@ -1,15 +1,13 @@
 @extends('layouts.buyer')
-@section('title', 'Wishlist — MOVR')
+@section('title', __('ui.wishlist') . ' — MOVR')
 @section('content')
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-2xl font-black text-gray-900">
-        Wishlist
-      </h1>
+      <h1 class="text-2xl font-black text-gray-900">{{ __('ui.wishlist') }}</h1>
       <p class="text-gray-400 text-sm mt-1">
-        {{ $wishlists->count() }} produk tersimpan
+        {{ $wishlists->count() }} {{ __('ui.wishlist_saved_count') }}
       </p>
     </div>
   </div>
@@ -32,13 +30,13 @@
       </svg>
     </div>
     <h2 class="text-xl font-bold text-gray-700 mb-2">
-      Wishlist masih kosong
+      {{ __('ui.wishlist_empty_title') }}
     </h2>
     <p class="text-gray-400 mb-8">
-      Simpan produk favorit kamu dengan klik ikon ❤️
+      {{ __('ui.wishlist_empty_hint') }}
     </p>
     <a href="/" class="btn-primary">
-      Jelajahi Produk
+      {{ __('ui.wishlist_explore_products') }}
     </a>
   </div>
   @else
@@ -93,7 +91,7 @@
                    const badge = document.getElementById(
                      'wishlist-count');
                    if (badge) badge.textContent = data.count;
-                   showToast('Dihapus dari wishlist');
+                   showToast(@json(__('ui.wishlist_removed')));
                  }
                  this.loading = false;
                }
@@ -147,7 +145,7 @@
                   py-2.5 rounded-xl text-xs font-bold 
                   hover:bg-[#63A2BB] hover:text-white 
                   transition-all">
-          Lihat Produk →
+          {{ __('ui.view_detail') }} →
         </a>
       </div>
     </div>

@@ -1,21 +1,10 @@
 <?php
 
-use App\Models\Notifikasi;
-use Illuminate\Support\Facades\Schema;
-
+// Notifikasi dinonaktifkan — fungsi menjaga kompatibilitas pemanggilan.
 if (! function_exists('kirimNotifikasi')) {
-    function kirimNotifikasi(int $pengguna_id, string $judul, string $pesan, string $jenis, ?string $url = null): ?Notifikasi
+    function kirimNotifikasi(int $pengguna_id, string $judul, string $pesan, string $jenis, ?string $url = null)
     {
-        if (!Schema::hasTable('notifikasi')) {
-            return null;
-        }
-
-        return Notifikasi::create([
-            'pengguna_id' => $pengguna_id,
-            'judul' => $judul,
-            'pesan' => $pesan,
-            'jenis' => $jenis,
-            'url_redirect' => $url,
-        ]);
+        // Fungsionalitas notifikasi telah dihapus; kembalikan null tanpa melakukan apa-apa.
+        return null;
     }
 }

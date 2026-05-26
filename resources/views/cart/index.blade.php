@@ -5,7 +5,7 @@
 
 @extends('layouts.buyer')
 
-@section('title','MOVR | Keranjang')
+@section('title', __('ui.cart') . ' | MOVR')
 
 @section('content')
 <div class="space-y-6">
@@ -17,9 +17,9 @@
     @if(empty($items) || $items->isEmpty())
         <div class="rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
             <div class="text-6xl">🛒</div>
-            <div class="mt-3 text-lg font-bold">Keranjang kamu masih kosong</div>
-            <div class="text-slate-300 text-sm mt-2">Mulai cari produk favoritmu di MOVR.</div>
-            <a href="{{ route('home') }}" class="mt-5 inline-flex rounded-full bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-400">Belanja Sekarang</a>
+            <div class="mt-3 text-lg font-bold">{{ __('ui.cart_empty_title') }}</div>
+            <div class="text-slate-300 text-sm mt-2">{{ __('ui.cart_empty_desc') }}</div>
+            <a href="{{ route('home') }}" class="mt-5 inline-flex rounded-full bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-400">{{ __('ui.shop_now') }}</a>
         </div>
     @else
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -47,11 +47,11 @@
 
                                 <div class="flex-1">
                                     <div class="font-bold">{{ $produk->nama_produk ?? '-' }}</div>
-                                    <div class="text-sm text-slate-300 mt-1">Warna: {{ $detail->warna?->nama_warna ?? '-' }} • Ukuran: {{ $detail->ukuran ?? '-' }}</div>
+                                    <div class="text-sm text-slate-300 mt-1">{{ __('ui.color') }}: {{ $detail->warna?->nama_warna ?? '-' }} • {{ __('ui.size') }}: {{ $detail->ukuran ?? '-' }}</div>
 
                                     <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                         <div>
-                                            <div class="text-xs text-slate-300">Harga</div>
+                                            <div class="text-xs text-slate-300">{{ __('ui.price') }}</div>
                                             <div class="font-black">Rp {{ number_format((int)$harga,0,',','.') }}</div>
                                         </div>
 
@@ -62,13 +62,13 @@
                                         </div>
 
                                         <div class="text-right">
-                                            <div class="text-xs text-slate-300">Subtotal</div>
+                                            <div class="text-xs text-slate-300">{{ __('ui.subtotal') }}</div>
                                             <div class="font-black" x-text="formatRupiah(subtotal)">Rp 0</div>
                                         </div>
 
                                         <div>
                                             <button type="button" class="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 hover:bg-rose-500/20" @click="remove" :disabled="loading">
-                                                Hapus
+                                                {{ __('ui.delete') }}
                                             </button>
                                         </div>
                                     </div>
@@ -80,7 +80,7 @@
             </div>
 
             <div class="lg:col-span-4 rounded-3xl border border-white/10 bg-white/5 p-4">
-                <h2 class="font-bold text-lg">Ringkasan</h2>
+                <h2 class="font-bold text-lg">{{ __('ui.summary') }}</h2>
                 <div class="mt-4 space-y-2 text-sm">
                     @php
                         $subtotalAll = 0;
@@ -90,10 +90,10 @@
                             $subtotalAll += $harga * (int)($it->jumlah ?? 1);
                         }
                     @endphp
-                    <div class="flex justify-between"><span class="text-slate-300">Subtotal</span><span class="font-bold">Rp {{ number_format($subtotalAll,0,',','.') }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-300">{{ __('ui.subtotal') }}</span><span class="font-bold">Rp {{ number_format($subtotalAll,0,',','.') }}</span></div>
                 </div>
 
-                <a href="{{ route('checkout.index') }}" class="mt-6 block rounded-3xl bg-cyan-500 px-6 py-3 text-center text-sm font-bold text-slate-950 hover:bg-cyan-400">Checkout</a>
+                <a href="{{ route('checkout.index') }}" class="mt-6 block rounded-3xl bg-cyan-500 px-6 py-3 text-center text-sm font-bold text-slate-950 hover:bg-cyan-400">{{ __('ui.checkout') }}</a>
             </div>
         </div>
     @endif
@@ -154,7 +154,7 @@
                 }, 400);
             },
             async remove() {
-                if (!confirm('Hapus item dari keranjang?')) return;
+                if (!confirm('{{ __('ui.remove_item') }}')) return;
                 this.loading = true;
                 try {
                     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

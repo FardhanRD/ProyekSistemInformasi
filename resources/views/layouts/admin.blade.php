@@ -39,61 +39,7 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        {{-- Notifikasi real (5 terbaru) --}}
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" type="button" class="relative inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 1 5.454 1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.642 23.848 23.848 0 0 1 5.454-1.31m5.715 0a24.255 24.255 0 0 0-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                                </svg>
-
-                                @if(isset($notifikasi) && $notifikasi->count() > 0)
-                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                                    {{ $notifikasi->count() }}
-                                </span>
-                                @endif
-                            </button>
-
-                            <div x-show="open"
-                                 @click.outside="open = false"
-                                 @keydown.escape.window="open = false"
-                                 x-cloak
-                                 class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
-                                <div class="px-4 py-3 border-b flex justify-between items-center">
-                                    <span class="font-semibold text-gray-700">Notifikasi</span>
-                                    <span class="text-xs text-gray-400">{{ isset($notifikasi) ? $notifikasi->count() : 0 }} baru</span>
-                                </div>
-
-                                <div class="max-h-72 overflow-y-auto">
-                                    @if(isset($notifikasi) && $notifikasi->count() > 0)
-                                        @foreach($notifikasi as $notif)
-                                            <a href="{{ $notif->url_redirect ?? '#' }}"
-                                               class="block px-4 py-3 hover:bg-gray-50 border-b last:border-0 transition">
-                                                <p class="font-medium text-sm text-gray-800">
-                                                    {{ $notif->judul }}
-                                                </p>
-                                                <p class="text-xs text-gray-500 mt-1">
-                                                    {{ Str::limit($notif->pesan, 60) }}
-                                                </p>
-                                                <p class="text-xs text-gray-400 mt-1">
-                                                    {{ $notif->created_at->diffForHumans() }}
-                                                </p>
-                                            </a>
-                                        @endforeach
-                                    @else
-                                        <div class="px-4 py-6 text-center text-gray-400 text-sm">
-                                            Tidak ada notifikasi baru
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="px-4 py-2 border-t text-center">
-                                    <a href="/admin/notification"
-                                       class="text-xs text-teal-600 hover:underline">
-                                        Lihat semua notifikasi
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                        {{-- Notifikasi dinonaktifkan --}}
 
 
                         {{-- Avatar + Nama --}}

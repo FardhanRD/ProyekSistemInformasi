@@ -7,13 +7,13 @@
 
 @extends('layouts.buyer')
 
-@section('title','MOVR | Checkout')
+@section('title', __('ui.checkout') . ' | MOVR')
 
 @section('content')
 <div class="space-y-6">
     <div>
-        <div class="text-xs font-semibold text-cyan-300">CHECKOUT</div>
-        <h1 class="text-2xl md:text-3xl font-black">Selesaikan Pembelian</h1>
+        <div class="text-xs font-semibold text-cyan-300">{{ __('ui.checkout') }}</div>
+        <h1 class="text-2xl md:text-3xl font-black">{{ __('ui.complete_purchase') }}</h1>
     </div>
 
     @php
@@ -49,14 +49,14 @@
 
             {{-- A. Informasi Penerima --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <h2 class="font-bold text-lg">A. Informasi Penerima</h2>
+                <h2 class="font-bold text-lg">A. {{ __('ui.recipient_info') }}</h2>
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
-                        <div class="text-xs text-slate-400">Nama Lengkap</div>
+                        <div class="text-xs text-slate-400">{{ __('ui.full_name') }}</div>
                         <div class="font-semibold">{{ auth()->user()->nama_pengguna ?? '-' }}</div>
                     </div>
                     <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
-                        <div class="text-xs text-slate-400">No. Telepon</div>
+                        <div class="text-xs text-slate-400">{{ __('ui.phone_number') }}</div>
                         <div class="font-semibold">{{ auth()->user()->no_telepon ?? '-' }}</div>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
 
             {{-- B. Pilih Alamat Pengiriman --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <h2 class="font-bold text-lg">B. Pilih Alamat Pengiriman</h2>
+                <h2 class="font-bold text-lg">B. {{ __('ui.shipping_address') }}</h2>
 
                 @php
                     $alamatUtama = $addresses->firstWhere('is_utama', 1) ?? $addresses->first();
@@ -85,7 +85,7 @@
                                 <div class="text-xs text-slate-400 mt-1">{{ $a->no_telepon }}</div>
 
                                 @if(($a->is_utama ?? false) == 1)
-                                    <div class="mt-2 inline-flex rounded-full bg-emerald-500/15 border border-emerald-400/30 px-3 py-1 text-xs text-emerald-300 font-semibold">Utama</div>
+                                    <div class="mt-2 inline-flex rounded-full bg-emerald-500/15 border border-emerald-400/30 px-3 py-1 text-xs text-emerald-300 font-semibold">{{ __('ui.shipping_primary') }}</div>
                                 @endif
                             </div>
                         </label>
@@ -95,14 +95,14 @@
                 <div class="mt-4 text-sm text-slate-300 flex items-center gap-3">
                     <a href="{{ route('profile.address.create', ['return' => 'checkout']) }}"
                        class="inline-flex rounded-full bg-white/5 border border-white/10 px-5 py-3 text-sm font-bold hover:bg-white/10">
-                        Tambah Alamat Baru
+                        {{ __('ui.address_add_new') }}
                     </a>
                 </div>
             </div>
 
             {{-- C. Pilihan Ekspedisi & Layanan --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <h2 class="font-bold text-lg">C. Pilihan Ekspedisi & Layanan</h2>
+                <h2 class="font-bold text-lg">C. {{ __('ui.shipping_service') }}</h2>
 
                 <div class="mt-4 space-y-3">
                     <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
@@ -111,7 +111,7 @@
                                 @click="shippingOpen = !shippingOpen; serviceOpen = false">
                             <div>
                                 <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Ekspedisi</div>
-                                <div class="mt-1 font-semibold text-white" x-text="selectedShippingGroupLabel || 'Pilih ekspedisi'"></div>
+                                <div class="mt-1 font-semibold text-white" x-text="selectedShippingGroupLabel || '{{ __('ui.select_shipping') }}'"></div>
                             </div>
                             <svg class="h-5 w-5 text-slate-300 transition-transform" :class="shippingOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -126,9 +126,9 @@
                                         @click="selectShippingGroup(groupIndex)">
                                     <div>
                                         <div class="font-semibold text-white" x-text="group.nama_ekspedisi"></div>
-                                        <div class="mt-1 text-xs text-slate-400" x-text="group.items.length + ' layanan tersedia'"></div>
+                                        <div class="mt-1 text-xs text-slate-400" x-text="group.items.length + ' {{ __('ui.services_available') }}'"></div>
                                     </div>
-                                    <span class="text-xs font-bold text-cyan-300">Pilih</span>
+                                    <span class="text-xs font-bold text-cyan-300">{{ __('ui.select') }}</span>
                                 </button>
                             </template>
                         </div>
@@ -141,7 +141,7 @@
                                 :disabled="!selectedShippingGroup">
                             <div>
                                 <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Layanan</div>
-                                <div class="mt-1 font-semibold text-white" x-text="selectedServiceLabel || 'Pilih layanan'"></div>
+                                <div class="mt-1 font-semibold text-white" x-text="selectedServiceLabel || '{{ __('ui.select_service') }}'"></div>
                             </div>
                             <svg class="h-5 w-5 text-slate-300 transition-transform" :class="serviceOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -175,7 +175,7 @@
 
             {{-- D. Metode Pembayaran --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <h2 class="font-bold text-lg">D. Metode Pembayaran</h2>
+                <h2 class="font-bold text-lg">D. {{ __('ui.payment_method_title') }}</h2>
 
                 @php
                     $metodes = $metodes ?? collect();
@@ -234,23 +234,23 @@
                     @endforeach
                 </div>
 
-                <div class="mt-4 text-xs text-slate-400">Pilih metode pembayaran untuk melanjutkan.</div>
+                <div class="mt-4 text-xs text-slate-400">{{ __('ui.choose_payment_method') }}</div>
             </div>
 
             {{-- E. Kode Voucher --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-5" x-data="voucherUI()">
-                <h2 class="font-bold text-lg">E. Kode Voucher</h2>
+                <h2 class="font-bold text-lg">E. {{ __('ui.voucher_title') }}</h2>
 
                 <form method="post" action="{{ route('checkout.apply_voucher') }}" @submit.prevent="apply()" class="mt-4 flex gap-3">
                     @csrf
                     <input type="text"
                            x-model="kode"
                            class="flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-2 text-sm outline-none focus:border-cyan-400"
-                           placeholder="Masukkan kode voucher" />
+                           placeholder="{{ __('ui.voucher_placeholder') }}" />
                     <button type="submit"
                             class="rounded-2xl bg-cyan-500 px-5 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
                             :disabled="loading">
-                        {{ __('Pakai') }}
+                        {{ __('ui.use') }}
                     </button>
                 </form>
 
@@ -265,7 +265,7 @@
         {{-- Kolom Kanan: Ringkasan Pesanan --}}
         <div class="lg:col-span-4">
             <div class="lg:sticky lg:top-24 rounded-3xl border border-white/10 bg-white/5 p-5">
-                <h2 class="font-bold text-lg">Ringkasan Pesanan</h2>
+                <h2 class="font-bold text-lg">{{ __('ui.summary') }}</h2>
 
                 <div class="mt-4 space-y-3">
                     @php
@@ -292,12 +292,12 @@
                 </div>
 
                 <div class="mt-5 space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="text-slate-300">Subtotal Produk</span><span class="font-bold">Rp <span x-text="fmt(subtotalProduk)"></span></span></div>
-                    <div class="flex justify-between"><span class="text-slate-300">Ongkos Kirim</span><span class="font-bold">Rp <span x-text="fmt(ongkir)"></span></span></div>
-                    <div class="flex justify-between"><span class="text-slate-300">Biaya Layanan</span><span class="font-bold">Rp <span x-text="fmt(biayaLayanan)"></span></span></div>
-                    <div class="flex justify-between" x-show="diskonVoucher>0"><span class="text-slate-300">Diskon Voucher</span><span class="font-bold">-Rp <span x-text="fmt(diskonVoucher)"></span></span></div>
+                    <div class="flex justify-between"><span class="text-slate-300">{{ __('ui.cart_products_subtotal') }}</span><span class="font-bold">Rp <span x-text="fmt(subtotalProduk)"></span></span></div>
+                    <div class="flex justify-between"><span class="text-slate-300">{{ __('ui.cart_shipping_cost') }}</span><span class="font-bold">Rp <span x-text="fmt(ongkir)"></span></span></div>
+                    <div class="flex justify-between"><span class="text-slate-300">{{ __('ui.cart_service_fee') }}</span><span class="font-bold">Rp <span x-text="fmt(biayaLayanan)"></span></span></div>
+                    <div class="flex justify-between" x-show="diskonVoucher>0"><span class="text-slate-300">{{ __('ui.voucher_discount') }}</span><span class="font-bold">-Rp <span x-text="fmt(diskonVoucher)"></span></span></div>
                     <div class="border-t border-white/10 pt-3 flex justify-between">
-                        <span class="text-slate-200 font-semibold">Total</span>
+                        <span class="text-slate-200 font-semibold">{{ __('ui.total') }}</span>
                         <span class="font-black text-xl">Rp <span x-text="fmt(grandTotal)"></span></span>
                     </div>
                 </div>
@@ -315,10 +315,10 @@
                         <input type="hidden" name="voucher_id" x-ref="voucher" value="{{ $voucher->voucher_id ?? '' }}" />
 
                         <button type="submit" class="w-full rounded-3xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-400">
-                            Bayar Sekarang
+                            {{ __('ui.pay_now') }}
                         </button>
 
-                        <div class="mt-2 text-xs text-slate-400">Pastikan alamat, ekspedisi, dan metode pembayaran dipilih.</div>
+                        <div class="mt-2 text-xs text-slate-400">{{ __('ui.ensure_selected_checkout') }}</div>
                     </form>
                 </div>
             </div>
@@ -424,9 +424,9 @@
                 const alamat = document.querySelector('input[name="alamat_id"]:checked');
                 const metode = document.querySelector('input[name="metode_id"]:checked');
 
-                if (!alamat) { alert('Silakan pilih alamat pengiriman'); return; }
-                if (!this.selectedShippingId) { alert('Silakan pilih ekspedisi'); return; }
-                if (!metode) { alert('Silakan pilih metode pembayaran'); return; }
+                if (!alamat) { alert('{{ __('ui.select_address_alert') }}'); return; }
+                if (!this.selectedShippingId) { alert('{{ __('ui.select_shipping_alert') }}'); return; }
+                if (!metode) { alert('{{ __('ui.select_payment_alert') }}'); return; }
 
                 // Sinkronkan nilai ke hidden input sebelum submit
                 this.$refs.alamat.value = alamat.value;
@@ -483,7 +483,7 @@
                     const data = await resp.json();
                     if(!resp.ok || !data.valid){
                         this.valid = false;
-                        this.message = data.message || 'Voucher tidak valid';
+                        this.message = data.message || '{{ __('ui.voucher_invalid') }}';
                         return;
                     }
                     this.valid = true;
@@ -494,7 +494,7 @@
                     const hv = document.querySelector('input[name="voucher_id"]');
                     if(hv && data.voucher_id) hv.value = data.voucher_id;
                 }catch(e){
-                    this.message = 'Gagal memakai voucher';
+                    this.message = '{{ __('ui.voucher_failed') }}';
                 }finally{
                     this.loading = false;
                 }

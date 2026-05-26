@@ -10,7 +10,6 @@ use App\Models\Produk;
 use App\Models\DetailProduk;
 use App\Models\StockMovement;
 use App\Models\Admin;
-use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -128,22 +127,7 @@ class SupplierOrderController extends Controller
 
             DB::commit();
 
-            // Buat notifikasi untuk pengguna (admin yang membuat PO)
-            try {
-                if (Schema::hasTable('notifikasi')) {
-                    Notifikasi::create([
-                        'pengguna_id' => auth()->user()->pengguna_id,
-                        'judul' => 'PO Baru Dibuat',
-                        'pesan' => 'Purchase Order ' . $kode_order . ' berhasil dibuat',
-                        'jenis' => 'transaksi',
-                        'url_redirect' => '/admin/supplier-order',
-                        'is_read' => 0,
-                        'created_at' => now(),
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                // Jangan gagalkan proses utama jika notifikasi gagal
-            }
+            // Notifikasi dinonaktifkan
 
             return redirect()->route('admin.supplier-order.show', $po->supplier_order_id)
                 ->with('success', "PO {$kode_order} berhasil dibuat.");
@@ -206,18 +190,7 @@ class SupplierOrderController extends Controller
                 }
             }
 
-            // Notifikasi
-            if (Schema::hasTable('notifikasi')) {
-                Notifikasi::create([
-                    'pengguna_id' => auth()->user()->pengguna_id,
-                    'judul' => 'Stok Diperbarui',
-                    'pesan' => 'PO ' . $order->kode_order . ' diterima, stok bertambah',
-                    'jenis' => 'transaksi',
-                    'url_redirect' => '/admin/stock',
-                    'is_read' => 0,
-                    'created_at' => now(),
-                ]);
-            }
+            // Notifikasi dinonaktifkan
 
             DB::commit();
 

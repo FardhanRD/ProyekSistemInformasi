@@ -120,14 +120,14 @@ class PaymentController extends Controller
         return substr($clean, 0, 4) . '-' . substr($clean, 4, 6) . '-' . substr($clean, 10, 4);
     }
 
-    public function uploadProof(Request $request, $kodeTransaksi)
+    public function uploadProof(Request $request, $kode)
     {
         $request->validate([
-            'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'bukti_pembayaran' => 'required|image|mimes:jpg,jpeg,png|max:5120'
         ]);
 
         $transaksi = Transaksi::with('pembayaran', 'buyer')
-            ->where('kode_transaksi', $kodeTransaksi)
+            ->where('kode_transaksi', $kode)
             ->firstOrFail();
 
         // Validasi kepemilikan
@@ -135,37 +135,31 @@ class PaymentController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        // Validasi status
-        if ($transaksi->status !== 'menunggu_pembayaran') {
-            return back()->with('error', 'Transaksi ini tidak lagi menunggu pembayaran.');
-        }
-
         $pembayaran = $transaksi->pembayaran;
 
         // Cek kadaluarsa
         if ($pembayaran->expired_at && now()->gt($pembayaran->expired_at)) {
-            return back()->with('error', 'Waktu pembayaran untuk transaksi ini sudah habis.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Waktu pembayaran untuk transaksi ini sudah habis.'
+            ], 422);
         }
 
-        DB::beginTransaction();
-        try {
-            // Simpan file bukti pembayaran
-            $path = $request->file('bukti_pembayaran')->store('proofs', 'public');
+        $path = $request->file('bukti_pembayaran')
+            ->store('bukti-pembayaran', 'public');
 
-            // Update status pembayaran dan transaksi
-            $pembayaran->update([
-                'bukti_pembayaran' => $path,
-                'status_pembayaran' => 'menunggu_konfirmasi',
-                'tanggal_pembayaran' => now(),
-            ]);
-            $transaksi->update(['status' => 'pembayaran_dikonfirmasi']);
+            // Notifikasi dinonaktifkan
 
-            DB::commit();
-            return redirect()->route('order.show', ['kode_transaksi' => $transaksi->kode_transaksi])->with('success', 'Bukti pembayaran berhasil diunggah. Mohon tunggu konfirmasi dari admin.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal mengunggah bukti pembayaran: ' . $e->getMessage());
-        }
+        $pembayaran->update([
+            'bukti_pembayaran' => $path
+        ]);
+
+        // Notifikasi dinonaktifkan
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bukti pembayaran berhasil dikirim'
+        ]);
     }
 
     public function confirmByBuyer(Request $request, $kodeTransaksi)
