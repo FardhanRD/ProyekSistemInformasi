@@ -10,7 +10,7 @@
     $userName = $user->nama_pengguna ?? $user->name ?? $user->username ?? 'User';
     $userEmail = $user->email ?? '';
     $userPhoto = $user->foto_profil ?? null;
-    $orderCount = count($orders ?? []);
+    $orderCount = isset($orderCount) ? $orderCount : count($orders ?? []);
     $wishlistOwnerColumn = Wishlist::ownerColumn();
     $wishlistOwnerId = Wishlist::resolveOwnerId($user);
     $wishlistCount = $wishlistOwnerId ? Wishlist::where($wishlistOwnerColumn, $wishlistOwnerId)->count() : 0;
@@ -67,7 +67,7 @@
           <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7l1 13h12l1-13M9 11h6"/>
           </svg>
-          {{ __('ui.orders_my') }}
+          My Orders
         </button>
         <button @click="activeTab = 'alamat'; history.replaceState({}, '', '?tab=alamat')"
                 :class="activeTab === 'alamat' ? 'bg-[#63A2BB]/10 text-[#63A2BB]' : 'text-gray-500 hover:bg-gray-50'"
@@ -292,69 +292,348 @@
         </div>
       </div>
 
-      <div x-show="activeTab === 'pesanan'"
-           x-cloak
+      <div x-show="activeTab === 'pesanan'" x-cloak
            x-transition:enter="transition ease-out duration-150"
            x-transition:enter-start="opacity-0 translate-y-2"
            x-transition:enter-end="opacity-100 translate-y-0"
-           class="space-y-4">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="font-bold text-gray-800 text-lg">{{ __('ui.orders_my') }}</h2>
-          <p class="text-xs text-gray-400">{{ __('ui.click_detail') }}</p>
+           x-data="{
+             activeStatus: '',
+             selectedOrder: null,
+             loadingDetail: false,
+
+             async openDetail(kode) {
+               this.loadingDetail = true;
+               try {
+                 const res = await fetch(
+                   '/orders/' + kode + '/json',
+                   { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+                 );
+                 const data = await res.json();
+                 this.selectedOrder = data;
+               } catch (e) {
+                 showToast('Gagal memuat detail', 'error');
+               } finally {
+                 this.loadingDetail = false;
+               }
+             },
+
+             closeDetail() {
+               this.selectedOrder = null;
+             }
+           }">
+
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-gray-800 text-lg">
+            My Orders
+          </h2>
+          <p class="text-xs text-gray-400">
+            Klik Detail untuk melihat pesanan
+          </p>
         </div>
 
-        @forelse($orders ?? [] as $order)
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide -mx-1 px-1">
           @php
-            $firstItem = $order->details->first();
+            $statusTabs = [
+              '' => 'Semua',
+              'menunggu_pembayaran' => 'Belum Bayar',
+              'pembayaran_dikonfirmasi' => 'Dikonfirmasi',
+              'dikirim' => 'Dikirim',
+              'selesai' => 'Selesai',
+              'dibatalkan' => 'Dibatalkan',
+            ];
           @endphp
-
-          <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div>
-                  <p class="text-xs text-gray-400">{{ is_string($order->tanggal) ? \Carbon\Carbon::parse($order->tanggal)->format('d M Y, H:i') : $order->tanggal->format('d M Y, H:i') }}</p>
-                  <p class="text-sm font-bold text-gray-700">{{ $order->kode_transaksi }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="px-5 py-4">
-              @if($firstItem)
-                <div class="flex items-center gap-3">
-                  <img src="{{ $firstItem->detailProduk->produk->gambarUtama?->url_safe ?? asset('images/placeholder.png') }}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0 bg-gray-50" alt="Produk">
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-700 line-clamp-1">{{ $firstItem->nama_produk_snap }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">{{ $firstItem->ukuran_snap ?? 'No Size' }} · {{ $firstItem->warna_snap ?? 'No Color' }} · x{{ $firstItem->quantity }}</p>
-                  </div>
-                  <p class="text-sm font-bold text-gray-700 flex-shrink-0">Rp {{ number_format($firstItem->subtotal, 0, ',', '.') }}</p>
-                </div>
-                @if($order->details->count() > 1)
-                  <p class="text-xs text-gray-400 mt-2">+{{ $order->details->count() - 1 }} produk lagi</p>
-                @endif
+          @foreach($statusTabs as $val => $label)
+            @php
+              $count = isset($orderCounts[$val]) ? $orderCounts[$val] : 0;
+            @endphp
+            <button @click="activeStatus = '{{ $val }}'; selectedOrder = null"
+                    :class="activeStatus === '{{ $val }}'
+                      ? 'bg-[#63A2BB] text-white shadow-sm'
+                      : 'bg-white text-gray-500 border border-gray-200 hover:border-[#63A2BB] hover:text-[#63A2BB]'"
+                    class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap">
+              {{ $label }}
+              @if($val === 'menunggu_pembayaran' && $count > 0)
+                <span class="bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {{ $count }}
+                </span>
               @endif
-            </div>
+            </button>
+          @endforeach
+        </div>
 
-            <div class="px-6 py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-3">
-              <div>
-                <p class="text-xs text-gray-400">Total</p>
-                <p class="font-black text-[#63A2BB] text-lg">Rp {{ number_format($order->total_harga,0,',','.') }}</p>
+        <div class="grid grid-cols-1 gap-4"
+             :class="selectedOrder ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
+
+          <div class="space-y-3">
+            @forelse($semuaPesanan ?? [] as $t)
+              @php
+                $statusConfig = [
+                  'menunggu_pembayaran' => ['bg' => 'bg-amber-50', 'text' => 'text-amber-600', 'label' => 'Belum Bayar'],
+                  'pembayaran_dikonfirmasi' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600', 'label' => 'Dikonfirmasi'],
+                  'diproses' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600', 'label' => 'Diproses'],
+                  'dikirim' => ['bg' => 'bg-[#63A2BB]/10', 'text' => 'text-[#63A2BB]', 'label' => 'Dikirim'],
+                  'selesai' => ['bg' => 'bg-green-50', 'text' => 'text-green-600', 'label' => 'Selesai'],
+                  'dibatalkan' => ['bg' => 'bg-red-50', 'text' => 'text-red-500', 'label' => 'Dibatalkan'],
+                ];
+                $sc = $statusConfig[$t->status] ?? ['bg' => 'bg-gray-50', 'text' => 'text-gray-500', 'label' => ucfirst($t->status)];
+              @endphp
+              <div x-show="activeStatus === '' || activeStatus === '{{ $t->status }}'"
+                   class="bg-white rounded-2xl p-4 shadow-sm border-2 transition-all cursor-pointer hover:border-[#63A2BB]/30"
+                   :class="selectedOrder?.kode_transaksi === '{{ $t->kode_transaksi }}'
+                     ? 'border-[#63A2BB]'
+                     : 'border-transparent'">
+
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <p class="text-xs text-gray-400">
+                      {{ is_string($t->tanggal) ? \Carbon\Carbon::parse($t->tanggal)->format('d M Y, H:i') : $t->tanggal->format('d M Y, H:i') }}
+                    </p>
+                    <p class="font-bold text-gray-700 text-sm mt-0.5">
+                      {{ $t->kode_transaksi }}
+                    </p>
+                  </div>
+                  <span class="text-[11px] font-bold px-2.5 py-1 rounded-full {{ $sc['bg'] }} {{ $sc['text'] }}">
+                    {{ $sc['label'] }}
+                  </span>
+                </div>
+
+                @foreach($t->transaksiDetail->take(1) as $d)
+                  <div class="flex items-center gap-3 mb-3">
+                    <img src="{{ $d->detailProduk->produk->gambarUtama?->url_safe ?? asset('images/placeholder.png') }}"
+                         class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-gray-50"
+                         alt="Produk">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-gray-700 line-clamp-1">
+                        {{ $d->nama_produk_snap }}
+                      </p>
+                      <p class="text-xs text-gray-400 mt-0.5">
+                        {{ $d->ukuran_snap }} · {{ $d->warna_snap }} · x{{ $d->quantity }}
+                      </p>
+                    </div>
+                    <p class="text-sm font-bold text-gray-700 flex-shrink-0">
+                      Rp {{ number_format($d->subtotal,0,',','.') }}
+                    </p>
+                  </div>
+                @endforeach
+                @if($t->transaksiDetail->count() > 1)
+                  <p class="text-xs text-gray-400 mb-3">
+                    +{{ $t->transaksiDetail->count()-1 }} produk lagi
+                  </p>
+                @endif
+
+                <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div>
+                    <p class="text-xs text-gray-400">Total</p>
+                    <p class="font-black text-[#63A2BB] text-sm">
+                      Rp {{ number_format($t->total_harga,0,',','.') }}
+                    </p>
+                  </div>
+                  <div class="flex gap-2">
+                    @if($t->status === 'menunggu_pembayaran')
+                      <a href="{{ route('payment.show', $t->kode_transaksi) }}"
+                         class="px-3 py-1.5 bg-[#63A2BB] text-white text-xs font-bold rounded-full hover:bg-[#4A8BA3] transition">
+                        Bayar
+                      </a>
+                    @endif
+                    <button @click="openDetail('{{ $t->kode_transaksi }}')"
+                            class="px-4 py-1.5 border-2 border-gray-200 text-gray-500 text-xs font-semibold rounded-full hover:border-[#63A2BB] hover:text-[#63A2BB] transition">
+                      Detail
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div class="flex gap-2 flex-wrap justify-end">
-                <a href="{{ route('orders.show', $order->kode_transaksi) }}" class="px-4 py-2 bg-white border-2 border-gray-200 text-gray-500 text-xs font-semibold rounded-full hover:border-[#63A2BB] hover:text-[#63A2BB] transition">Detail</a>
+            @empty
+              <div class="bg-white rounded-2xl p-10 shadow-sm text-center">
+                <div class="w-14 h-14 bg-[#63A2BB]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-7 h-7 text-[#63A2BB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                  </svg>
+                </div>
+                <p class="text-gray-500 font-semibold text-sm">
+                  Belum ada pesanan
+                </p>
+                <a href="/" class="mt-3 inline-flex text-xs text-[#63A2BB] font-semibold hover:underline">
+                  Mulai Belanja ->
+                </a>
               </div>
-            </div>
+            @endforelse
           </div>
-        @empty
-          <div class="bg-white rounded-3xl p-12 shadow-sm text-center">
-            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+
+          <div x-show="selectedOrder !== null" x-cloak
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 translate-x-4"
+               x-transition:enter-end="opacity-100 translate-x-0"
+               class="lg:sticky lg:top-24 lg:self-start">
+
+            <div x-show="loadingDetail"
+                 class="bg-white rounded-2xl p-8 shadow-sm text-center">
+              <svg class="animate-spin w-8 h-8 text-[#63A2BB] mx-auto"
+                   fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10"
+                        stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
+              <p class="text-sm text-gray-400 mt-3">Memuat detail...</p>
             </div>
-            <p class="text-gray-500 font-semibold">Belum ada pesanan</p>
-          </div>
-        @endforelse
 
+            <div x-show="selectedOrder && !loadingDetail" x-cloak
+                 class="bg-white rounded-2xl shadow-sm overflow-hidden">
+
+              <div class="bg-[#63A2BB] p-4 flex items-center justify-between">
+                <div>
+                  <p class="text-white/70 text-xs">Detail Pesanan</p>
+                  <p class="text-white font-bold text-sm mt-0.5"
+                     x-text="selectedOrder?.kode_transaksi">
+                  </p>
+                </div>
+                <button @click="closeDetail()"
+                        class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition">
+                  <svg class="w-4 h-4 text-white" fill="none"
+                       stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold px-3 py-1.5 rounded-full"
+                        :class="{
+                          'bg-amber-50 text-amber-600': selectedOrder?.status === 'menunggu_pembayaran',
+                          'bg-blue-50 text-blue-600': selectedOrder?.status === 'pembayaran_dikonfirmasi',
+                          'bg-[#63A2BB]/10 text-[#63A2BB]': selectedOrder?.status === 'dikirim',
+                          'bg-green-50 text-green-600': selectedOrder?.status === 'selesai',
+                          'bg-red-50 text-red-500': selectedOrder?.status === 'dibatalkan',
+                          'bg-gray-50 text-gray-500': !['menunggu_pembayaran','pembayaran_dikonfirmasi','dikirim','selesai','dibatalkan'].includes(selectedOrder?.status),
+                        }"
+                        x-text="selectedOrder?.status_label">
+                  </span>
+                </div>
+
+                <div>
+                  <p class="text-xs font-bold text-gray-400 uppercase mb-2">
+                    Produk
+                  </p>
+                  <template x-for="item in selectedOrder?.items ?? []" :key="item.id">
+                    <div class="flex items-center gap-3 mb-2 last:mb-0">
+                      <img :src="item.gambar" :alt="item.nama"
+                           class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-gray-50"
+                           onerror="this.src='/images/placeholder.png'">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gray-700 line-clamp-1"
+                           x-text="item.nama">
+                        </p>
+                        <p class="text-xs text-gray-400 mt-0.5"
+                           x-text="item.ukuran + ' · ' + item.warna + ' · x' + item.qty">
+                        </p>
+                      </div>
+                      <p class="text-sm font-bold text-gray-700 flex-shrink-0"
+                         x-text="'Rp ' + item.subtotal.toLocaleString('id-ID')">
+                      </p>
+                    </div>
+                  </template>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-3">
+                  <p class="text-xs font-bold text-gray-400 uppercase mb-1.5">
+                    Alamat Kirim
+                  </p>
+                  <p class="font-semibold text-gray-700 text-sm"
+                     x-text="selectedOrder?.penerima">
+                  </p>
+                  <p class="text-xs text-gray-500 mt-1 leading-relaxed"
+                     x-text="selectedOrder?.alamat">
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1"
+                     x-text="selectedOrder?.telepon">
+                  </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-3">
+                  <p class="text-xs font-bold text-gray-400 uppercase mb-1.5">
+                    Pengiriman
+                  </p>
+                  <p class="text-sm font-semibold text-gray-700"
+                     x-text="selectedOrder?.ekspedisi">
+                  </p>
+                  <p class="text-xs text-[#63A2BB] font-mono mt-1"
+                     x-show="selectedOrder?.resi"
+                     x-text="'Resi: ' + selectedOrder?.resi">
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1"
+                     x-show="selectedOrder?.estimasi"
+                     x-text="'Estimasi: ' + selectedOrder?.estimasi">
+                  </p>
+                </div>
+
+                <div>
+                  <p class="text-xs font-bold text-gray-400 uppercase mb-2">
+                    Rincian Pembayaran
+                  </p>
+                  <div class="space-y-1.5 text-sm">
+                    <div class="flex justify-between text-gray-600">
+                      <span>Subtotal Produk</span>
+                      <span x-text="'Rp ' + (selectedOrder?.subtotal ?? 0).toLocaleString('id-ID')">
+                      </span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                      <span>Ongkos Kirim</span>
+                      <span x-text="'Rp ' + (selectedOrder?.ongkir ?? 0).toLocaleString('id-ID')">
+                      </span>
+                    </div>
+                    <div x-show="selectedOrder?.diskon > 0"
+                         class="flex justify-between text-green-600">
+                      <span>Diskon Voucher</span>
+                      <span x-text="'-Rp ' + (selectedOrder?.diskon ?? 0).toLocaleString('id-ID')">
+                      </span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-2 flex justify-between font-bold">
+                      <span class="text-gray-800">Total</span>
+                      <span class="text-[#63A2BB]"
+                            x-text="'Rp ' + (selectedOrder?.total ?? 0).toLocaleString('id-ID')">
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <svg class="w-4 h-4 text-[#63A2BB]" fill="none"
+                       stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                  </svg>
+                  <span class="text-sm font-medium text-gray-600"
+                        x-text="selectedOrder?.metode_bayar ?? '-'"></span>
+                </div>
+
+                <div class="space-y-2 pt-1">
+                  <template x-if="selectedOrder?.status === 'menunggu_pembayaran'">
+                    <a :href="'/pay/' + selectedOrder?.kode_transaksi"
+                       class="w-full flex items-center justify-center gap-2 bg-[#63A2BB] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#4A8BA3] transition">
+                      Bayar Sekarang
+                    </a>
+                  </template>
+                  <template x-if="selectedOrder?.status === 'dikirim'">
+                    <a :href="'/tracking/' + selectedOrder?.kode_transaksi"
+                       class="w-full flex items-center justify-center gap-2 border-2 border-[#63A2BB] text-[#63A2BB] py-3 rounded-xl font-bold text-sm hover:bg-[#63A2BB] hover:text-white transition">
+                      Lacak Paket
+                    </a>
+                  </template>
+                  <template x-if="selectedOrder?.status === 'selesai' && !selectedOrder?.sudah_rating">
+                    <a :href="'/orders/' + selectedOrder?.kode_transaksi + '/rating'"
+                       class="w-full flex items-center justify-center bg-amber-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-amber-600 transition">
+                      Beri Rating
+                    </a>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div x-show="activeTab === 'alamat'"

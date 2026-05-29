@@ -12,6 +12,7 @@ use App\Models\AlamatPengguna;
 use App\Models\Transaksi;
 use App\Models\Buyer;
 use App\Models\AkunPembayaran;
+use App\Models\Wishlist;
 use App\Services\PenggunaSyncService;
 
 class ProfileController extends Controller
@@ -19,29 +20,53 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $buyer = Buyer::where('pengguna_id', $user->pengguna_id)->first();
         $addresses = [];
         $orders = [];
         $paymentMethods = [];
+        $semuaPesanan = collect();
+        $orderCounts = [
+            '' => 0,
+            'menunggu_pembayaran' => 0,
+            'pembayaran_dikonfirmasi' => 0,
+            'dikirim' => 0,
+            'selesai' => 0,
+            'dibatalkan' => 0,
+        ];
 
         if (Schema::hasTable('alamat_pengguna')) {
             $addresses = AlamatPengguna::where('pengguna_id', $user->pengguna_id)->get();
         }
 
-        if (Schema::hasTable('transaksi') && Schema::hasTable('buyer')) {
-            $buyer = Buyer::where('pengguna_id', $user->pengguna_id)->first();
-            if ($buyer) {
-                $orders = Transaksi::with([
-                        'details.detailProduk.produk.gambarUtama',
-                        'alamat',
-                        'ekspedisi',
-                        'pembayaran.metodePembayaran',
-                        'pesanan.trackingLog',
-                        'voucher',
-                    ])
-                    ->where('pengguna_id', $user->pengguna_id)
-                    ->orderBy('tanggal', 'desc')
-                    ->get();
-            }
+        if (Schema::hasTable('transaksi')) {
+            $orders = Transaksi::with([
+                    'details.detailProduk.produk.gambarUtama',
+                    'alamat',
+                    'ekspedisi',
+                    'pembayaran.metodePembayaran',
+                    'pesanan.trackingLog',
+                    'voucher',
+                ])
+                ->where('pengguna_id', $user->pengguna_id)
+                ->orderBy('tanggal', 'desc')
+                ->get();
+
+            $semuaPesanan = Transaksi::with([
+                    'transaksiDetail.detailProduk.produk.gambarUtama',
+                    'transaksiDetail.detailProduk.warna',
+                ])
+                ->where('pengguna_id', $user->pengguna_id)
+                ->orderBy('tanggal', 'desc')
+                ->get();
+
+            $orderCounts = [
+                '' => $semuaPesanan->count(),
+                'menunggu_pembayaran' => $semuaPesanan->where('status', 'menunggu_pembayaran')->count(),
+                'pembayaran_dikonfirmasi' => $semuaPesanan->where('status', 'pembayaran_dikonfirmasi')->count(),
+                'dikirim' => $semuaPesanan->where('status', 'dikirim')->count(),
+                'selesai' => $semuaPesanan->where('status', 'selesai')->count(),
+                'dibatalkan' => $semuaPesanan->where('status', 'dibatalkan')->count(),
+            ];
         }
 
         if (Schema::hasTable('akun_pembayaran')) {
@@ -52,7 +77,30 @@ class ProfileController extends Controller
         
         $availableMethods = \App\Models\MetodePembayaran::where('is_active', 1)->get();
 
-        return view('buyer.profile.index', compact('user', 'addresses', 'orders', 'paymentMethods', 'availableMethods'));
+        $orderCount = $semuaPesanan->count();
+        $wishlistOwnerColumn = Wishlist::ownerColumn();
+        $wishlistOwnerId = Wishlist::resolveOwnerId($user);
+        $wishlistCount = $wishlistOwnerId ? Wishlist::where($wishlistOwnerColumn, $wishlistOwnerId)->count() : 0;
+
+        $alamats = $addresses;
+        $akunPembayaran = $paymentMethods;
+        $metodePembayarans = $availableMethods;
+
+        return view('buyer.profile.index', compact(
+            'user',
+            'buyer',
+            'addresses',
+            'orders',
+            'paymentMethods',
+            'availableMethods',
+            'semuaPesanan',
+            'orderCounts',
+            'orderCount',
+            'wishlistCount',
+            'alamats',
+            'akunPembayaran',
+            'metodePembayarans'
+        ));
     }
 
     public function updateProfile(Request $request, PenggunaSyncService $penggunaSyncService)

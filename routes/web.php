@@ -18,6 +18,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\NotificationBuyerController;
+use App\Http\Controllers\Admin\NotificationAdminController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\WishlistController as ApiWishlistController;
 use App\Http\Controllers\Api\CartController as ApiCartController;
@@ -95,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
     // Order & Tracking
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show')->middleware(['auth']);
+    Route::get('/orders/{kode}/json', [OrderController::class, 'showJson'])->name('orders.show.json');
     Route::get('/tracking/{kode_transaksi}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/orders/{kode_transaksi}/tracking', [TrackingController::class, 'show'])->name('order.tracking');
 
@@ -123,12 +126,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/payment-methods', [ProfileController::class, 'paymentMethods'])->name('profile.payment-methods');
     Route::post('/profile/payment-methods', [ProfileController::class, 'storePaymentMethod'])->name('profile.payment-methods.store');
     Route::delete('/profile/payment-methods/{id}', [ProfileController::class, 'deletePaymentMethod'])->name('profile.payment-methods.delete');
+
+    Route::get('/notifications/unread', [NotificationBuyerController::class, 'unread'])->name('notifications.unread');
+    Route::post('/notifications/{id}/read', [NotificationBuyerController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationBuyerController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications', [NotificationBuyerController::class, 'index'])->name('notifications.index');
 });
 
 // Admin routes (prefix /admin)
 Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/export', [\App\Http\Controllers\Admin\DashboardExportController::class, 'export'])->name('dashboard.export');
+
+    Route::get('/notifications/unread', [NotificationAdminController::class, 'unread'])->name('notifications.unread');
+    Route::post('/notifications/{id}/read', [NotificationAdminController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationAdminController::class, 'readAll'])->name('notifications.read-all');
 
     
 

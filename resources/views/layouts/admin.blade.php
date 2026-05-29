@@ -39,7 +39,120 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        {{-- Notifikasi dinonaktifkan --}}
+                                                <div class="relative" x-data="{
+                                                    open: false,
+                                                    notifs: [],
+                                                    count: 0,
+                                                    async load() {
+                                                        try {
+                                                            const res = await fetch('/admin/notifications/unread',
+                                                                { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                                                            const data = await res.json();
+                                                            this.notifs = data.notifs;
+                                                            this.count  = data.count;
+                                                        } catch(e) {}
+                                                    },
+                                                    async markRead(id, url) {
+                                                        await fetch('/admin/notifications/' + id + '/read', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                                'X-Requested-With': 'XMLHttpRequest'
+                                                            }
+                                                        });
+                                                        this.notifs = this.notifs.filter(n => n.id !== id);
+                                                        this.count = Math.max(0, this.count - 1);
+                                                        if (url) window.location.href = url;
+                                                    },
+                                                    async markAllRead() {
+                                                        await fetch('/admin/notifications/read-all', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                                'X-Requested-With': 'XMLHttpRequest'
+                                                            }
+                                                        });
+                                                        this.count = 0;
+                                                        this.notifs = [];
+                                                    }
+                                                }" x-init="load(); setInterval(() => load(), 20000)">
+
+                                                    <button @click="open = !open"
+                                                                    @click.outside="open = false"
+                                                                    class="relative p-2 rounded-xl hover:bg-gray-100 transition">
+                                                        <svg class="w-5 h-5 text-gray-500" fill="none"
+                                                                 stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                                        </svg>
+                                                        <span x-show="count > 0" x-cloak
+                                                                    x-text="count > 9 ? '9+' : count"
+                                                                    class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center">
+                                                        </span>
+                                                    </button>
+
+                                                    <div x-show="open" x-cloak
+                                                             x-transition:enter="transition ease-out duration-150"
+                                                             x-transition:enter-start="opacity-0 scale-95"
+                                                             x-transition:enter-end="opacity-100 scale-100"
+                                                             class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+
+                                                        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                                                            <span class="font-bold text-gray-800 text-sm">
+                                                                Notifikasi
+                                                            </span>
+                                                            <button x-show="count > 0" @click="markAllRead()"
+                                                                            class="text-xs text-[#63A2BB] hover:underline">
+                                                                Tandai semua dibaca
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="max-h-80 overflow-y-auto">
+                                                            <template x-if="notifs.length === 0">
+                                                                <div class="px-4 py-8 text-center">
+                                                                    <p class="text-xs text-gray-400">
+                                                                        Tidak ada notifikasi baru
+                                                                    </p>
+                                                                </div>
+                                                            </template>
+                                                            <template x-for="n in notifs" :key="n.id">
+                                                                <div @click="markRead(n.id, n.url)"
+                                                                         class="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 cursor-pointer transition flex gap-3">
+                                                                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                                                                             :class="{
+                                                                                 'bg-[#63A2BB]/10': n.jenis === 'transaksi',
+                                                                                 'bg-green-50': n.jenis === 'pengiriman',
+                                                                                 'bg-amber-50': n.jenis === 'promo',
+                                                                                 'bg-red-50': n.jenis === 'stok',
+                                                                                 'bg-gray-100': n.jenis === 'sistem',
+                                                                             }">
+                                                                        <span x-text="{
+                                                                            transaksi: '🛒',
+                                                                            pengiriman: '📦',
+                                                                            promo: '🎁',
+                                                                            stok: '⚠️',
+                                                                            sistem: '⚙️'
+                                                                        }[n.jenis] ?? '🔔'">
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="flex-1 min-w-0">
+                                                                        <p class="text-sm font-semibold text-gray-800 line-clamp-1" x-text="n.judul"></p>
+                                                                        <p class="text-xs text-gray-500 mt-0.5 line-clamp-2" x-text="n.pesan"></p>
+                                                                        <p class="text-[11px] text-gray-400 mt-1" x-text="n.waktu"></p>
+                                                                    </div>
+                                                                    <div class="w-2 h-2 bg-[#63A2BB] rounded-full mt-2 flex-shrink-0"></div>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+
+                                                        <div class="px-4 py-2.5 border-t border-gray-100 text-center">
+                                                            <span class="text-xs text-gray-400 font-medium">
+                                                                Notifikasi terbaru admin
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
 
                         {{-- Avatar + Nama --}}

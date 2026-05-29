@@ -78,14 +78,135 @@
                     <span x-cloak x-show="wishlistCount > 0" x-text="wishlistCount" class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EF4444] px-1.5 text-[10px] font-bold text-white shadow-md"></span>
                 </a>
 
+                                @auth
+                                <div class="relative" x-data="{
+                                    open: false,
+                                    notifs: [],
+                                    count: 0,
+                                    async load() {
+                                        try {
+                                            const res = await fetch('/notifications/unread',
+                                                { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                                            const data = await res.json();
+                                            this.notifs = data.notifs;
+                                            this.count  = data.count;
+                                        } catch(e) {}
+                                    },
+                                    async markRead(id, url) {
+                                        await fetch('/notifications/' + id + '/read', {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        });
+                                        this.count = Math.max(0, this.count - 1);
+                                        this.notifs = this.notifs.filter(n => n.id !== id);
+                                        if (url) window.location.href = url;
+                                    },
+                                    async markAllRead() {
+                                        await fetch('/notifications/read-all', {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        });
+                                        this.count = 0;
+                                        this.notifs = [];
+                                        showToast('Semua notifikasi ditandai dibaca');
+                                    }
+                                }" x-init="load(); setInterval(() => load(), 30000)">
+
+                                    <button @click="open = !open"
+                                                    @click.outside="open = false"
+                                                    class="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-all duration-200 hover:scale-105 hover:border-[#63A2BB] hover:text-[#63A2BB]">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none"
+                                                 stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                        </svg>
+                                        <span x-show="count > 0" x-cloak
+                                                    x-text="count > 9 ? '9+' : count"
+                                                    class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center leading-none">
+                                        </span>
+                                    </button>
+
+                                    <div x-show="open" x-cloak
+                                             x-transition:enter="transition ease-out duration-150"
+                                             x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+                                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                             class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+
+                                        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                                            <span class="font-bold text-gray-800 text-sm">
+                                                Notifikasi
+                                            </span>
+                                            <button x-show="count > 0" @click="markAllRead()"
+                                                            class="text-xs text-[#63A2BB] hover:underline font-medium">
+                                                Tandai semua dibaca
+                                            </button>
+                                        </div>
+
+                                        <div class="max-h-72 overflow-y-auto">
+                                            <template x-if="notifs.length === 0">
+                                                <div class="px-4 py-8 text-center">
+                                                    <svg class="w-10 h-10 text-gray-200 mx-auto mb-2"
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="1.5"
+                                                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                                    </svg>
+                                                    <p class="text-xs text-gray-400">
+                                                        Tidak ada notifikasi baru
+                                                    </p>
+                                                </div>
+                                            </template>
+                                            <template x-for="n in notifs" :key="n.id">
+                                                <div @click="markRead(n.id, n.url)"
+                                                         class="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 cursor-pointer transition flex gap-3">
+                                                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5"
+                                                             :class="{
+                                                                 'bg-[#63A2BB]/10': n.jenis === 'transaksi',
+                                                                 'bg-green-50': n.jenis === 'pengiriman',
+                                                                 'bg-amber-50': n.jenis === 'promo',
+                                                                 'bg-gray-100': n.jenis === 'sistem',
+                                                             }">
+                                                        <span x-text="{
+                                                            transaksi: '🛍️',
+                                                            pengiriman: '📦',
+                                                            promo: '🎁',
+                                                            sistem: '⚙️'
+                                                        }[n.jenis] ?? '🔔'">
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-semibold text-gray-800 line-clamp-1" x-text="n.judul"></p>
+                                                        <p class="text-xs text-gray-500 mt-0.5 line-clamp-2" x-text="n.pesan"></p>
+                                                        <p class="text-[11px] text-gray-400 mt-1" x-text="n.waktu"></p>
+                                                    </div>
+                                                    <div class="w-2 h-2 bg-[#63A2BB] rounded-full flex-shrink-0 mt-2"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <div class="px-4 py-2.5 border-t border-gray-100 text-center">
+                                            <a href="/notifications"
+                                                 class="text-xs text-[#63A2BB] hover:underline font-medium">
+                                                Lihat semua notifikasi
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endauth
+
                 <a href="{{ route('cart.index') }}" class="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-all duration-200 hover:scale-105 hover:border-[#63A2BB] hover:text-[#63A2BB]">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H6.4M7 13L6.4 5M7 13l-1.5 3.5A1 1 0 007 18h10m-10 0a2 2 0 104 0m6 0a2 2 0 104 0" />
                     </svg>
                     <span x-cloak x-show="cartCount > 0" x-text="cartCount" class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#63A2BB] px-1.5 text-[10px] font-bold text-white shadow-md"></span>
                 </a>
-
-                {{-- Notifikasi dinonaktifkan --}}
 
                 <div class="hidden sm:flex items-center rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold">
                     <a href="{{ route('language.switch', 'id') }}" class="rounded-full px-3 py-1.5 {{ app()->getLocale() === 'id' ? 'bg-[#63a2bb] text-white' : 'text-slate-600 hover:bg-slate-100' }}">ID</a>
