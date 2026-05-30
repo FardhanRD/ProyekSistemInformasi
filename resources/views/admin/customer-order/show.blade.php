@@ -3,7 +3,7 @@
 @section('title', 'Detail Customer Order')
 
 @section('content')
-<div class="max-w-5xl mx-auto space-y-6">
+<div x-data="{ showProofModal: false, proofUrl: '', proofTitle: '' }" class="max-w-5xl mx-auto space-y-6">
     {{-- Header --}}
     <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -128,12 +128,35 @@
                 </div>
                 <div>
                     <p class="text-slate-600 font-semibold mb-1">Status</p>
-                    <p class="text-slate-900">{{ $order->pembayaran?->status_pembayaran ?? '-' }}</p>
+                    @php
+                        $status_badge = [
+                            'menunggu_konfirmasi' => 'bg-amber-100 text-amber-700',
+                            'berhasil' => 'bg-green-100 text-green-700',
+                            'gagal' => 'bg-red-100 text-red-700',
+                            'ditolak' => 'bg-red-100 text-red-700',
+                        ];
+                        $badge_class = $status_badge[$order->pembayaran?->status_pembayaran] ?? 'bg-gray-100 text-gray-700';
+                    @endphp
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold {{ $badge_class }}">
+                        {{ ucfirst(str_replace('_', ' ', $order->pembayaran?->status_pembayaran ?? '-')) }}
+                    </span>
+                </div>
+                <div>
+                    <p class="text-slate-600 font-semibold mb-1">Bukti Pembayaran</p>
+                    @if($order->pembayaran?->bukti_pembayaran)
+                        <button type="button"
+                                @click="proofUrl='{{ Storage::url($order->pembayaran->bukti_pembayaran) }}'; proofTitle='{{ $order->kode_transaksi }}'; showProofModal = true"
+                                class="text-[#63A2BB] font-semibold hover:underline">
+                            📷 Lihat Bukti
+                        </button>
+                    @else
+                        <p class="text-slate-900">-</p>
+                    @endif
                 </div>
             </div>
 
             @if($order->pembayaran && $order->pembayaran->status_pembayaran === 'menunggu_konfirmasi')
-                <form method="POST" action="{{ route('admin.customer-order.verify-payment', $order->pembayaran->pembayaran_id) }}" class="mt-4">
+                <form method="POST" action="{{ route('admin.customer-order.verify-payment', $order->pembayaran->pembayaran_id) }}" class="mt-4 flex">
                     @csrf
                     <button type="submit" class="rounded-xl bg-green-500 text-white px-6 py-2 font-semibold hover:bg-green-600">✓ Verifikasi Pembayaran</button>
                 </form>
@@ -172,6 +195,32 @@
             </div>
         </div>
     @endif
+
+    <div x-show="showProofModal" x-cloak
+         @click.self="showProofModal = false"
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+        <div class="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-center justify-between bg-[#63A2BB] px-5 py-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white">Bukti Pembayaran</h3>
+                    <p class="mt-0.5 text-xs text-white/70" x-text="proofTitle"></p>
+                </div>
+                <button type="button" @click="showProofModal = false" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="bg-slate-50 p-4">
+                <div class="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-3">
+                    <img :src="proofUrl" alt="Bukti Pembayaran" class="max-h-[75vh] w-full rounded-2xl object-contain">
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- Actions --}}
     <div class="flex gap-3 justify-end">

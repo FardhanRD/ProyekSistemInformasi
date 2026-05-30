@@ -87,7 +87,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/pay/{kode_transaksi}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{kode}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payment.upload-proof')->middleware(['auth']);
-    Route::post('/payment/{kode_transaksi}/confirm', [PaymentController::class, 'confirmByBuyer'])->name('payment.confirm');
+    Route::match(['get', 'post'], '/payment/{kode}/confirm', [PaymentController::class, 'confirm'])->name('payment.confirm')->middleware(['auth']);
+    Route::get('/payment/{kode}/waiting', [PaymentController::class, 'waiting'])->name('payment.waiting')->middleware(['auth']);
+    Route::get('/payment/{kode}/check-status', [PaymentController::class, 'checkStatus'])->name('payment.check-status')->middleware(['auth']);
+    Route::post('/payment/{kode_transaksi}/confirm', [PaymentController::class, 'confirmByBuyer'])->name('payment.confirm.buyer');
 
     Route::get('/profile/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
     Route::get('/profile/alamat/create', [ProfileController::class, 'createAddress'])->name('profile.alamat.create');
@@ -222,8 +225,8 @@ Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group
     Route::put('/shipping/ekspedisi/{id}', [\App\Http\Controllers\Admin\ShippingController::class, 'updateEkspedisi'])->name('shipping.ekspedisi.update');
     Route::delete('/shipping/ekspedisi/{id}', [\App\Http\Controllers\Admin\ShippingController::class, 'destroyEkspedisi'])->name('shipping.ekspedisi.destroy');
     Route::put('/shipping/ekspedisi/{id}/toggle', [\App\Http\Controllers\Admin\ShippingController::class, 'toggleEkspedisi'])->name('shipping.ekspedisi.toggle');
-    Route::post('/shipping/update-resi', [\App\Http\Controllers\Admin\ShippingController::class, 'updateResi'])->name('shipping.update-resi');
-    Route::post('/shipping/update-status', [\App\Http\Controllers\Admin\ShippingController::class, 'updateStatus'])->name('shipping.update-status');
+    Route::post('/shipping/{id}/update-resi', [\App\Http\Controllers\Admin\ShippingController::class, 'updateResi'])->name('shipping.update-resi');
+    Route::post('/shipping/{id}/update-status', [\App\Http\Controllers\Admin\ShippingController::class, 'updateStatus'])->name('shipping.update-status');
     Route::post('/shipping/tracking-log', [\App\Http\Controllers\Admin\ShippingController::class, 'storeTrackingLog'])->name('shipping.tracking-log.store');
 
     // Report & Analytics (AD17)
@@ -246,9 +249,11 @@ Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group
     // Customer Order Management (AD12)
     Route::get('/customer-order', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'index'])->name('customer-order.index');
     Route::get('/customer-order/{kode_transaksi}', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'show'])->name('customer-order.show');
+    Route::post('/customer-order/{id}/verify', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'verify'])->name('customer-order.verify');
+    Route::post('/customer-order/{id}/reject', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'reject'])->name('customer-order.reject');
     Route::post('/customer-order/{id}/verify-payment', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'verifyPayment'])->name('customer-order.verify-payment');
-    Route::put('/customer-order/{id}/status', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'updateStatus'])->name('customer-order.update-status');
-    Route::put('/customer-order/{id}/resi', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'updateResi'])->name('customer-order.update-resi');
+    Route::post('/customer-order/{id}/update-status', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'updateStatus'])->name('customer-order.update-status');
+    Route::post('/customer-order/{id}/update-resi', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'updateResi'])->name('customer-order.update-resi');
     Route::get('/customer-order/{id}/invoice', [\App\Http\Controllers\Admin\CustomerOrderController::class, 'invoicePdf'])->name('customer-order.invoice-pdf');
 
     // Supplier Order (AD11)

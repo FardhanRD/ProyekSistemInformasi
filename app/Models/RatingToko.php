@@ -10,7 +10,7 @@ class RatingToko extends Model
     protected $primaryKey = 'rating_toko_id';
     public $timestamps = false;
 
-    protected $fillable = ['supplier_id', 'buyer_id', 'bintang', 'komentar'];
+    protected $fillable = ['supplier_id', 'buyer_id', 'kategori', 'pelayanan', 'aplikasi', 'bintang', 'komentar'];
 
     public function supplier()
     {

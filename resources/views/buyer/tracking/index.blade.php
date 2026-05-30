@@ -2,6 +2,25 @@
 @section('title', __('ui.tracking_title') . ' — MOVR')
 @section('content')
 
+@php
+  $trackingStatus = (string) ($pesanan?->status_pesanan ?? '');
+  $trackingStatusMap = [
+    'menunggu_konfirmasi' => ['label' => 'Menunggu Konfirmasi', 'class' => 'bg-amber-50 text-amber-600 border-amber-100', 'icon' => 'clock'],
+    'dikemas' => ['label' => 'Dikemas', 'class' => 'bg-purple-50 text-purple-600 border-purple-100', 'icon' => 'package'],
+    'siap_kirim' => ['label' => 'Siap Kirim', 'class' => 'bg-sky-50 text-sky-600 border-sky-100', 'icon' => 'truck'],
+    'diserahkan_ke_kurir' => ['label' => 'Diserahkan ke Kurir', 'class' => 'bg-[#63A2BB]/10 text-[#63A2BB] border-[#63A2BB]/20', 'icon' => 'truck'],
+    'dalam_pengiriman' => ['label' => 'Dalam Pengiriman', 'class' => 'bg-[#63A2BB]/10 text-[#63A2BB] border-[#63A2BB]/20', 'icon' => 'truck'],
+    'tiba_di_tujuan' => ['label' => 'Tiba di Tujuan', 'class' => 'bg-emerald-50 text-emerald-600 border-emerald-100', 'icon' => 'check'],
+    'diterima' => ['label' => 'Diterima', 'class' => 'bg-emerald-50 text-emerald-600 border-emerald-100', 'icon' => 'check'],
+    'bermasalah' => ['label' => 'Bermasalah', 'class' => 'bg-red-50 text-red-600 border-red-100', 'icon' => 'alert'],
+  ];
+  $trackingStatusInfo = $trackingStatusMap[$trackingStatus] ?? [
+    'label' => $trackingStatus !== '' ? ucfirst(str_replace('_', ' ', $trackingStatus)) : 'Belum Diproses',
+    'class' => 'bg-gray-50 text-gray-500 border-gray-200',
+    'icon' => 'clock',
+  ];
+@endphp
+
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
   {{-- Breadcrumb --}}
   <div class="flex items-center gap-2 text-sm text-gray-400 mb-8">
@@ -60,10 +79,33 @@
         <p class="text-2xl font-black mb-3">
           {{ $pesanan?->estimasi_tiba ? \Carbon\Carbon::parse($pesanan->estimasi_tiba)->locale('id')->format('d M Y') : '-' }}
         </p>
-        <span class="inline-block bg-white/20 text-white px-4 py-1.5 
-                     rounded-full text-xs font-bold">
-          {{ $pesanan?->status ?? __('ui.shipping_in_process') }}
-        </span>
+        <div class="mt-4 flex flex-wrap justify-end gap-3">
+          <div class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-sm">
+            <span class="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/90">Resi</span>
+            <span class="font-mono text-sm">{{ $pesanan?->no_resi ?? '-' }}</span>
+          </div>
+
+          <div class="inline-flex items-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm font-semibold shadow-sm {{ $trackingStatusInfo['class'] }}">
+            @if($trackingStatusInfo['icon'] === 'clock')
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            @elseif($trackingStatusInfo['icon'] === 'package')
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m-8-14l8 4m0 0v10m0-10L4 7m8 4l8-4"/>
+              </svg>
+            @elseif($trackingStatusInfo['icon'] === 'truck')
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6M3 17h1m16 0h1m-1-6h-5m0 0V6a1 1 0 00-1-1H6a2 2 0 00-2 2v10h2m12 0h2v-5a2 2 0 00-2-2h-5"/>
+              </svg>
+            @else
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            @endif
+            <span>{{ $trackingStatusInfo['label'] }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

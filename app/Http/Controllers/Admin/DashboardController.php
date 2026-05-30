@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\RatingToko;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
 use App\Models\DetailProduk;
@@ -10,6 +11,7 @@ use App\Models\Kategori;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Pengguna;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -111,6 +113,30 @@ class DashboardController extends Controller
             ];
         }
 
+        $storeRatingAverage = 0;
+        $storeServiceAverage = 0;
+        $storeAppAverage = 0;
+        $storeRatingCount = 0;
+        $storeRatingLatest = collect();
+        if (Schema::hasTable('rating_toko')) {
+            $storeRatingsQuery = RatingToko::query()
+                ->whereBetween('created_at', [$start->toDateTimeString(), $end->toDateTimeString()]);
+
+            $storeRatingAverage = (float) (clone $storeRatingsQuery)->avg('bintang');
+            $storeServiceAverage = Schema::hasColumn('rating_toko', 'pelayanan')
+                ? (float) (clone $storeRatingsQuery)->avg('pelayanan')
+                : $storeRatingAverage;
+            $storeAppAverage = Schema::hasColumn('rating_toko', 'aplikasi')
+                ? (float) (clone $storeRatingsQuery)->avg('aplikasi')
+                : $storeRatingAverage;
+            $storeRatingCount = (clone $storeRatingsQuery)->count();
+            $storeRatingLatest = (clone $storeRatingsQuery)
+                ->with(['supplier', 'buyer.pengguna'])
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get();
+        }
+
         // Recent Activities: admin_log (jika ada). Placeholder aman.
         $recentActivities = [];
         if (DB::getSchemaBuilder()->hasTable('admin_log')) {
@@ -135,6 +161,11 @@ class DashboardController extends Controller
             'prevTrendData' => $prevTrendData,
             'categoryRevenue' => $categoryRevenue,
             'monthly' => $monthly,
+            'storeRatingAverage' => $storeRatingAverage,
+            'storeServiceAverage' => $storeServiceAverage,
+            'storeAppAverage' => $storeAppAverage,
+            'storeRatingCount' => $storeRatingCount,
+            'storeRatingLatest' => $storeRatingLatest,
             'recentActivities' => $recentActivities,
         ]);
     }

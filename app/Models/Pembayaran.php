@@ -10,6 +10,11 @@ class Pembayaran extends Model
     protected $primaryKey = 'pembayaran_id';
     public $timestamps = false;
 
+    protected $casts = [
+        'tanggal_pembayaran' => 'datetime',
+        'expired_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'transaksi_id',
         'metode_id',

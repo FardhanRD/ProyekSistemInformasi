@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Produk;
 use App\Models\Kategori;
 use App\Models\DetailProduk;
+use App\Models\RatingProduk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -147,6 +148,32 @@ class ProductController extends Controller
             ]
         ];
 
+        $ratingDistribution = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $ratingDistribution[$i] = RatingProduk::where('produk_id', $product->produk_id)
+                ->where('bintang', $i)
+                ->count();
+        }
+
+        $ratings = RatingProduk::with(['buyer.pengguna'])
+            ->where('produk_id', $product->produk_id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(5);
+
+        $gambarList = $product->images
+            ->map(fn ($image) => $image->url_lengkap ?? $image->url_safe ?? null)
+            ->filter()
+            ->values()
+            ->all();
+
+        $gambarUtama = $gambarList[0]
+            ?? optional($product->gambarUtama)->url_lengkap
+            ?? optional($product->gambarUtama)->url_safe
+            ?? asset('images/placeholder.png');
+
+        $produk = $product;
+        $produkSerupa = $similarProducts;
+
         // Cek apakah user sudah membeli produk ini
         $hasPurchased = false;
         $hasReviewed = false;
@@ -167,9 +194,15 @@ class ProductController extends Controller
 
         return view('buyer.product.detail', compact(
             'product',
+            'produk',
             'similarProducts',
+            'produkSerupa',
             'promoAktif',
             'ratingStats',
+            'ratingDistribution',
+            'ratings',
+            'gambarList',
+            'gambarUtama',
             'hasPurchased',
             'hasReviewed'
         ));

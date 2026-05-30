@@ -33,7 +33,15 @@ class OrderController extends Controller
         foreach ($allStatuses as $status) {
             $query = Transaksi::where('pengguna_id', $user->pengguna_id);
             if ($status !== '') {
-                $query->where('status', $status);
+                if ($status === 'pembayaran_dikonfirmasi') {
+                    // include transactions where pesanan.status_pesanan == 'dikonfirmasi' as confirmed
+                    $query->where(function($q) use ($status) {
+                        $q->where('status', $status)
+                          ->orWhereHas('pesanan', fn($sq) => $sq->where('status_pesanan', 'dikonfirmasi'));
+                    });
+                } else {
+                    $query->where('status', $status);
+                }
             }
             $orderCounts[$status] = $query->count();
         }
@@ -48,7 +56,14 @@ class OrderController extends Controller
         
         $currentStatus = $request->input('status', '');
         if ($currentStatus !== '') {
-            $query->where('status', $currentStatus);
+            if ($currentStatus === 'pembayaran_dikonfirmasi') {
+                $query->where(function($q) use ($currentStatus) {
+                    $q->where('status', $currentStatus)
+                      ->orWhereHas('pesanan', fn($sq) => $sq->where('status_pesanan', 'dikonfirmasi'));
+                });
+            } else {
+                $query->where('status', $currentStatus);
+            }
         }
 
         $transaksis = $query->orderBy('tanggal', 'desc')->get();
@@ -122,6 +137,7 @@ class OrderController extends Controller
             'sudah_rating' => $sudahRating,
             'items' => $t->transaksiDetail->map(fn ($d) => [
                 'id' => $d->detail_id,
+                'produk_id' => $d->detailProduk->produk_id,
                 'nama' => $d->nama_produk_snap,
                 'gambar' => $d->detailProduk->produk->gambarUtama?->url_safe ?? asset('images/placeholder.png'),
                 'ukuran' => $d->ukuran_snap ?? '-',

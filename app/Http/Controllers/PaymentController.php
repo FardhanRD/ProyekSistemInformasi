@@ -148,17 +148,14 @@ class PaymentController extends Controller
         $path = $request->file('bukti_pembayaran')
             ->store('bukti-pembayaran', 'public');
 
-            // Notifikasi dinonaktifkan
-
         $pembayaran->update([
             'bukti_pembayaran' => $path
         ]);
 
-        // Notifikasi dinonaktifkan
-
         return response()->json([
             'success' => true,
-            'message' => 'Bukti pembayaran berhasil dikirim'
+            'message' => 'Bukti pembayaran berhasil dikirim',
+            'redirect_url' => route('payment.waiting', $kode)
         ]);
     }
 
@@ -197,5 +194,64 @@ class PaymentController extends Controller
 
         return redirect()->route('orders.index')
             ->with('success', 'Pembayaran berhasil dikonfirmasi.');
+    }
+
+    public function waiting($kode)
+    {
+        $transaksi = Transaksi::with([
+            'pembayaran.metodePembayaran',
+            'buyer'
+        ])
+        ->where('kode_transaksi', $kode)
+        ->firstOrFail();
+        
+        // Validasi kepemilikan
+        if ($transaksi->buyer->pengguna_id !== Auth::user()->pengguna_id) {
+            abort(403, 'Akses ditolak.');
+        }
+        
+        return view('buyer.payment.waiting', 
+            compact('transaksi'));
+    }
+
+    public function checkStatus($kode)
+    {
+        $transaksi = Transaksi::with('pembayaran')
+            ->where('kode_transaksi', $kode)
+            ->firstOrFail();
+        
+        // Validasi kepemilikan
+        if ($transaksi->pengguna_id !== Auth::user()->pengguna_id) {
+            abort(403, 'Akses ditolak.');
+        }
+        
+        $verified = $transaksi->pembayaran?->status_pembayaran === 'berhasil';
+        
+        return response()->json([
+            'verified' => $verified,
+            'status'   => $transaksi->status,
+        ]);
+    }
+
+    public function confirm($kode)
+    {
+        $transaksi = Transaksi::with('pembayaran')
+            ->where('kode_transaksi', $kode)
+            ->firstOrFail();
+        
+        // Validasi kepemilikan
+        if ($transaksi->pengguna_id !== Auth::user()->pengguna_id) {
+            abort(403, 'Akses ditolak.');
+        }
+        
+        // Hanya update jika masih menunggu
+        if ($transaksi->pembayaran?->status_pembayaran === 'menunggu') {
+            $transaksi->pembayaran->update([
+                'status_pembayaran' => 'menunggu'
+                // Tetap menunggu, admin yang verifikasi
+            ]);
+        }
+        
+        return redirect()->route('payment.waiting', $kode);
     }
 }

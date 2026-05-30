@@ -34,7 +34,25 @@ class RatingTokoController extends Controller
         $data = $request->validate(['bintang'=>'required|integer|min:1|max:5','komentar'=>'nullable|string']);
         $penggunaId = $penggunaSyncService->ensureForAuthUser($user, 'buyer');
         $buyer = Buyer::firstOrCreate(['pengguna_id' => $penggunaId]);
-        RatingToko::create(array_merge($data,['supplier_id'=>$supplierId,'buyer_id'=>$buyer->buyer_id]));
+        $bintang = (int) $data['bintang'];
+        $attributes = [
+            'supplier_id' => $supplierId,
+            'buyer_id' => $buyer->buyer_id,
+        ];
+
+        if (Schema::hasColumn('rating_toko', 'kategori')) {
+            $attributes['kategori'] = 'pelayanan';
+        }
+
+        RatingToko::updateOrCreate(
+            $attributes,
+            [
+                'pelayanan' => Schema::hasColumn('rating_toko', 'pelayanan') ? $bintang : null,
+                'aplikasi' => Schema::hasColumn('rating_toko', 'aplikasi') ? $bintang : null,
+                'bintang' => $bintang,
+                'komentar' => $data['komentar'] ?? null,
+            ]
+        );
         return redirect()->back()->with('success','Terima kasih atas rating toko');
     }
 

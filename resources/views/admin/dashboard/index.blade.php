@@ -82,6 +82,80 @@
         </div>
     </div>
 
+    <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-1">
+            <p class="text-xs font-bold uppercase text-slate-500">Rating Toko / Pelayanan</p>
+            <div class="mt-3 flex items-end gap-3">
+                <div class="text-4xl font-black text-slate-900">{{ number_format($storeRatingAverage ?? 0, 1) }}</div>
+                <div class="pb-1 text-sm text-slate-500">/ 5</div>
+            </div>
+            <div class="mt-2 text-sm text-slate-600">{{ $storeRatingCount ?? 0 }} ulasan toko dan pelayanan</div>
+            <div class="mt-4 flex items-center gap-1 text-amber-400">
+                @for($i = 1; $i <= 5; $i++)
+                    <span class="text-lg">{{ $i <= round($storeRatingAverage ?? 0) ? '★' : '☆' }}</span>
+                @endfor
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-2xl bg-slate-50 p-3">
+                    <p class="text-xs font-semibold text-slate-500">Pelayanan</p>
+                    <p class="mt-1 text-xl font-black text-slate-900">{{ number_format($storeServiceAverage ?? 0, 1) }}</p>
+                </div>
+                <div class="rounded-2xl bg-slate-50 p-3">
+                    <p class="text-xs font-semibold text-slate-500">Aplikasi</p>
+                    <p class="mt-1 text-xl font-black text-slate-900">{{ number_format($storeAppAverage ?? 0, 1) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <p class="text-sm font-bold text-slate-800">Ulasan Toko Terbaru</p>
+                    <p class="text-xs text-slate-500">Masukan ini langsung dipakai sebagai evaluasi operasional</p>
+                </div>
+            </div>
+
+            <div class="mt-4 overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wider text-slate-500">
+                            <th class="py-3">Toko</th>
+                            <th class="py-3">Buyer</th>
+                            <th class="py-3">Pelayanan</th>
+                            <th class="py-3">Aplikasi</th>
+                            <th class="py-3">Rating</th>
+                            <th class="py-3">Komentar</th>
+                            <th class="py-3">Tanggal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($storeRatingLatest as $rating)
+                            @php
+                                $buyerName = $rating->buyer?->pengguna?->nama_pengguna ?? 'Pembeli';
+                                $maskedBuyerName = mb_strlen($buyerName) > 2
+                                    ? mb_substr($buyerName, 0, 2) . str_repeat('*', max(mb_strlen($buyerName) - 2, 3))
+                                    : $buyerName;
+                            @endphp
+                            <tr class="border-t border-slate-100">
+                                <td class="py-3 text-slate-700">{{ $rating->supplier?->nama_toko ?? '-' }}</td>
+                                <td class="py-3 text-slate-700">{{ $maskedBuyerName }}</td>
+                                <td class="py-3 text-slate-700">{{ number_format((float) ($rating->pelayanan ?? $rating->bintang ?? 0), 1) }}</td>
+                                <td class="py-3 text-slate-700">{{ number_format((float) ($rating->aplikasi ?? $rating->bintang ?? 0), 1) }}</td>
+                                <td class="py-3 text-amber-500 font-semibold">{{ number_format((float) $rating->bintang, 1) }} ★</td>
+                                <td class="py-3 text-slate-700">{{ \Illuminate\Support\Str::limit($rating->komentar ?? '-', 60) }}</td>
+                                <td class="py-3 text-slate-500">{{ \Carbon\Carbon::parse($rating->created_at)->format('Y-m-d H:i') }}</td>
+                            </tr>
+                        @empty
+                            <tr class="border-t border-slate-100">
+                                <td colspan="5" class="py-4 text-slate-500">Belum ada rating toko pada periode ini.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     {{-- Charts --}}
     <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div class="xl:col-span-2 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">

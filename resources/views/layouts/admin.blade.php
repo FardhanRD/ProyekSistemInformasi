@@ -267,6 +267,32 @@
             </main>
         </div>
     </div>
+
+    <script>
+        function showAdminToast(msg, type = 'success') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-amber-500'
+            };
+
+            const t = document.createElement('div');
+            t.className = `fixed bottom-6 right-6 z-[9999] ${colors[type] || colors.success} text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-medium flex items-center gap-2 transform translate-y-4 opacity-0 transition-all duration-300`;
+            t.innerHTML = msg;
+            document.body.appendChild(t);
+
+            setTimeout(() => {
+                t.style.opacity = '1';
+                t.style.transform = 'translateY(0)';
+            }, 10);
+
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(10px)';
+                setTimeout(() => t.remove(), 300);
+            }, 3500);
+        }
+    </script>
 </body>
 </html>
 

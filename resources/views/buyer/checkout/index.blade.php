@@ -71,6 +71,19 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="mb-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+            <div class="flex items-center gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm font-medium text-green-700">
+                    {{ session('success') }}
+                </p>
+            </div>
+        </div>
+    @endif
+
     @if($cartItems->isEmpty())
         <div class="card-surface p-10 text-center">
             <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#63A2BB]/10 text-[#63A2BB]">
@@ -114,12 +127,12 @@
                                 <p class="text-sm text-slate-500">{{ __('ui.shipping_address_desc') }}</p>
                             </div>
                         </div>
-                        <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="inline-flex items-center gap-1 rounded-full bg-[#63A2BB]/10 px-4 py-2 text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:scale-105 hover:bg-[#63A2BB] hover:text-white">
+                        <button type="button" @click="showAddressModal = true" class="inline-flex items-center gap-1 rounded-full bg-[#63A2BB]/10 px-4 py-2 text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:scale-105 hover:bg-[#63A2BB] hover:text-white">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            {{ __('ui.add_address') }}
-                        </a>
+                            Tambah Alamat
+                        </button>
                     </div>
 
                     <div class="space-y-3">
@@ -140,7 +153,7 @@
                         @empty
                             <div class="rounded-2xl border border-dashed border-slate-200 bg-[#F8FAFB] p-8 text-center">
                                 <p class="text-sm font-semibold text-slate-700">{{ __('ui.no_address') }}</p>
-                                <a href="{{ route('profile.address.create.alias') }}?return=checkout" class="btn-primary mt-4 inline-flex px-5 py-3 text-sm">{{ __('ui.add_address') }}</a>
+                                <button type="button" @click="showAddressModal = true" class="btn-primary mt-4 inline-flex px-5 py-3 text-sm">Tambah Alamat</button>
                             </div>
                         @endforelse
                     </div>
@@ -382,6 +395,118 @@
                 </div>
             </div>
         </div>
+
+        {{-- MODAL TAMBAH ALAMAT --}}
+        <div x-show="showAddressModal" x-cloak
+             @click.self="showAddressModal = false"
+             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+
+            <div class="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="flex items-center justify-between bg-[#63A2BB] px-6 py-4">
+                    <div>
+                        <h3 class="text-base font-bold text-white">Tambah Alamat Baru</h3>
+                        <p class="mt-0.5 text-xs text-white/70">Alamat akan langsung bisa dipilih di checkout</p>
+                    </div>
+                    <button type="button" @click="showAddressModal = false" class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <form action="{{ route('profile.address.store') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
+                    @csrf
+                    <input type="hidden" name="return" value="checkout">
+
+                    <div class="max-h-[65vh] space-y-4 overflow-y-auto p-6">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Label</label>
+                                <select name="label" class="w-full rounded-2xl border-2 border-gray-200 bg-white px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none">
+                                    <option value="Rumah">🏠 Rumah</option>
+                                    <option value="Kantor">🏢 Kantor</option>
+                                    <option value="Kos">🏡 Kos</option>
+                                    <option value="Lainnya">📍 Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Nama Penerima *</label>
+                                <input type="text" name="nama_penerima" required placeholder="Nama lengkap penerima" class="w-full rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none focus:ring-2 focus:ring-[#63A2BB]/20">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">No. Telepon *</label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 -translate-y-1/2 border-r border-gray-200 pr-3 text-sm font-medium text-gray-500">🇮🇩 +62</div>
+                                <input type="tel" name="no_telepon" required placeholder="812 3456 7890" class="w-full rounded-2xl border-2 border-gray-200 py-3 pl-20 pr-4 text-sm transition focus:border-[#63A2BB] focus:outline-none focus:ring-2 focus:ring-[#63A2BB]/20">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Provinsi *</label>
+                                <input type="text" name="provinsi" required placeholder="DKI Jakarta" class="w-full rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Kota/Kabupaten *</label>
+                                <input type="text" name="kota" required placeholder="Jakarta Selatan" class="w-full rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Kecamatan *</label>
+                                <input type="text" name="kecamatan" required placeholder="Kebayoran Baru" class="w-full rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Kelurahan *</label>
+                                <input type="text" name="kelurahan" required placeholder="Senayan" class="w-full rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Kode Pos *</label>
+                            <input type="text" name="kode_pos" required placeholder="12190" maxlength="5" pattern="[0-9]{5}" class="w-full rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">Alamat Lengkap *</label>
+                            <textarea name="alamat_lengkap" required rows="3" placeholder="Jl. Contoh No. 1, RT 001/RW 002, Blok A..." class="w-full resize-none rounded-2xl border-2 border-gray-200 px-3 py-3 text-sm transition focus:border-[#63A2BB] focus:outline-none focus:ring-2 focus:ring-[#63A2BB]/20"></textarea>
+                        </div>
+
+                        <label class="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-[#63A2BB]/20 bg-[#63A2BB]/5 p-4 transition hover:bg-[#63A2BB]/10">
+                            <input type="checkbox" name="is_utama" value="1" class="mt-0.5 h-4 w-4 flex-shrink-0 rounded accent-[#63A2BB]">
+                            <div>
+                                <p class="text-sm font-bold text-gray-700">Jadikan alamat utama</p>
+                                <p class="mt-0.5 text-xs text-gray-400">Alamat ini akan otomatis terpilih saat checkout berikutnya</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="flex gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+                        <button type="button" @click="showAddressModal = false" class="flex-1 rounded-2xl border-2 border-gray-200 py-3 text-sm font-semibold text-gray-500 transition hover:border-gray-300 hover:bg-gray-100">Batal</button>
+                        <button type="submit" :disabled="submitting" :class="submitting ? 'cursor-not-allowed opacity-60' : 'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#63A2BB]/30'" class="flex-[2] flex items-center justify-center gap-2 rounded-2xl bg-[#63A2BB] py-3 text-sm font-bold text-white transition-all duration-200">
+                            <svg x-show="submitting" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <svg x-show="!submitting" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span x-text="submitting ? 'Menyimpan...' : 'Simpan Alamat'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     @endif
 </div>
 @endsection
@@ -399,6 +524,7 @@ function checkoutPage(state) {
         selectedShippingId: Number(state.selectedShippingId || 0),
         selectedMetode: state.selectedMetode || 0,
         selectedAddress: state.selectedAddress || 0,
+        showAddressModal: false,
         biayaLayanan: 1000,
         voucherId: state.voucherId || 0,
         voucherDiscount: state.voucherDiscount || 0,

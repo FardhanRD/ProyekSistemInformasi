@@ -300,9 +300,15 @@
              activeStatus: '',
              selectedOrder: null,
              loadingDetail: false,
+             showRating: false,
+             ratingStep: 1,
+             produkRatings: [],
+             tokoRating: { pelayanan: 0, aplikasi: 0, komentar: '' },
+             submittingRating: false,
 
              async openDetail(kode) {
                this.loadingDetail = true;
+               this.showRating = false;
                try {
                  const res = await fetch(
                    '/orders/' + kode + '/json',
@@ -319,6 +325,62 @@
 
              closeDetail() {
                this.selectedOrder = null;
+               this.showRating = false;
+             },
+
+             openRating(order) {
+               this.selectedOrder = order;
+               this.ratingStep = 1;
+               this.produkRatings = (order.items ?? []).map(item => ({
+                 produk_id: item.produk_id,
+                 nama: item.nama,
+                 gambar: item.gambar,
+                 bintang: 0,
+                 judul: '',
+                 isi: '',
+               }));
+               this.tokoRating = { pelayanan: 0, aplikasi: 0, komentar: '' };
+               this.showRating = true;
+             },
+
+             async submitRating() {
+               const belumRating = this.produkRatings.filter(p => p.bintang === 0);
+               if (this.ratingStep === 1 && belumRating.length > 0) {
+                 showToast('Beri rating semua produk dulu', 'warning');
+                 return;
+               }
+               if (this.ratingStep === 2 && (this.tokoRating.pelayanan === 0 || this.tokoRating.aplikasi === 0)) {
+                 showToast('Beri rating pelayanan dan aplikasi', 'warning');
+                 return;
+               }
+
+               this.submittingRating = true;
+               try {
+                 const res = await fetch('/orders/' + this.selectedOrder.kode_transaksi + '/rating', {
+                   method: 'POST',
+                   headers: {
+                     'Content-Type': 'application/json',
+                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                   },
+                   body: JSON.stringify({
+                     produk_ratings: this.produkRatings,
+                     toko_rating: this.tokoRating
+                   })
+                 });
+
+                 const data = await res.json();
+                 if (data.success) {
+                   this.showRating = false;
+                   this.selectedOrder.sudah_rating = true;
+                   showToast('✅ Rating berhasil dikirim!');
+                 } else {
+                   showToast(data.message ?? 'Gagal submit', 'error');
+                 }
+               } catch (e) {
+                 showToast('Terjadi kesalahan', 'error');
+               } finally {
+                 this.submittingRating = false;
+               }
              }
            }">
 
@@ -624,13 +686,115 @@
                     </a>
                   </template>
                   <template x-if="selectedOrder?.status === 'selesai' && !selectedOrder?.sudah_rating">
-                    <a :href="'/orders/' + selectedOrder?.kode_transaksi + '/rating'"
-                       class="w-full flex items-center justify-center bg-amber-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-amber-600 transition">
+                    <button @click="openRating(selectedOrder)"
+                            class="w-full flex items-center justify-center bg-amber-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-amber-600 transition">
                       Beri Rating
-                    </a>
+                    </button>
                   </template>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div x-show="showRating" x-cloak
+             @click.self="showRating = false"
+             class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh]"
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100">
+            <div class="bg-[#63A2BB] px-5 py-4 flex items-center justify-between">
+              <div>
+                <p class="text-white/70 text-xs">
+                  <span x-text="ratingStep === 1 ? 'Step 1/2' : 'Step 2/2'"></span>
+                </p>
+                <h3 class="font-bold text-white text-sm mt-0.5" x-text="ratingStep === 1 ? 'Rating Produk' : 'Rating Toko'"></h3>
+              </div>
+              <button @click="showRating = false" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="px-5 py-3 border-b border-gray-100">
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-1.5 rounded-full bg-[#63A2BB]"></div>
+                <div class="flex-1 h-1.5 rounded-full transition-all" :class="ratingStep >= 2 ? 'bg-[#63A2BB]' : 'bg-gray-200'"></div>
+              </div>
+            </div>
+
+            <div class="p-5 overflow-y-auto max-h-[60vh]">
+              <div x-show="ratingStep === 1" class="space-y-4">
+                <template x-for="(item, idx) in produkRatings" :key="idx">
+                  <div class="bg-gray-50 rounded-2xl p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                      <img :src="item.gambar" :alt="item.nama" class="w-12 h-12 rounded-xl object-cover flex-shrink-0">
+                      <p class="text-sm font-semibold text-gray-700 line-clamp-2" x-text="item.nama"></p>
+                    </div>
+                    <div class="flex gap-1.5 mb-3">
+                      <template x-for="star in [1,2,3,4,5]" :key="star">
+                        <button type="button" @click="produkRatings[idx].bintang = star" class="transition-transform hover:scale-110">
+                          <svg :class="star <= item.bintang ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'" class="w-7 h-7" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                          </svg>
+                        </button>
+                      </template>
+                      <span class="text-xs text-gray-400 ml-1 self-center" x-text="['','Sangat Buruk','Kurang','Cukup','Bagus','Sempurna'][item.bintang]"></span>
+                    </div>
+                    <textarea x-model="produkRatings[idx].isi" rows="2" placeholder="Ceritakan pengalamanmu..." class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-[#63A2BB] focus:outline-none text-xs resize-none transition"></textarea>
+                  </div>
+                </template>
+              </div>
+
+              <div x-show="ratingStep === 2" class="space-y-4">
+                <div class="bg-gray-50 rounded-2xl p-4">
+                  <p class="text-sm font-bold text-gray-700 mb-3">🏪 Pelayanan Toko</p>
+                  <div class="flex gap-1.5">
+                    <template x-for="star in [1,2,3,4,5]" :key="'p'+star">
+                      <button type="button" @click="tokoRating.pelayanan = star" class="transition-transform hover:scale-110">
+                        <svg :class="star <= tokoRating.pelayanan ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'" class="w-7 h-7" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                      </button>
+                    </template>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1" x-text="['','Sangat Buruk','Kurang','Cukup','Bagus','Sempurna'][tokoRating.pelayanan]"></p>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-4">
+                  <p class="text-sm font-bold text-gray-700 mb-3">📱 Aplikasi MOVR</p>
+                  <div class="flex gap-1.5">
+                    <template x-for="star in [1,2,3,4,5]" :key="'a'+star">
+                      <button type="button" @click="tokoRating.aplikasi = star" class="transition-transform hover:scale-110">
+                        <svg :class="star <= tokoRating.aplikasi ? 'text-[#63A2BB] fill-[#63A2BB]' : 'text-gray-200 fill-gray-200'" class="w-7 h-7" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                      </button>
+                    </template>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1" x-text="['','Sangat Buruk','Kurang','Cukup','Bagus','Sempurna'][tokoRating.aplikasi]"></p>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Komentar (opsional)</label>
+                  <textarea x-model="tokoRating.komentar" rows="3" placeholder="Saran atau masukan..." class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm resize-none transition"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button x-show="ratingStep === 1" @click="showRating = false" class="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-500 font-semibold text-sm">Batal</button>
+              <button x-show="ratingStep === 2" @click="ratingStep = 1" class="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-500 font-semibold text-sm">← Kembali</button>
+              <button x-show="ratingStep === 1" @click="const belum = produkRatings.filter(p => p.bintang === 0); if (belum.length > 0) { showToast('Beri rating semua produk', 'warning'); return; } ratingStep = 2" class="flex-[2] py-3 bg-[#63A2BB] text-white rounded-2xl font-bold text-sm hover:bg-[#4A8BA3] transition">Lanjut →</button>
+              <button x-show="ratingStep === 2" @click="submitRating()" :disabled="submittingRating" class="flex-[2] py-3 bg-[#63A2BB] text-white rounded-2xl font-bold text-sm hover:bg-[#4A8BA3] transition disabled:opacity-60 flex items-center justify-center gap-2">
+                <svg x-show="submittingRating" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span x-text="submittingRating ? 'Mengirim...' : '✓ Kirim Rating'"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -641,10 +805,12 @@
            x-transition:enter="transition ease-out duration-150"
            x-transition:enter-start="opacity-0 translate-y-2"
            x-transition:enter-end="opacity-100 translate-y-0"
+           x-data="{ open: false, isUtama: false }"
+           @open-add-address.window="open = true"
            class="space-y-4">
         <div class="flex items-center justify-between mb-2">
           <h2 class="font-bold text-gray-800 text-lg">{{ __('ui.alamat') }}</h2>
-          <button type="button" @click="$dispatch('open-modal', 'add-address-modal')"
+          <button type="button" @click="$dispatch('open-add-address')"
                   class="flex items-center gap-2 px-4 py-2.5 bg-[#63A2BB] text-white rounded-2xl text-sm font-bold hover:bg-[#4A8BA3] transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -728,12 +894,105 @@
               </svg>
             </div>
             <p class="text-gray-500 font-semibold mb-4">Belum ada alamat tersimpan</p>
-            <button type="button" @click="$dispatch('open-modal', 'add-address-modal')"
+            <button type="button" @click="$dispatch('open-add-address')"
                     class="inline-flex items-center gap-2 px-6 py-3 bg-[#63A2BB] text-white rounded-2xl text-sm font-bold hover:bg-[#4A8BA3] transition">
               + Tambah Alamat Pertama
             </button>
           </div>
         @endforelse
+
+        <div x-show="open" x-cloak
+             @click.self="open = false"
+             class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100">
+            <div class="bg-[#63A2BB] px-6 py-4 flex items-center justify-between">
+              <h3 class="font-bold text-white text-base">Tambah Alamat Baru</h3>
+              <button @click="open = false" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <form action="{{ route('profile.address.store') }}" method="POST" class="p-6 max-h-[75vh] overflow-y-auto">
+              @csrf
+
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Label Alamat</label>
+                    <select name="label" required class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm bg-white">
+                      <option value="Rumah">🏠 Rumah</option>
+                      <option value="Kantor">🏢 Kantor</option>
+                      <option value="Kos">🏡 Kos</option>
+                      <option value="Lainnya">📍 Lainnya</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Nama Penerima *</label>
+                    <input type="text" name="nama_penerima" required placeholder="Nama lengkap" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">No. Telepon *</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+62</span>
+                    <input type="tel" name="no_telepon" required placeholder="812 3456 7890" class="w-full pl-10 pr-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Provinsi *</label>
+                    <input type="text" name="provinsi" required placeholder="DKI Jakarta" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Kota/Kabupaten *</label>
+                    <input type="text" name="kota" required placeholder="Jakarta Selatan" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Kecamatan *</label>
+                    <input type="text" name="kecamatan" required placeholder="Kebayoran Baru" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Kelurahan *</label>
+                    <input type="text" name="kelurahan" required placeholder="Senayan" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Kode Pos *</label>
+                  <input type="text" name="kode_pos" required placeholder="12190" maxlength="5" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Alamat Lengkap *</label>
+                  <textarea name="alamat_lengkap" required rows="3" placeholder="Nama jalan, nomor rumah, RT/RW, blok, dll..." class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-[#63A2BB] focus:outline-none text-sm transition resize-none"></textarea>
+                </div>
+
+                <label class="flex items-center gap-3 p-3 bg-[#63A2BB]/5 rounded-xl cursor-pointer">
+                  <input type="checkbox" name="is_utama" value="1" x-model="isUtama" class="w-4 h-4 rounded accent-[#63A2BB]">
+                  <div>
+                    <p class="text-sm font-semibold text-gray-700">Jadikan alamat utama</p>
+                    <p class="text-xs text-gray-400">Alamat ini akan otomatis dipilih saat checkout</p>
+                  </div>
+                </label>
+              </div>
+
+              <div class="flex gap-3 mt-6">
+                <button type="button" @click="open = false" class="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-gray-300 transition">Batal</button>
+                <button type="submit" class="flex-1 py-3 bg-[#63A2BB] text-white rounded-2xl font-bold text-sm hover:bg-[#4A8BA3] hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">Simpan Alamat</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
 
       <div x-show="activeTab === 'pembayaran'"
@@ -873,85 +1132,6 @@
           </form>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<div x-data="{ show: false }"
-     x-show="show"
-     @open-modal.window="if ($event.detail === 'add-address-modal') show = true"
-     @keydown.escape.window="show = false"
-     class="fixed inset-0 z-50 overflow-y-auto"
-     style="display: none;"
-     aria-labelledby="modal-title"
-     role="dialog"
-     aria-modal="true">
-  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-    <div x-show="show" x-transition.opacity class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="show = false" aria-hidden="true"></div>
-    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-    <div x-show="show" x-transition class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-      <form action="{{ route('profile.address.store') }}" method="POST">
-        @csrf
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">Tambah Alamat Baru</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
-              <label class="block text-sm font-medium text-gray-700">Label (Rumah/Kantor)</label>
-              <input type="text" name="label" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm" placeholder="Contoh: Rumah">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Nama Penerima</label>
-              <input type="text" name="nama_penerima" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">No. Telepon</label>
-              <input type="text" name="no_telepon" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Provinsi</label>
-              <input type="text" name="provinsi" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
-              <input type="text" name="kota" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
-              <input type="text" name="kecamatan" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Kelurahan/Desa</label>
-              <input type="text" name="kelurahan" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Kode Pos</label>
-              <input type="text" name="kode_pos" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm">
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
-              <textarea name="alamat_lengkap" rows="3" required class="mt-1 block w-full border-gray-300 rounded-2xl shadow-sm focus:ring-[#63A2BB] focus:border-[#63A2BB] sm:text-sm" placeholder="Nama jalan, gedung, no. rumah/unit"></textarea>
-            </div>
-            <div class="sm:col-span-2">
-              <div class="flex items-start">
-                <div class="flex items-center h-5">
-                  <input id="is_utama" name="is_utama" type="checkbox" value="1" class="focus:ring-[#63A2BB] h-4 w-4 text-[#63A2BB] border-gray-300 rounded">
-                </div>
-                <div class="ml-3 text-sm">
-                  <label for="is_utama" class="font-medium text-gray-700">Jadikan alamat utama</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="submit" class="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-4 py-2 bg-[#63A2BB] text-base font-medium text-white hover:bg-[#4A8BA3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#63A2BB] sm:ml-3 sm:w-auto sm:text-sm">
-            Simpan Alamat
-          </button>
-          <button type="button" @click="show = false" class="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#63A2BB] sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-            Batal
-          </button>
-        </div>
-      </form>
     </div>
   </div>
 </div>

@@ -76,31 +76,41 @@ class RatingController extends Controller
     public function store(Request $request, $kodeTransaksi)
     {
         $user = auth()->user();
-        $buyer = $user->buyer;
-        
-        $transaksi = Transaksi::where('kode_transaksi', $kodeTransaksi)
+        $buyer = $user?->buyer;
+
+        if (! $user || ! $buyer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan login kembali untuk memberi rating.',
+            ], 401);
+        }
+
+        $transaksi = Transaksi::with(['transaksiDetail.detailProduk.produk'])
+            ->where('kode_transaksi', $kodeTransaksi)
             ->where('pengguna_id', $user->pengguna_id)
             ->where('status', 'selesai')
             ->firstOrFail();
-        
+
         $validated = $request->validate([
-            'produk_ratings' => 'required|array',
-            'produk_ratings.*.bintang' => 'required|integer|min:0|max:5',
-            'toko_rating' => 'required|array',
-            'toko_rating.pelayanan' => 'required|integer|min:1|max:5',
-            'toko_rating.aplikasi' => 'required|integer|min:1|max:5',
+            'produk_ratings' => 'nullable|array',
+            'produk_ratings.*.bintang' => 'nullable|integer|min:0|max:5',
+            'toko_rating' => 'nullable|array',
+            'toko_rating.pelayanan' => 'nullable|integer|min:1|max:5',
+            'toko_rating.aplikasi' => 'nullable|integer|min:1|max:5',
         ]);
-        
+
         DB::beginTransaction();
         try {
-            // Simpan rating produk
-            foreach ($validated['produk_ratings'] as $rating) {
-                if ($rating['bintang'] > 0) {
+            foreach (($validated['produk_ratings'] ?? []) as $rating) {
+                $bintang = (int) ($rating['bintang'] ?? 0);
+
+                if ($bintang > 0) {
                     $produkId = $rating['produk_id'] ?? null;
-                    if (!$produkId) {
+
+                    if (! $produkId) {
                         continue;
                     }
-                    
+
                     RatingProduk::updateOrCreate(
                         [
                             'produk_id'    => $produkId,
@@ -108,7 +118,7 @@ class RatingController extends Controller
                             'transaksi_id' => $transaksi->transaksi_id,
                         ],
                         [
-                            'bintang'      => $rating['bintang'],
+                            'bintang'      => $bintang,
                             'judul_ulasan' => $rating['judul'] ?? null,
                             'isi_ulasan'   => $rating['isi'] ?? null,
                             'is_verified'  => 1,
@@ -116,39 +126,58 @@ class RatingController extends Controller
                     );
                 }
             }
-            
-            // Simpan rating toko
-            $tokoRating = $validated['toko_rating'];
-            $supplierId = $transaksi->transaksiDetail->first()->detailProduk->produk->supplier_id;
-            
-            // Rating pelayanan
-            RatingToko::updateOrCreate(
-                [
-                    'supplier_id'  => $supplierId,
-                    'buyer_id'     => $buyer->buyer_id,
-                    'transaksi_id' => $transaksi->transaksi_id,
-                    'kategori'     => 'pelayanan',
-                ],
-                [
-                    'bintang'  => $tokoRating['pelayanan'],
-                    'komentar' => $tokoRating['komentar'] ?? null,
-                ]
-            );
-            
-            // Rating aplikasi
-            RatingToko::updateOrCreate(
-                [
-                    'supplier_id'  => $supplierId,
-                    'buyer_id'     => $buyer->buyer_id,
-                    'transaksi_id' => $transaksi->transaksi_id,
-                    'kategori'     => 'aplikasi',
-                ],
-                [
-                    'bintang'  => $tokoRating['aplikasi'],
-                    'komentar' => $tokoRating['komentar'] ?? null,
-                ]
-            );
-            
+
+            $tokoRating = $validated['toko_rating'] ?? [];
+            $supplierId = $transaksi->transaksiDetail->first()?->detailProduk?->produk?->supplier_id;
+            $pelayanan = (int) ($tokoRating['pelayanan'] ?? 0);
+            $aplikasi = (int) ($tokoRating['aplikasi'] ?? 0);
+
+            if ($supplierId && Schema::hasColumn('rating_toko', 'kategori')) {
+                if ($pelayanan > 0) {
+                    RatingToko::updateOrCreate(
+                        [
+                            'supplier_id' => $supplierId,
+                            'buyer_id'    => $buyer->buyer_id,
+                            'kategori'    => 'pelayanan',
+                        ],
+                        [
+                            'bintang'  => $pelayanan,
+                            'komentar' => $tokoRating['komentar'] ?? null,
+                        ]
+                    );
+                }
+
+                if ($aplikasi > 0) {
+                    RatingToko::updateOrCreate(
+                        [
+                            'supplier_id' => $supplierId,
+                            'buyer_id'    => $buyer->buyer_id,
+                            'kategori'    => 'aplikasi',
+                        ],
+                        [
+                            'bintang'  => $aplikasi,
+                            'komentar' => $tokoRating['komentar'] ?? null,
+                        ]
+                    );
+                }
+            } elseif ($supplierId && ($pelayanan > 0 || $aplikasi > 0)) {
+                $scores = array_values(array_filter([$pelayanan, $aplikasi], fn ($value) => $value > 0));
+                $bintangToko = $scores ? (int) round(array_sum($scores) / count($scores)) : 0;
+
+                if ($bintangToko > 0) {
+                    RatingToko::updateOrCreate(
+                        [
+                            'supplier_id' => $supplierId,
+                            'buyer_id'    => $buyer->buyer_id,
+                        ],
+                        [
+                            'bintang'  => $bintangToko,
+                            'komentar' => $tokoRating['komentar'] ?? null,
+                        ]
+                    );
+                }
+            }
+
             DB::commit();
             return response()->json([
                 'success' => true,

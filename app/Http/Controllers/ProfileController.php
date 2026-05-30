@@ -197,29 +197,32 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'label' => 'required|string|max:20',
             'nama_penerima' => 'required|string|max:100',
-            'no_telepon' => 'required|string|max:15',
-            'provinsi' => 'required|string|max:50',
-            'kota' => 'required|string|max:50',
-            'kecamatan' => 'required|string|max:50',
-            'kelurahan' => 'required|string|max:50',
+            'no_telepon' => 'required|string|max:20',
+            'provinsi' => 'required|string|max:100',
+            'kota' => 'required|string|max:100',
+            'kecamatan' => 'required|string|max:100',
+            'kelurahan' => 'required|string|max:100',
             'kode_pos' => 'required|string|max:10',
-            'alamat_lengkap' => 'required|string|max:255',
+            'alamat_lengkap' => 'required|string',
             'is_utama' => 'nullable|boolean',
         ]);
 
         $validated['pengguna_id'] = Auth::user()->pengguna_id;
+        $validated['no_telepon'] = '+62' . ltrim(preg_replace('/\s+/', '', (string) $request->no_telepon), '0');
 
         // If this is marked as primary, unmark others
-        if ($request->is_utama) {
+        if ($request->boolean('is_utama')) {
             AlamatPengguna::where('pengguna_id', Auth::user()->pengguna_id)->update(['is_utama' => false]);
             $validated['is_utama'] = true;
+        } else {
+            $validated['is_utama'] = false;
         }
 
         AlamatPengguna::create($validated);
 
         // Cek jika ada parameter 'return' untuk redirect kembali ke checkout
         if ($request->input('return') === 'checkout') {
-            return redirect()->route('checkout.index')->with('success', 'Alamat berhasil ditambahkan.');
+            return redirect()->route('checkout.index')->with('success', 'Alamat baru berhasil ditambahkan!');
         }
 
         // Redirect default ke halaman daftar alamat
