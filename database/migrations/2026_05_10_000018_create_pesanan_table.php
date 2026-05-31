@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('ekspedisi_id')->nullable();
             $table->foreign('ekspedisi_id')->references('ekspedisi_id')->on('ekspedisi')->nullOnDelete();
             $table->string('no_resi', 100)->nullable();
-            $table->enum('status_pesanan', ['menunggu_konfirmasi','dikemas','siap_kirim','diserahkan_ke_kurir','dalam_pengiriman','tiba_di_tujuan','diterima','bermasalah'])->default('menunggu_konfirmasi');
+            $table->enum('status_pesanan', ['menunggu_konfirmasi','dikonfirmasi','dikemas','siap_kirim','diserahkan_ke_kurir','dalam_pengiriman','tiba_di_tujuan','diterima','bermasalah'])->default('menunggu_konfirmasi');
             $table->text('alamat_pengiriman');
             $table->string('foto_bukti', 500)->nullable();
             $table->dateTime('waktu_diambil')->nullable();

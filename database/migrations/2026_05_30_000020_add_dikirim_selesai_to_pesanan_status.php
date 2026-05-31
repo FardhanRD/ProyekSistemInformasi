@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         // Modify enum to include the new values. Adjust the list to match current schema plus new ones.
-        DB::statement("ALTER TABLE `pesanan` MODIFY `status_pesanan` ENUM('menunggu_konfirmasi','dikemas','siap_kirim','diserahkan_ke_kurir','dalam_pengiriman','tiba_di_tujuan','diterima','bermasalah','dikirim','selesai') NOT NULL DEFAULT 'menunggu_konfirmasi'");
+        DB::statement("ALTER TABLE `pesanan` MODIFY `status_pesanan` ENUM('menunggu_konfirmasi','dikonfirmasi','dikemas','siap_kirim','diserahkan_ke_kurir','dalam_pengiriman','tiba_di_tujuan','diterima','bermasalah','dikirim','selesai') NOT NULL DEFAULT 'menunggu_konfirmasi'");
     }
 
     /**
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down()
     {
-        DB::statement("ALTER TABLE `pesanan` MODIFY `status_pesanan` ENUM('menunggu_konfirmasi','dikemas','siap_kirim','diserahkan_ke_kurir','dalam_pengiriman','tiba_di_tujuan','diterima','bermasalah') NOT NULL DEFAULT 'menunggu_konfirmasi'");
+        DB::statement("ALTER TABLE `pesanan` MODIFY `status_pesanan` ENUM('menunggu_konfirmasi','dikonfirmasi','dikemas','siap_kirim','diserahkan_ke_kurir','dalam_pengiriman','tiba_di_tujuan','diterima','bermasalah') NOT NULL DEFAULT 'menunggu_konfirmasi'");
     }
 };

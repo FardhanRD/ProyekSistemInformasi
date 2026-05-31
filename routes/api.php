@@ -16,6 +16,7 @@ Route::prefix('v1')->group(function () {
 
     // --- PUBLIC ROUTES (Bisa diakses tanpa login) ---
     Route::get('/products', [\App\Http\Controllers\Api\ProductController::class, 'index']);
+    Route::get('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'show']);
     Route::get('/categories', [\App\Http\Controllers\Api\CategoryController::class, 'index']);
     Route::get('/categories/{id}', [\App\Http\Controllers\Api\CategoryController::class, 'show']);
     Route::get('/products/category/{id}', [\App\Http\Controllers\Api\ProductController::class, 'getByCategory']);
@@ -65,6 +66,23 @@ Route::prefix('v1')->group(function () {
 
         // Checkout Options
         Route::get('/checkout/options', [\App\Http\Controllers\Api\CheckoutController::class, 'options']);
+        Route::post('/checkout', [\App\Http\Controllers\Api\CheckoutController::class, 'process']);
+
+        // Orders & Tracking API Routes
+        Route::get('/orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);
+        Route::get('/orders/{kode_transaksi}/tracking', [\App\Http\Controllers\Api\OrderController::class, 'tracking']);
+        Route::post('/orders/{kode_transaksi}/complete', [\App\Http\Controllers\Api\OrderController::class, 'complete']);
+        Route::post('/orders/{kode_transaksi}/rating', [\App\Http\Controllers\Api\OrderController::class, 'postRating']);
+
+        // Payment API Routes
+        Route::post('/payment/{kode_transaksi}/confirm', [\App\Http\Controllers\Api\PaymentController::class, 'confirmByBuyer']);
+        Route::post('/payment/{kode_transaksi}/upload-proof', [\App\Http\Controllers\Api\PaymentController::class, 'uploadProof']);
+
+        // Notifications API Routes
+        Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'read']);
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'readAll']);
+        Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
 
         // Favorit / Wishlist (Menyelaraskan rute mobile dengan WishlistController bawaan web)
         Route::get('/favorites', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
