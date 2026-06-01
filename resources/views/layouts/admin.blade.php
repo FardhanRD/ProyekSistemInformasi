@@ -186,7 +186,12 @@
             <aside class="w-80 bg-white border-r border-slate-200 shadow-sm">
                 <div class="p-5">
                     <div class="flex flex-col items-start gap-2">
-                        <div class="text-2xl font-black text-[var(--admin-brand)]">MOVR</div>
+                        <img src="{{ asset('images/logo-movr.png') }}"
+                             alt="MOVR"
+                             class="h-8 w-auto object-contain brightness-0 invert"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                        <span style="display:none"
+                            class="text-2xl font-black text-[var(--admin-brand)]">MOVR</span>
                         <div class="text-sm font-semibold tracking-[0.2em] text-slate-500">DASHBOARD</div>
                     </div>
                 </div>

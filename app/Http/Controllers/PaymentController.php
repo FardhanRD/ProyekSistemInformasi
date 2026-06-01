@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AkunPembayaran;
+use App\Models\Notifikasi;
 
 class PaymentController extends Controller
 {
@@ -53,19 +54,30 @@ class PaymentController extends Controller
         // Generate VA jika belum ada dan metode adalah transfer (cek kolom agar tidak error bila belum ditambahkan)
         try {
             if (Schema::hasColumn('pembayaran', 'nomor_va')) {
-                $metodeObj = $pembayaran->metode ?? null;
-                $jenis = (string) ($metodeObj->jenis ?? $pembayaran->metodePembayaran->jenis ?? '');
-                if (empty($pembayaran->nomor_va) && str_contains(strtolower($jenis), 'transfer')) {
+                $metodeObj = $pembayaran->metode ?? $pembayaran->metodePembayaran ?? null;
+                $jenis = strtolower((string) ($metodeObj->jenis ?? ''));
+
+                // Accept several variants: 'transfer', 'bank_transfer', 'va', 'virtual_account', etc.
+                $isTransferLike = false;
+                if (!empty($jenis)) {
+                    $isTransferLike = str_contains($jenis, 'transfer') || str_contains($jenis, 'va') || str_contains($jenis, 'virtual');
+                }
+
+                if (empty($pembayaran->nomor_va) && $isTransferLike) {
                     $buyerId = $transaksi->buyer->pengguna_id ?? null;
-                    $noVA = $this->generateVA($metodeObj->metode ?? ($pembayaran->metodePembayaran->metode ?? ''), $buyerId, $transaksi->transaksi_id);
+                    $noVA = $this->generateVA(
+                        $metodeObj->metode ?? '',
+                        $buyerId,
+                        $transaksi->transaksi_id
+                    );
+
                     if ($noVA) {
                         $pembayaran->update(['nomor_va' => $noVA]);
-                        // refresh model
                         $pembayaran->refresh();
                     }
                 }
             }
-    } catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             // jangan ganggu alur bila ada masalah dengan skema db
         }
 
@@ -184,16 +196,32 @@ class PaymentController extends Controller
         }
 
         DB::transaction(function () use ($transaksi, $pembayaran) {
+            // Mark payment as waiting for admin verification instead of final success.
             $pembayaran->update([
-                'status_pembayaran' => 'berhasil',
+                'status_pembayaran' => 'menunggu_konfirmasi',
                 'tanggal_pembayaran' => $pembayaran->tanggal_pembayaran ?: now(),
             ]);
 
-            $transaksi->update(['status' => 'pembayaran_dikonfirmasi']);
+            // Change transaksi status so it is no longer shown as 'menunggu_pembayaran'
+            $transaksi->update(['status' => 'menunggu_konfirmasi']);
+
+            // Create a notification for the buyer so they see admin verification is pending
+            $buyerId = $transaksi->buyer?->pengguna_id;
+            if ($buyerId) {
+                Notifikasi::create([
+                    'pengguna_id' => $buyerId,
+                    'judul' => 'Pembayaran diterima, menunggu verifikasi admin',
+                    'pesan' => 'Pembayaran untuk pesanan ' . $transaksi->kode_transaksi . ' telah dikonfirmasi oleh kamu dan sedang menunggu verifikasi oleh admin.',
+                    'jenis' => 'transaksi',
+                    'url_redirect' => '/orders?status=menunggu_konfirmasi',
+                    'is_read' => 0,
+                    'created_at' => now(),
+                ]);
+            }
         });
 
         return redirect()->route('orders.index')
-            ->with('success', 'Pembayaran berhasil dikonfirmasi.');
+            ->with('success', 'Pembayaran dikirimkan untuk verifikasi admin. Kamu akan diberi tahu setelah diverifikasi.');
     }
 
     public function waiting($kode)

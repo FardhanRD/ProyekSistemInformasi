@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Models\AlamatPengguna;
+use App\Models\Notifikasi;
+use App\Models\Voucher;
 use App\Models\Transaksi;
 use App\Models\Buyer;
 use App\Models\AkunPembayaran;
 use App\Models\Wishlist;
+use App\Models\VoucherKlaim;
 use App\Services\PenggunaSyncService;
 
 class ProfileController extends Controller
@@ -28,11 +31,17 @@ class ProfileController extends Controller
         $orderCounts = [
             '' => 0,
             'menunggu_pembayaran' => 0,
-            'pembayaran_dikonfirmasi' => 0,
+            'diproses' => 0,
             'dikirim' => 0,
             'selesai' => 0,
             'dibatalkan' => 0,
         ];
+        $voucherKlaim = collect();
+        $semuaVoucher = collect();
+        $notifikasis = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15, 1, [
+            'path' => request()->url(),
+            'query' => request()->query(),
+        ]);
 
         if (Schema::hasTable('alamat_pengguna')) {
             $addresses = AlamatPengguna::where('pengguna_id', $user->pengguna_id)->get();
@@ -62,11 +71,38 @@ class ProfileController extends Controller
             $orderCounts = [
                 '' => $semuaPesanan->count(),
                 'menunggu_pembayaran' => $semuaPesanan->where('status', 'menunggu_pembayaran')->count(),
-                'pembayaran_dikonfirmasi' => $semuaPesanan->where('status', 'pembayaran_dikonfirmasi')->count(),
+                'diproses' => $semuaPesanan->whereIn('status', ['pembayaran_dikonfirmasi', 'diproses'])->count(),
                 'dikirim' => $semuaPesanan->where('status', 'dikirim')->count(),
                 'selesai' => $semuaPesanan->where('status', 'selesai')->count(),
                 'dibatalkan' => $semuaPesanan->where('status', 'dibatalkan')->count(),
             ];
+
+            if (Schema::hasTable('voucher_klaim')) {
+                $voucherKlaim = VoucherKlaim::with('voucher')
+                    ->where('buyer_id', $buyer->buyer_id)
+                    ->orderBy('diklaim_at', 'desc')
+                    ->get();
+            }
+
+            if (Schema::hasTable('voucher')) {
+                $voucherQuery = Voucher::where('is_active', 1)
+                    ->where(function ($q) {
+                        $q->whereNull('berlaku_sampai')
+                            ->orWhere('berlaku_sampai', '>=', now());
+                    });
+
+                if (Schema::hasTable('voucher_klaim')) {
+                    $voucherQuery->withCount('voucherKlaim');
+                }
+
+                $semuaVoucher = $voucherQuery->orderByDesc('created_at')->get();
+            }
+
+            if (Schema::hasTable('notifikasi')) {
+                $notifikasis = Notifikasi::where('pengguna_id', $user->pengguna_id)
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(15);
+            }
         }
 
         if (Schema::hasTable('akun_pembayaran')) {
@@ -97,6 +133,9 @@ class ProfileController extends Controller
             'orderCounts',
             'orderCount',
             'wishlistCount',
+            'voucherKlaim',
+            'semuaVoucher',
+            'notifikasis',
             'alamats',
             'akunPembayaran',
             'metodePembayarans'

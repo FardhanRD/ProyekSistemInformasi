@@ -1,10 +1,10 @@
 @extends('layouts.buyer')
-@section('title', __('ui.my_orders') . ' — MOVR')
+@section('title', 'Pesanan Saya — MOVR')
 @section('content')
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <h1 class="text-2xl font-black text-gray-900 mb-6">
-    {{ __('ui.my_orders') }}
+    Pesanan Saya
   </h1>
 
   {{-- Tab Status --}}
@@ -14,7 +14,7 @@
       $tabs = [
         ''                      => __('ui.all'),
         'menunggu_pembayaran'   => __('ui.unpaid'),
-        'pembayaran_dikonfirmasi'=> __('ui.confirmed'),
+        'diproses'              => 'Dikemas',
         'dikirim'               => __('ui.shipped'),
         'selesai'               => __('ui.completed'),
         'dibatalkan'            => __('ui.cancelled'),
@@ -49,9 +49,9 @@
     @forelse($transaksis as $t)
     @php
       $statusConfig = [
-        'menunggu_pembayaran'     => ['color'=>'text-amber-600','bg'=>'bg-amber-50','border'=>'border-amber-200','label'=>__('ui.status_waiting_payment'),'icon'=>'clock'],
-        'pembayaran_dikonfirmasi' => ['color'=>'text-blue-600','bg'=>'bg-blue-50','border'=>'border-blue-200','label'=>__('ui.status_payment_confirmed'),'icon'=>'check'],
-        'diproses'                => ['color'=>'text-purple-600','bg'=>'bg-purple-50','border'=>'border-purple-200','label'=>__('ui.status_packed'),'icon'=>'box'],
+        'menunggu_pembayaran'     => ['color'=>'text-amber-600','bg'=>'bg-amber-50','border'=>'border-amber-200','label'=>'Belum Dibayar','icon'=>'clock'],
+        'pembayaran_dikonfirmasi' => ['color'=>'text-purple-700','bg'=>'bg-purple-100','border'=>'border-purple-200','label'=>'Dikemas','icon'=>'box'],
+        'diproses'                => ['color'=>'text-purple-700','bg'=>'bg-purple-100','border'=>'border-purple-200','label'=>'Dikemas','icon'=>'box'],
         'dikirim'                 => ['color'=>'text-[#63A2BB]','bg'=>'bg-[#63A2BB]/5','border'=>'border-[#63A2BB]/30','label'=>__('ui.status_shipping'),'icon'=>'truck'],
         'selesai'                 => ['color'=>'text-green-600','bg'=>'bg-green-50','border'=>'border-green-200','label'=>__('ui.status_completed'),'icon'=>'check-circle'],
         'dibatalkan'              => ['color'=>'text-red-500','bg'=>'bg-red-50','border'=>'border-red-200','label'=>__('ui.status_cancelled'),'icon'=>'x'],

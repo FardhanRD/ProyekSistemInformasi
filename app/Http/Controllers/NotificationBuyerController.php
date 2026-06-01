@@ -31,11 +31,24 @@ class NotificationBuyerController extends Controller
 
     public function markRead($id)
     {
-        Notifikasi::where('notifikasi_id', $id)
+        $notif = Notifikasi::where('notifikasi_id', $id)
             ->where('pengguna_id', auth()->user()->pengguna_id)
-            ->update(['is_read' => 1]);
+            ->firstOrFail();
 
-        return response()->json(['success' => true]);
+        $notif->update(['is_read' => 1]);
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'url_redirect' => $notif->url_redirect,
+            ]);
+        }
+
+        if ($notif->url_redirect) {
+            return redirect($notif->url_redirect);
+        }
+
+        return back();
     }
 
     public function readAll()
@@ -44,7 +57,11 @@ class NotificationBuyerController extends Controller
             ->where('is_read', 0)
             ->update(['is_read' => 1]);
 
-        return response()->json(['success' => true]);
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Semua notifikasi dibaca');
     }
 
     public function index()

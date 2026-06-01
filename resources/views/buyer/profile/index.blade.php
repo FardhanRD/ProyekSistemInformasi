@@ -85,6 +85,22 @@
           </svg>
           {{ __('ui.payment_method') }}
         </button>
+        <button @click="activeTab = 'voucher'; history.replaceState({}, '', '?tab=voucher')"
+                :class="activeTab === 'voucher' ? 'bg-[#63A2BB]/10 text-[#63A2BB]' : 'text-gray-500 hover:bg-gray-50'"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-left mb-1 last:mb-0">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+          </svg>
+          Voucher Saya
+        </button>
+        <button @click="activeTab = 'notifikasi'; history.replaceState({}, '', '?tab=notifikasi')"
+                :class="activeTab === 'notifikasi' ? 'bg-[#63A2BB]/10 text-[#63A2BB]' : 'text-gray-500 hover:bg-gray-50'"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-left mb-1 last:mb-0">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          Notifikasi
+        </button>
         <button @click="activeTab = 'keamanan'; history.replaceState({}, '', '?tab=keamanan')"
                 :class="activeTab === 'keamanan' ? 'bg-[#63A2BB]/10 text-[#63A2BB]' : 'text-gray-500 hover:bg-gray-50'"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-left mb-1 last:mb-0">
@@ -397,8 +413,8 @@
           @php
             $statusTabs = [
               '' => 'Semua',
-              'menunggu_pembayaran' => 'Belum Bayar',
-              'pembayaran_dikonfirmasi' => 'Dikonfirmasi',
+              'menunggu_pembayaran' => 'Belum Dibayar',
+              'diproses' => 'Dikemas',
               'dikirim' => 'Dikirim',
               'selesai' => 'Selesai',
               'dibatalkan' => 'Dibatalkan',
@@ -430,16 +446,16 @@
             @forelse($semuaPesanan ?? [] as $t)
               @php
                 $statusConfig = [
-                  'menunggu_pembayaran' => ['bg' => 'bg-amber-50', 'text' => 'text-amber-600', 'label' => 'Belum Bayar'],
-                  'pembayaran_dikonfirmasi' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600', 'label' => 'Dikonfirmasi'],
-                  'diproses' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600', 'label' => 'Diproses'],
+                  'menunggu_pembayaran' => ['bg' => 'bg-amber-50', 'text' => 'text-amber-600', 'label' => 'Belum Dibayar'],
+                  'pembayaran_dikonfirmasi' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Dikemas'],
+                  'diproses' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Dikemas'],
                   'dikirim' => ['bg' => 'bg-[#63A2BB]/10', 'text' => 'text-[#63A2BB]', 'label' => 'Dikirim'],
                   'selesai' => ['bg' => 'bg-green-50', 'text' => 'text-green-600', 'label' => 'Selesai'],
                   'dibatalkan' => ['bg' => 'bg-red-50', 'text' => 'text-red-500', 'label' => 'Dibatalkan'],
                 ];
                 $sc = $statusConfig[$t->status] ?? ['bg' => 'bg-gray-50', 'text' => 'text-gray-500', 'label' => ucfirst($t->status)];
               @endphp
-              <div x-show="activeStatus === '' || activeStatus === '{{ $t->status }}'"
+              <div x-show="activeStatus === '' || activeStatus === '{{ $t->status }}' || (activeStatus === 'diproses' && ['pembayaran_dikonfirmasi','diproses'].includes('{{ $t->status }}'))"
                    class="bg-white rounded-2xl p-4 shadow-sm border-2 transition-all cursor-pointer hover:border-[#63A2BB]/30"
                    :class="selectedOrder?.kode_transaksi === '{{ $t->kode_transaksi }}'
                      ? 'border-[#63A2BB]'
@@ -565,11 +581,11 @@
                   <span class="text-xs font-bold px-3 py-1.5 rounded-full"
                         :class="{
                           'bg-amber-50 text-amber-600': selectedOrder?.status === 'menunggu_pembayaran',
-                          'bg-blue-50 text-blue-600': selectedOrder?.status === 'pembayaran_dikonfirmasi',
+                          'bg-purple-100 text-purple-700': ['pembayaran_dikonfirmasi','diproses'].includes(selectedOrder?.status),
                           'bg-[#63A2BB]/10 text-[#63A2BB]': selectedOrder?.status === 'dikirim',
                           'bg-green-50 text-green-600': selectedOrder?.status === 'selesai',
                           'bg-red-50 text-red-500': selectedOrder?.status === 'dibatalkan',
-                          'bg-gray-50 text-gray-500': !['menunggu_pembayaran','pembayaran_dikonfirmasi','dikirim','selesai','dibatalkan'].includes(selectedOrder?.status),
+                          'bg-gray-50 text-gray-500': !['menunggu_pembayaran','pembayaran_dikonfirmasi','diproses','dikirim','selesai','dibatalkan'].includes(selectedOrder?.status),
                         }"
                         x-text="selectedOrder?.status_label">
                   </span>
@@ -798,6 +814,336 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div x-show="activeTab === 'voucher'"
+           x-cloak
+           x-transition:enter="transition ease-out duration-150"
+           x-transition:enter-start="opacity-0 translate-y-2"
+           x-transition:enter-end="opacity-100 translate-y-0"
+           class="space-y-5">
+
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="font-bold text-gray-800 text-lg">
+            Voucher Saya
+          </h2>
+          <span class="text-xs text-gray-400">
+            {{ $voucherKlaim->where('status','aktif')->count() }} aktif
+          </span>
+        </div>
+
+        <div x-data="{ voucherTab: 'tersedia' }" class="space-y-5">
+          <div class="flex gap-2 bg-gray-100 p-1 rounded-2xl w-fit overflow-x-auto">
+            <button @click="voucherTab = 'tersedia'"
+                    :class="voucherTab === 'tersedia' ? 'bg-white text-[#63A2BB] shadow-sm font-bold' : 'text-gray-500'"
+                    class="px-5 py-2 rounded-xl text-sm font-medium transition-all">
+              🎁 Tersedia
+            </button>
+            <button @click="voucherTab = 'milik'"
+                    :class="voucherTab === 'milik' ? 'bg-white text-[#63A2BB] shadow-sm font-bold' : 'text-gray-500'"
+                    class="px-5 py-2 rounded-xl text-sm font-medium transition-all">
+              🎫 Voucher Saya
+              @if($voucherKlaim->where('status','aktif')->count() > 0)
+              <span class="ml-1 bg-[#63A2BB] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {{ $voucherKlaim->where('status','aktif')->count() }}
+              </span>
+              @endif
+            </button>
+          </div>
+
+          <div x-show="voucherTab === 'tersedia'" class="space-y-3">
+            <p class="text-xs text-gray-400">
+              Klik "Klaim" untuk menyimpan voucher ke akun kamu
+            </p>
+
+            @forelse($semuaVoucher as $v)
+            @php
+              $sudahDiklaim = $voucherKlaim->where('voucher_id', $v->voucher_id)->isNotEmpty();
+              $isExpired = $v->expired_at && \Carbon\Carbon::parse($v->expired_at)->isPast();
+              $isFull = $v->kuota !== null && ($v->voucher_klaim_count ?? 0) >= $v->kuota;
+            @endphp
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden border-2 {{ $sudahDiklaim ? 'border-green-200' : ($isExpired || $isFull ? 'border-gray-100 opacity-60' : 'border-[#63A2BB]/20') }} flex">
+              <div class="w-20 flex-shrink-0 {{ $sudahDiklaim ? 'bg-green-500' : ($isExpired || $isFull ? 'bg-gray-300' : 'bg-[#63A2BB]') }} flex flex-col items-center justify-center text-white p-2">
+                @if($v->jenis_diskon === 'persen')
+                <span class="text-2xl font-black leading-none">{{ $v->nilai_diskon }}</span>
+                <span class="text-xs font-bold">%</span>
+                @else
+                <span class="text-xs font-bold leading-tight text-center">Rp {{ number_format($v->nilai_diskon/1000,0).'rb' }}</span>
+                @endif
+                <span class="text-[9px] text-white/80 mt-1">OFF</span>
+              </div>
+
+              <div class="relative flex flex-col justify-between py-3 px-1 flex-shrink-0">
+                <div class="w-4 h-4 bg-[#F8FAFB] rounded-full border-2 border-gray-100 -ml-2"></div>
+                <div class="border-l-2 border-dashed border-gray-200 flex-1 mx-auto my-1"></div>
+                <div class="w-4 h-4 bg-[#F8FAFB] rounded-full border-2 border-gray-100 -ml-2"></div>
+              </div>
+
+              <div class="flex-1 p-4">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <p class="font-black text-gray-800 text-sm font-mono tracking-wider">
+                        {{ $v->kode_voucher }}
+                      </p>
+                      @if($sudahDiklaim)
+                      <span class="bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✓ Diklaim</span>
+                      @elseif($isExpired)
+                      <span class="bg-red-50 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full">Expired</span>
+                      @elseif($isFull)
+                      <span class="bg-gray-50 text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded-full">Habis</span>
+                      @endif
+                    </div>
+
+                    @if($v->nama_voucher)
+                    <p class="text-sm font-semibold text-gray-700 mb-1">{{ $v->nama_voucher }}</p>
+                    @endif
+
+                    <p class="text-sm font-bold text-[#63A2BB] mb-2">
+                      @if($v->jenis_diskon === 'persen')
+                        Diskon {{ $v->nilai_diskon }}%
+                        @if($v->max_diskon)
+                        <span class="text-xs text-gray-400 font-normal">(maks Rp {{ number_format($v->max_diskon,0,',','.') }})</span>
+                        @endif
+                      @else
+                        Diskon Rp {{ number_format($v->nilai_diskon,0,',','.') }}
+                      @endif
+                    </p>
+
+                    <div class="bg-gray-50 rounded-xl p-2.5 mb-2 space-y-1">
+                      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Syarat & Ketentuan
+                      </p>
+                      @if($v->min_pembelian)
+                      <p class="text-xs text-gray-500 flex items-center gap-1">
+                        <svg class="w-3 h-3 text-[#63A2BB] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                        </svg>
+                        Min. pembelian Rp {{ number_format($v->min_pembelian,0,',','.') }}
+                      </p>
+                      @endif
+                      @if($v->jenis_diskon === 'persen' && $v->max_diskon)
+                      <p class="text-xs text-gray-500 flex items-center gap-1">
+                        <svg class="w-3 h-3 text-[#63A2BB] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                        </svg>
+                        Maksimal diskon Rp {{ number_format($v->max_diskon,0,',','.') }}
+                      </p>
+                      @endif
+                      @if($v->kategori_produk)
+                      <p class="text-xs text-gray-500 flex items-center gap-1">
+                        <svg class="w-3 h-3 text-[#63A2BB] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                        </svg>
+                        Berlaku untuk: {{ $v->kategori_produk }}
+                      </p>
+                      @endif
+                      @if($v->kuota)
+                      <p class="text-xs text-gray-500 flex items-center gap-1">
+                        <svg class="w-3 h-3 text-[#63A2BB] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                        </svg>
+                        Kuota: {{ max(0, $v->kuota - ($v->voucher_klaim_count ?? 0)) }} tersisa
+                      </p>
+                      @endif
+                      @if($v->deskripsi)
+                      <p class="text-xs text-gray-500 flex items-start gap-1">
+                        <svg class="w-3 h-3 text-[#63A2BB] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01"/>
+                        </svg>
+                        {{ $v->deskripsi }}
+                      </p>
+                      @endif
+                      <p class="text-xs text-gray-400 flex items-center gap-1">
+                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Berlaku s/d {{ $v->expired_at ? \Carbon\Carbon::parse($v->expired_at)->isoFormat('D MMM YYYY') : 'Tanpa batas' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex-shrink-0" x-data="{ loading: false, done: {{ $sudahDiklaim ? 'true' : 'false' }} }">
+                    @if(!$isExpired && !$isFull)
+                    <button x-show="!done"
+                            @click="
+                              loading = true;
+                              fetch('/voucher/klaim', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                },
+                                body: JSON.stringify({ kode_voucher: '{{ $v->kode_voucher }}' })
+                              })
+                              .then(r => r.json())
+                              .then(data => {
+                                if (data.success) {
+                                  done = true;
+                                  showToast('✅ Voucher berhasil diklaim!');
+                                  setTimeout(() => location.reload(), 1000);
+                                } else {
+                                  showToast(data.message, 'error');
+                                }
+                                loading = false;
+                              })
+                              .catch(() => {
+                                showToast('Terjadi kesalahan', 'error');
+                                loading = false;
+                              })"
+                            :disabled="loading"
+                            class="px-4 py-2 bg-[#63A2BB] text-white text-xs font-bold rounded-xl hover:bg-[#4A8BA3] transition disabled:opacity-60 flex items-center gap-1.5">
+                      <svg x-show="loading" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      <span x-text="loading ? '...' : 'Klaim'"></span>
+                    </button>
+                    <div x-show="done" x-cloak class="px-4 py-2 bg-green-50 text-green-600 text-xs font-bold rounded-xl flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Diklaim
+                    </div>
+                    @else
+                    <span class="px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl">
+                      {{ $isExpired ? 'Kadaluarsa' : 'Habis' }}
+                    </span>
+                    @endif
+                  </div>
+                </div>
+              </div>
+            </div>
+            @empty
+            <div class="bg-white rounded-2xl p-10 shadow-sm text-center">
+              <div class="text-4xl mb-3">🎁</div>
+              <p class="text-gray-500 font-semibold">Belum ada voucher tersedia</p>
+            </div>
+            @endforelse
+          </div>
+
+          <div x-show="voucherTab === 'milik'" x-cloak class="space-y-3">
+            @forelse($voucherKlaim as $klaim)
+            @php $v = $klaim->voucher; @endphp
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden border-2 {{ $klaim->status === 'aktif' ? 'border-[#63A2BB]/30' : 'border-gray-100 opacity-60' }} flex">
+              <div class="w-16 flex-shrink-0 {{ $klaim->status === 'aktif' ? 'bg-[#63A2BB]' : 'bg-gray-300' }} flex items-center justify-center text-white">
+                @if($v->jenis_diskon === 'persen')
+                <div class="text-center">
+                  <span class="text-xl font-black">{{ $v->nilai_diskon }}</span>
+                  <span class="text-xs block">%</span>
+                </div>
+                @else
+                <span class="text-xs font-bold text-center px-1">Rp {{ number_format($v->nilai_diskon/1000,0).'rb' }}</span>
+                @endif
+              </div>
+              <div class="flex-1 p-4 flex items-center justify-between">
+                <div>
+                  <p class="font-mono font-black text-gray-800 tracking-wider text-sm">{{ $v->kode_voucher }}</p>
+                  <p class="text-xs font-semibold text-[#63A2BB] mt-0.5">
+                    @if($v->jenis_diskon === 'persen')
+                      Diskon {{ $v->nilai_diskon }}%
+                    @else
+                      Diskon Rp {{ number_format($v->nilai_diskon,0,',','.') }}
+                    @endif
+                  </p>
+                  @if($v->min_belanja)
+                  <p class="text-xs text-gray-400 mt-0.5">Min. Rp {{ number_format($v->min_belanja,0,',','.') }}</p>
+                  @endif
+                </div>
+                <div class="text-right">
+                  @if($klaim->status === 'aktif')
+                  <span class="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full block mb-2">Aktif</span>
+                  <button onclick="navigator.clipboard.writeText('{{ $v->kode_voucher }}').then(() => showToast('Kode disalin!'))" class="text-xs text-[#63A2BB] font-semibold hover:underline">Salin Kode</button>
+                  @elseif($klaim->status === 'digunakan')
+                  <span class="bg-gray-100 text-gray-500 text-xs font-bold px-2.5 py-1 rounded-full">Terpakai</span>
+                  @else
+                  <span class="bg-red-50 text-red-400 text-xs font-bold px-2.5 py-1 rounded-full">Expired</span>
+                  @endif
+                </div>
+              </div>
+            </div>
+            @empty
+            <div class="bg-white rounded-2xl p-10 shadow-sm text-center">
+              <p class="text-gray-500 font-semibold">Belum ada voucher tersimpan</p>
+              <p class="text-xs text-gray-400 mt-1">Klaim voucher dari tab "Tersedia"</p>
+            </div>
+            @endforelse
+          </div>
+        </div>
+      </div>
+
+      <div x-show="activeTab === 'notifikasi'"
+           x-cloak
+           x-transition:enter="transition ease-out duration-150"
+           x-transition:enter-start="opacity-0 translate-y-2"
+           x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="font-bold text-gray-800 text-lg">Notifikasi</h2>
+          @if($notifikasis->where('is_read', 0)->count() > 0)
+            <form action="{{ route('notifications.read-all') }}" method="POST" class="inline">
+              @csrf
+              <button type="submit" class="text-xs text-[#63A2BB] hover:underline font-medium">Tandai semua dibaca</button>
+            </form>
+          @endif
+        </div>
+
+        <div class="space-y-3">
+          @forelse($notifikasis as $notif)
+            <div class="bg-white rounded-2xl p-4 shadow-sm border-2 transition-all {{ $notif->is_read ? 'border-transparent opacity-75' : 'border-[#63A2BB]/20 bg-[#63A2BB]/2' }}">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-lg {{ match($notif->jenis) {
+                  'transaksi' => 'bg-[#63A2BB]/10',
+                  'pengiriman' => 'bg-green-50',
+                  'promo' => 'bg-amber-50',
+                  'sistem' => 'bg-gray-100',
+                  default => 'bg-gray-100'
+                } }}">
+                  {{ match($notif->jenis) {
+                    'transaksi' => '🛍️',
+                    'pengiriman' => '📦',
+                    'promo' => '🎁',
+                    'sistem' => '⚙️',
+                    default => '🔔'
+                  } }}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="font-bold text-gray-800 text-sm">{{ $notif->judul }}</p>
+                    @if(! $notif->is_read)
+                      <div class="w-2 h-2 bg-[#63A2BB] rounded-full flex-shrink-0 mt-1"></div>
+                    @endif
+                  </div>
+                  <p class="text-sm text-gray-600 mt-1 leading-relaxed">{{ $notif->pesan }}</p>
+                  <div class="flex items-center justify-between mt-2">
+                    <p class="text-xs text-gray-400">{{ $notif->created_at->diffForHumans() }}</p>
+                    @if($notif->url_redirect && ! $notif->is_read)
+                      <form action="{{ route('notifications.read', $notif->notifikasi_id) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-xs text-[#63A2BB] hover:underline font-medium">Lihat Detail →</button>
+                      </form>
+                    @elseif($notif->url_redirect)
+                      <a href="{{ $notif->url_redirect }}" class="text-xs text-gray-400 hover:text-[#63A2BB] transition">Lihat Detail →</a>
+                    @endif
+                  </div>
+                </div>
+              </div>
+            </div>
+          @empty
+            <div class="bg-white rounded-3xl p-12 shadow-sm text-center">
+              <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+              </div>
+              <p class="text-gray-500 font-semibold">Belum ada notifikasi</p>
+            </div>
+          @endforelse
+        </div>
+
+        @if($notifikasis->hasPages())
+          <div class="mt-4">{{ $notifikasis->links() }}</div>
+        @endif
       </div>
 
       <div x-show="activeTab === 'alamat'"

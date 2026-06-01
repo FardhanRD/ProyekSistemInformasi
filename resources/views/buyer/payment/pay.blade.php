@@ -3,7 +3,59 @@
 @section('title', 'Pembayaran — MOVR')
 
 @section('content')
-<div class="section-shell py-8 sm:py-10" x-data="paymentCountdown('{{ $pembayaran->expired_at }}')">
+<div class="section-shell py-8 sm:py-10" x-data="{
+    expiredTime: new Date('{{ $pembayaran->expired_at }}').getTime(),
+    timeLeft: '00:00:00',
+    tick: null,
+    showCancelConfirm: false,
+    showCancelSuccess: false,
+    cancelling: false,
+    init() {
+        this.updateTime();
+        this.tick = setInterval(() => this.updateTime(), 1000);
+    },
+    updateTime() {
+        const distance = this.expiredTime - new Date().getTime();
+
+        if (distance <= 0) {
+            this.timeLeft = '00:00:00';
+            if (this.tick) clearInterval(this.tick);
+            return;
+        }
+
+        const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
+
+        this.timeLeft = [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    },
+    async cancelOrder() {
+        this.cancelling = true;
+
+        try {
+            const res = await fetch('/orders/{{ $transaksi->kode_transaksi }}/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                }
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                this.showCancelConfirm = false;
+                this.showCancelSuccess = true;
+            } else {
+                showToast(data.message || 'Gagal membatalkan', 'error');
+            }
+        } catch (e) {
+            showToast('Terjadi kesalahan', 'error');
+        } finally {
+            this.cancelling = false;
+        }
+    }
+}">
     <div class="mb-6 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-center gap-4">
@@ -364,7 +416,7 @@
                                                         </div>
                                                 </div>
 
-                                                <form action="{{ route('payment.confirm', $transaksi->kode_transaksi) }}" method="POST" class="mt-5">
+                                                <form action="{{ route('payment.confirm.buyer', $transaksi->kode_transaksi) }}" method="POST" class="mt-5">
                             @csrf
                             <button type="submit" class="btn-primary inline-flex w-full justify-center px-5 py-3 text-sm">Konfirmasi Pembayaran</button>
                         </form>
@@ -372,6 +424,97 @@
                     @elseif($pembayaran->status_pembayaran === 'berhasil')
                         <a href="{{ route('orders.index') }}" class="btn-primary mt-5 inline-flex w-full justify-center px-5 py-3 text-sm">Lihat Pesanan</a>
                     @endif
+
+                                        <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+                                            <button @click="showCancelConfirm = true"
+                                                            type="button"
+                                                            class="text-sm text-red-400 hover:text-red-600 font-medium hover:underline transition flex items-center gap-1.5 mx-auto">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                                Batalkan Pesanan
+                                            </button>
+
+                                            {{-- MODAL: Konfirmasi Batalkan --}}
+                                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                                                <div class="absolute inset-0 bg-slate-950/55" @click="!cancelling && (showCancelConfirm = false)"></div>
+                                                <div class="relative w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+                                                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+                                                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                                        </svg>
+                                                    </div>
+
+                                                    <div class="mt-5 text-center">
+                                                        <h3 class="text-xl font-black text-slate-900">Batalkan Pesanan?</h3>
+                                                        <p class="mt-2 text-sm text-slate-500">Kamu akan membatalkan pesanan</p>
+                                                        <p class="mt-1 text-sm font-bold text-slate-900">{{ $transaksi->kode_transaksi }}</p>
+                                                    </div>
+
+                                                    <div class="mt-5 space-y-3 rounded-3xl bg-slate-50 p-4 text-left text-sm text-slate-600">
+                                                        <div class="flex gap-3">
+                                                            <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-500">!</span>
+                                                            <p>Pesanan akan berstatus <strong>Dibatalkan</strong> dan tidak bisa dikembalikan</p>
+                                                        </div>
+                                                        <div class="flex gap-3">
+                                                            <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#63A2BB]/10 text-[#63A2BB]">↺</span>
+                                                            <p>Stok produk akan dikembalikan secara otomatis</p>
+                                                        </div>
+                                                        <div class="flex gap-3">
+                                                            <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">✓</span>
+                                                            <p>Tidak ada biaya pembatalan karena belum terbayar</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 grid grid-cols-2 gap-3">
+                                                        <button type="button" @click="showCancelConfirm = false" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">Kembali</button>
+                                                        <button type="button" @click="cancelOrder()" :disabled="cancelling" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#63A2BB] px-4 py-3 text-sm font-bold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60">
+                                                            <svg x-show="cancelling" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                            </svg>
+                                                            <span x-text="cancelling ? 'Membatalkan...' : 'Ya, Batalkan'"></span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- MODAL: Pesanan Berhasil Dibatalkan --}}
+                                            <div x-show="showCancelSuccess" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                                                <div class="absolute inset-0 bg-slate-950/55"></div>
+                                                <div class="relative w-full max-w-md rounded-[2rem] bg-white p-6 text-center shadow-2xl ring-1 ring-slate-200">
+                                                    <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+                                                        <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                    </div>
+
+                                                    <h3 class="mt-5 text-xl font-black text-slate-900">Pesanan Dibatalkan</h3>
+                                                    <p class="mt-2 text-sm text-slate-500">Pesanan kamu berhasil dibatalkan</p>
+                                                    <p class="mt-1 text-sm font-bold text-slate-900">{{ $transaksi->kode_transaksi }}</p>
+
+                                                    <div class="mt-5 space-y-3 rounded-3xl bg-slate-50 p-4 text-left text-sm text-slate-600">
+                                                        <div class="flex gap-3">
+                                                            <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#63A2BB]/10 text-[#63A2BB]">↺</span>
+                                                            <p>Stok produk telah dikembalikan</p>
+                                                        </div>
+                                                        <div class="flex gap-3">
+                                                            <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">✓</span>
+                                                            <p>Tidak ada biaya yang dikenakan</p>
+                                                        </div>
+                                                        <div class="flex gap-3">
+                                                            <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600">i</span>
+                                                            <p>Status pesanan diperbarui ke "Dibatalkan"</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                        <a href="{{ route('orders.index', ['status' => 'dibatalkan']) }}" class="inline-flex items-center justify-center rounded-2xl bg-[#63A2BB] px-4 py-3 text-sm font-bold text-white transition hover:brightness-95">Lihat Riwayat Pesanan</a>
+                                                        <a href="{{ route('home') }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">🛍️ Belanja Lagi</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                 </div>
             </div>
         </div>
@@ -393,33 +536,5 @@
         });
     }
 
-    function paymentCountdown(expiredAt) {
-        return {
-            expiredTime: new Date(expiredAt).getTime(),
-            timeLeft: '00:00:00',
-            tick: null,
-
-            init() {
-                this.updateTime();
-                this.tick = setInterval(() => this.updateTime(), 1000);
-            },
-
-            updateTime() {
-                const distance = this.expiredTime - new Date().getTime();
-
-                if (distance <= 0) {
-                    this.timeLeft = '00:00:00';
-                    if (this.tick) clearInterval(this.tick);
-                    return;
-                }
-
-                const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((distance % (1000 * 60)) / 1000);
-
-                this.timeLeft = [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
-            }
-        };
-    }
 </script>
 @endsection

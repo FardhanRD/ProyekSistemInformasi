@@ -157,7 +157,7 @@
                'sub'=>'File berhasil diupload','done'=>true],
               ['icon'=>'search','label'=>'Sedang Diverifikasi Admin',
                'sub'=>'Estimasi 1x24 jam kerja','active'=>true],
-              ['icon'=>'check','label'=>'Pembayaran Dikonfirmasi',
+              ['icon'=>'check','label'=>'Pesanan Dikemas',
                'sub'=>'Pesanan akan diproses','done'=>false],
               ['icon'=>'box','label'=>'Pesanan Diproses',
                'sub'=>'Produk sedang dikemas','done'=>false],

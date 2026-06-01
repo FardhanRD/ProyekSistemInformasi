@@ -122,13 +122,11 @@ class CustomerOrderController extends Controller
             ]);
 
             if ($status === 'berhasil') {
-                // Mark transaksi as payment-confirmed so it appears in user's "Dikonfirmasi" tab
-                $transaksi->update(['status' => 'pembayaran_dikonfirmasi']);
+                $transaksi->update(['status' => 'diproses']);
 
                 if ($transaksi->pesanan) {
-                    // Update order status to 'dikonfirmasi' so it shows under My Orders -> Dikonfirmasi
                     $transaksi->pesanan->update([
-                        'status_pesanan' => 'dikonfirmasi',
+                        'status_pesanan' => 'dikemas',
                     ]);
                 }
 
@@ -171,10 +169,10 @@ class CustomerOrderController extends Controller
                 if ($buyerId) {
                     Notifikasi::create([
                         'pengguna_id' => $buyerId,
-                        'judul' => '✅ Pembayaran Dikonfirmasi',
-                        'pesan' => 'Pembayaran untuk pesanan ' . $transaksi->kode_transaksi . ' telah dikonfirmasi. Pesanan sedang diproses.',
+                        'judul' => '✅ Pembayaran Berhasil Diverifikasi!',
+                        'pesan' => 'Pembayaran pesanan ' . $transaksi->kode_transaksi . ' sebesar Rp ' . number_format($transaksi->total_harga, 0, ',', '.') . ' telah berhasil diverifikasi. Pesanan kamu sedang dikemas!',
                         'jenis' => 'transaksi',
-                        'url_redirect' => '/orders',
+                        'url_redirect' => '/orders?status=diproses',
                         'is_read' => 0,
                         'created_at' => now(),
                     ]);
@@ -237,7 +235,7 @@ class CustomerOrderController extends Controller
         ];
 
         $pesananStatusMap = [
-            'pembayaran_dikonfirmasi' => 'menunggu_konfirmasi',
+            'pembayaran_dikonfirmasi' => 'dikemas',
             'diproses' => 'dikemas',
             'dikirim' => 'dalam_pengiriman',
             'selesai' => 'diterima',

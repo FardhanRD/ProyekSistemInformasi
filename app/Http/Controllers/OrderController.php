@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
 use App\Models\Buyer;
@@ -27,18 +28,14 @@ class OrderController extends Controller
         }
 
         // Get order counts for each status
-        $allStatuses = ['', 'menunggu_pembayaran', 'pembayaran_dikonfirmasi', 'diproses', 'dikirim', 'selesai', 'dibatalkan'];
+        $allStatuses = ['', 'menunggu_pembayaran', 'diproses', 'dikirim', 'selesai', 'dibatalkan'];
         $orderCounts = [];
         
         foreach ($allStatuses as $status) {
-            $query = Transaksi::where('pengguna_id', $user->pengguna_id);
+            $query = Transaksi::where('pengguna_id', $buyer->pengguna_id);
             if ($status !== '') {
-                if ($status === 'pembayaran_dikonfirmasi') {
-                    // include transactions where pesanan.status_pesanan == 'dikonfirmasi' as confirmed
-                    $query->where(function($q) use ($status) {
-                        $q->where('status', $status)
-                          ->orWhereHas('pesanan', fn($sq) => $sq->where('status_pesanan', 'dikonfirmasi'));
-                    });
+                if ($status === 'diproses') {
+                    $query->whereIn('status', ['pembayaran_dikonfirmasi', 'diproses']);
                 } else {
                     $query->where('status', $status);
                 }
@@ -47,7 +44,7 @@ class OrderController extends Controller
         }
 
         // Get filtered orders
-        $query = Transaksi::where('pengguna_id', $user->pengguna_id)
+        $query = Transaksi::where('pengguna_id', $buyer->pengguna_id)
             ->with([
                 'details.detailProduk.produk.gambarUtama',
                 'pembayaran.metode',
@@ -56,11 +53,8 @@ class OrderController extends Controller
         
         $currentStatus = $request->input('status', '');
         if ($currentStatus !== '') {
-            if ($currentStatus === 'pembayaran_dikonfirmasi') {
-                $query->where(function($q) use ($currentStatus) {
-                    $q->where('status', $currentStatus)
-                      ->orWhereHas('pesanan', fn($sq) => $sq->where('status_pesanan', 'dikonfirmasi'));
-                });
+            if ($currentStatus === 'diproses') {
+                $query->whereIn('status', ['pembayaran_dikonfirmasi', 'diproses']);
             } else {
                 $query->where('status', $currentStatus);
             }
@@ -118,8 +112,8 @@ class OrderController extends Controller
 
         $statusLabel = [
             'menunggu_pembayaran' => 'Belum Bayar',
-            'pembayaran_dikonfirmasi' => 'Dikonfirmasi',
-            'diproses' => 'Diproses',
+            'pembayaran_dikonfirmasi' => 'Dikemas',
+            'diproses' => 'Dikemas',
             'dikirim' => 'Dikirim',
             'selesai' => 'Selesai',
             'dibatalkan' => 'Dibatalkan',
@@ -167,9 +161,97 @@ class OrderController extends Controller
         ]);
     }
 
+    public function cancelled($kode)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return redirect('/login');
+        }
+
+        $buyer = $user->buyer;
+        if (! $buyer) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $transaksi = Transaksi::with([
+                'transaksiDetail.detailProduk.produk.gambarUtama',
+            ])
+            ->where('kode_transaksi', $kode)
+            ->where('pengguna_id', $buyer->pengguna_id)
+            ->where('status', 'dibatalkan')
+            ->firstOrFail();
+
+        return view('buyer.order.cancelled', [
+            'transaksi' => $transaksi,
+            'kode_transaksi' => $kode,
+        ]);
+    }
+
     // Metode untuk rating produk dan toko akan dipindahkan ke API atau controller terpisah
     // agar lebih modular dan sesuai dengan praktik terbaik.
     // Untuk saat ini, kita akan mengasumsikan rating dilakukan melalui API atau form terpisah.
     public function ratingProduk(Request $request, $id) { /* ... */ }
     public function ratingToko(Request $request, $id) { /* ... */ }
+
+    public function cancel($kode)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan login terlebih dahulu',
+            ], 401);
+        }
+
+        $buyer = $user->buyer;
+        if (! $buyer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data buyer tidak ditemukan',
+            ], 403);
+        }
+
+        $transaksi = Transaksi::with(['pembayaran', 'details.detailProduk'])
+            ->where('kode_transaksi', $kode)
+            ->where('pengguna_id', $buyer->pengguna_id)
+            ->firstOrFail();
+
+        if ($transaksi->status !== 'menunggu_pembayaran') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak dapat dibatalkan pada status ini',
+            ]);
+        }
+
+        DB::beginTransaction();
+        try {
+            $transaksi->update(['status' => 'dibatalkan']);
+
+            if ($transaksi->pembayaran) {
+                $transaksi->pembayaran->update([
+                    'status_pembayaran' => 'gagal',
+                ]);
+            }
+
+            foreach ($transaksi->details as $detail) {
+                if ($detail->detailProduk) {
+                    $detail->detailProduk->increment('stok', (int) $detail->quantity);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil dibatalkan',
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

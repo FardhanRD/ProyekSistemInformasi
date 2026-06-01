@@ -21,14 +21,21 @@
     <div class="section-shell">
         <div class="flex h-20 items-center justify-between gap-4">
             <div class="flex items-center gap-4 lg:gap-6">
-                <a href="{{ route('home') }}" class="flex h-12 w-44 items-center justify-center rounded-2xl bg-slate-950 px-4 text-lg font-black tracking-[0.2em] text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-slate-400/20">
-                    MOVR
+                <a href="{{ route('home') }}" class="flex items-center">
+                    <img src="{{ asset('images/logo-movr.png') }}"
+                         alt="MOVR"
+                         class="h-10 w-auto object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <span style="display:none"
+                          class="bg-black text-white font-black px-4 py-2 rounded-full tracking-widest text-sm">
+                        MOVR
+                    </span>
                 </a>
 
                 <nav class="hidden xl:flex items-center gap-1" x-cloak>
                     @foreach(($menuKategori ?? []) as $kategori)
                         <div class="group relative">
-                            <a href="#" class="rounded-full px-4 py-2 text-sm font-bold text-[#63A2BB] transition-all duration-200 hover:bg-[#63A2BB]/10 hover:text-[#4A8BA3]">
+                            <a href="{{ route('category.show', $kategori->slug ?? \Illuminate\Support\Str::slug($kategori->nama_kategori)) }}" class="rounded-full px-4 py-2 text-sm font-bold text-[#63A2BB] transition-all duration-200 hover:bg-[#63A2BB]/10 hover:text-[#4A8BA3]">
                                 {{ $kategori->nama_kategori }}
                             </a>
 
@@ -240,7 +247,7 @@
                 </form>
                 <div class="grid gap-2">
                     @foreach(($menuKategori ?? []) as $kategori)
-                        <a href="#" class="rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-[#63A2BB]/5 hover:text-[#63A2BB]">{{ $kategori->nama_kategori }}</a>
+                        <a href="{{ route('category.show', $kategori->slug ?? \Illuminate\Support\Str::slug($kategori->nama_kategori)) }}" class="rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-[#63A2BB]/5 hover:text-[#63A2BB]">{{ $kategori->nama_kategori }}</a>
                     @endforeach
                 </div>
                 <div class="grid grid-cols-2 gap-2">

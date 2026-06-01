@@ -84,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'storeSelection'])->name('checkout.store');
     Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::post('/checkout/apply-voucher', [CheckoutController::class, 'applyVoucher'])->name('checkout.apply_voucher');
+    Route::post('/voucher/klaim', [VoucherController::class, 'klaim'])->name('voucher.klaim')->middleware(['auth']);
 
     Route::get('/pay/{kode_transaksi}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{kode}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payment.upload-proof')->middleware(['auth']);
@@ -101,6 +102,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show')->middleware(['auth']);
     Route::get('/orders/{kode}/json', [OrderController::class, 'showJson'])->name('orders.show.json');
+    Route::post('/orders/{kode}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->middleware(['auth']);
+    Route::get('/orders/{kode}/cancelled', [OrderController::class, 'cancelled'])->name('orders.cancelled')->middleware(['auth']);
     Route::get('/tracking/{kode_transaksi}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/orders/{kode_transaksi}/tracking', [TrackingController::class, 'show'])->name('order.tracking');
 

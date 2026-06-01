@@ -46,15 +46,30 @@ class HomeController extends Controller
                 ? 'penyimpanan_waktu'
                 : (Schema::hasColumn('produk', 'created_at') ? 'created_at' : 'produk_id');
 
-            $newArrivals = Produk::where('is_active', 1)
-                ->where('status_publish', 'publish')
-                ->with('images')
+            $visibleProdukQuery = function ($query) {
+                $query->where('is_active', 1);
+            };
+
+            $newArrivals = Produk::with([
+                    'gambarUtama',
+                    'gambarProduk' => fn ($q) => $q->orderBy('urutan'),
+                    'kategori',
+                    'supplier',
+                    'detailProduk',
+                ])
+                ->where($visibleProdukQuery)
                 ->orderByDesc($orderField)
                 ->limit(8)
                 ->get();
 
-            $bestSellers = Produk::where('is_active', 1)
-                ->with('images')
+            $bestSellers = Produk::with([
+                    'gambarUtama',
+                    'gambarProduk' => fn ($q) => $q->orderBy('urutan'),
+                    'kategori',
+                    'supplier',
+                    'detailProduk',
+                ])
+                ->where($visibleProdukQuery)
                 ->orderByDesc('total_terjual')
                 ->limit(8)
                 ->get();

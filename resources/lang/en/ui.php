@@ -68,6 +68,7 @@ return [
     'register' => 'Register',
     'profile' => 'Profile',
     'profile_my' => 'My Profile',
+    'my_orders' => 'My Orders',
     'orders_my' => 'My Orders',
     'logout' => 'Logout',
     'account' => 'Account',

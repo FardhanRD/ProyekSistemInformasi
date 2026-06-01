@@ -6,8 +6,8 @@
 @php
     $statusConfig = [
         'menunggu_pembayaran'     => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'label' => 'Menunggu Pembayaran'],
-        'pembayaran_dikonfirmasi' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Pembayaran Dikonfirmasi'],
-        'diproses'                => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Diproses'],
+        'pembayaran_dikonfirmasi' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Dikemas'],
+        'diproses'                => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Dikemas'],
         'dikirim'                 => ['bg' => 'bg-[#63A2BB]/10', 'text' => 'text-[#63A2BB]', 'label' => 'Dikirim'],
         'selesai'                 => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => 'Selesai'],
         'dibatalkan'              => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => 'Dibatalkan'],

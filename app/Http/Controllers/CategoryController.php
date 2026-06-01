@@ -11,7 +11,20 @@ class CategoryController extends Controller
 {
     public function show(Request $request, $slug)
     {
-        $cat = Kategori::with('children.children.children')->where('slug', $slug)->firstOrFail();
+        $cat = Kategori::with('children.children.children')->where('slug', $slug)->first();
+
+        if (! $cat) {
+            $normalizedSlug = strtolower((string) $slug);
+
+            $cat = Kategori::with('children.children.children')
+                ->whereRaw('LOWER(REPLACE(nama_kategori, " ", "-")) = ?', [$normalizedSlug])
+                ->first();
+        }
+
+        if (! $cat) {
+            abort(404);
+        }
+
         $catIds = $cat->descendantIds();
 
         // --- Data untuk Filter ---
