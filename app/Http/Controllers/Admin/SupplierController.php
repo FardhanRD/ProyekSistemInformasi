@@ -8,7 +8,8 @@ use App\Models\Produk;
 use App\Models\Kategori;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Str;
+use Illuminate\Support\Facades\Storage;
 
 class SupplierController extends Controller
 {
@@ -125,7 +126,13 @@ class SupplierController extends Controller
         }
 
         $supplier = Supplier::findOrFail($id);
-        // Tidak ada is_active pada supplier, pakai soft via is_verified=0
+
+        // Hapus file foto jika ada
+        if ($supplier->foto_toko) {
+            Storage::disk('public')->delete($supplier->foto_toko);
+        }
+
+        // Soft/nonaktif
         $supplier->update(['is_verified' => 0]);
 
         return redirect()->route('admin.supplier.index')->with('success', 'Supplier dihapus (nonaktif).');

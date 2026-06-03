@@ -22,9 +22,9 @@
         <div class="flex h-20 items-center justify-between gap-4">
             <div class="flex items-center gap-4 lg:gap-6">
                 <a href="{{ route('home') }}" class="flex items-center">
-                    <img src="{{ asset('images/logo-movr.png') }}"
+                    <img src="{{ asset('images/logo_movr_ver2.png') }}"
                          alt="MOVR"
-                         class="h-10 w-auto object-contain"
+                         class="h-16 w-auto object-contain"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                     <span style="display:none"
                           class="bg-black text-white font-black px-4 py-2 rounded-full tracking-widest text-sm">

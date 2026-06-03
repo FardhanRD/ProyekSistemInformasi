@@ -183,19 +183,18 @@
         {{-- BODY --}}
         <div class="flex flex-1">
             {{-- SIDEBAR --}}
-            <aside class="w-80 bg-white border-r border-slate-200 shadow-sm">
-                <div class="p-5">
-                    <div class="flex flex-col items-start gap-2">
-                        <img src="{{ asset('images/logo-movr.png') }}"
-                             alt="MOVR"
-                             class="h-8 w-auto object-contain brightness-0 invert"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                        <span style="display:none"
-                            class="text-2xl font-black text-[var(--admin-brand)]">MOVR</span>
-                        <div class="text-sm font-semibold tracking-[0.2em] text-slate-500">DASHBOARD</div>
-                    </div>
-                </div>
-
+           <aside class="w-80 bg-white border-r border-slate-200 shadow-sm">
+    <div class="p-5 border-b border-slate-100">
+    <div class="flex flex-col items-center justify-center gap-2">
+        <img src="{{ asset('images/logo_movr_ver2.png') }}"
+             alt="MOVR"
+             class="h-12 w-auto object-contain"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+        <span style="display:none"
+            class="text-2xl font-black text-[var(--admin-brand)]">MOVR</span>
+        <div class="text-xs font-bold tracking-[0.2em] text-slate-400 mt-1">DASHBOARD</div>
+    </div>
+</div>
                 <nav class="px-5 pb-5">
                     {{-- Grup: DASHBOARD --}}
                     <div class="mt-2">
