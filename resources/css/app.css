@@ -9,6 +9,8 @@
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
     --color-brand: #2B9BAF;
+    --color-admin: #63A2BB;
+    --color-admin-dark: #4A8BA3;
     --color-danger: #DC3545;
     --color-surface: #F8F9FA;
     --color-success: #28A745;

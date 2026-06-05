@@ -1,299 +1,277 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Category Management')
 
 @section('content')
-<div class="mx-auto max-w-7xl px-4 py-6">
-    <div class="flex items-start justify-between gap-4 mb-6">
+<div class="mx-auto max-w-7xl px-4 py-6" x-data="categoryMgmt()">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-            <h1 class="font-bold text-2xl text-slate-900">Category Management</h1>
-            <p class="text-sm text-slate-500 mt-1">Kelola kategori utama & sub kategori.</p>
+            <p class="text-xs font-bold text-admin uppercase tracking-widest mb-1">MOVR ADMIN</p>
+            <h1 class="text-2xl font-black text-gray-900">Category Management</h1>
+            <p class="text-sm text-gray-400 mt-1">Kelola struktur kategori produk secara hierarki — Level 1 (Utama), Level 2 (Sub).</p>
         </div>
 
-        <div class="flex items-center gap-3">
-            <a href="#" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Export</a>
-            <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]" onclick="document.getElementById('addCategoryModal').classList.remove('hidden')">
-                + Add Category
-            </button>
+        <button @click="openAddModal()"
+                class="inline-flex items-center gap-2 px-5 py-3 bg-admin text-white rounded-xl font-bold text-sm shadow-lg shadow-admin/25 hover:bg-admin-dark hover:-translate-y-0.5 hover:shadow-xl hover:shadow-admin/30 transition-all duration-200 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Tambah Kategori
+        </button>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <p class="text-2xl font-black text-admin">{{ $total_categories_active }}</p>
+            <p class="text-xs text-gray-400 mt-1 font-medium">Total Kategori Aktif</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <p class="text-2xl font-black text-blue-600">{{ $categories->count() }}</p>
+            <p class="text-xs text-gray-400 mt-1 font-medium">Kategori Level 1</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <p class="text-2xl font-black text-purple-600">{{ $categories->sum(fn($c) => $c->children?->count() ?? 0) }}</p>
+            <p class="text-xs text-gray-400 mt-1 font-medium">Sub-Kategori Level 2</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <p class="text-2xl font-black text-green-600">{{ $active_products }}</p>
+            <p class="text-xs text-gray-400 mt-1 font-medium">Produk Aktif</p>
         </div>
     </div>
 
-    {{-- STAT CARDS --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">TOTAL CATEGORIES</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">{{ $total_categories_active ?? 0 }}</div>
-                </div>
-                <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600">+3 new</div>
-            </div>
-        </div>
-
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">ACTIVE PRODUCTS</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">{{ $active_products ?? 0 }}</div>
-                </div>
-                <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500">Static</div>
-            </div>
-        </div>
-
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">AVG MARGIN</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">-</div>
-                </div>
-                <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700">TBD</div>
-            </div>
-        </div>
-
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div id="fullCalendarCat" class="text-sm" style="height:200px;"></div>
-        </div>
-    </div>
-
-    {{-- Favorite Categories (cards) --}}
-    <div class="mb-6">
-        <h2 class="font-bold text-slate-900 mb-3">Favorite Categories</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            @forelse(($favorite_categories ?? collect()) as $cat)
-                @php
-                    // Simple threshold based on count
-                    $inv = $cat->inventory_count ?? 0;
-                    $status = $inv >= 50 ? 'Stable' : ($inv >= 20 ? 'Low' : 'Critical');
-                    $color = $status === 'Stable' ? 'bg-green-50 text-green-700' : ($status === 'Low' ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700');
-                @endphp
-                <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <div class="font-bold text-slate-900">{{ $cat->nama_kategori }}</div>
-                            <div class="text-sm text-slate-500 mt-1">Inventory: {{ $inv }}</div>
+    <!-- Category Tree -->
+    <div class="space-y-4">
+        @forelse($categories as $level1)
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                <!-- Level 1 Header -->
+                <div class="flex items-center gap-4 px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <div class="w-10 h-10 bg-admin rounded-xl flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+                        {{ strtoupper(substr($level1->nama_kategori, 0, 1)) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="font-black text-gray-900 text-base">{{ strtoupper($level1->nama_kategori) }}</p>
+                            <span class="text-[10px] bg-admin/10 text-admin px-2 py-0.5 rounded-full font-bold">LEVEL 1</span>
+                            <span class="text-xs text-gray-400 font-mono">/{{ $level1->slug }}</span>
                         </div>
-                        <span class="text-xs font-bold px-3 py-1 rounded-full {{ $color }}">{{ $status }}</span>
+                        <p class="text-xs text-gray-400 mt-0.5">{{ $level1->children?->count() ?? 0 }} sub-kategori · Root Category</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button @click="openAddSubModal({{ $level1->kategori_id }}, '{{ addslashes($level1->nama_kategori) }}')"
+                                class="flex items-center gap-1.5 px-3 py-2 bg-admin/10 text-admin rounded-xl text-xs font-bold hover:bg-admin hover:text-white transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Tambah Sub
+                        </button>
+                        <button @click="openEditModal({{ $level1->kategori_id }}, '{{ addslashes($level1->nama_kategori) }}', '{{ $level1->slug }}', null)"
+                                class="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center hover:bg-amber-100 transition" title="Edit Kategori">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </button>
+                        <form action="{{ route('admin.category.destroy', $level1->kategori_id) }}" method="POST" onsubmit="return confirm('Hapus kategori {{ addslashes($level1->nama_kategori) }}? Sub-kategori di dalamnya juga akan terpengaruh.')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center hover:bg-red-100 transition" title="Hapus Kategori">
+                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </form>
                     </div>
                 </div>
-            @empty
-                <div class="text-sm text-slate-500">Belum ada data kategori.</div>
-            @endforelse
-        </div>
-    </div>
 
-    {{-- Category Hierarchy Distribution --}}
-    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm mb-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-bold text-slate-900">Category Hierarchy Distribution</h2>
-        </div>
-
-        @forelse(($top_level ?? collect()) as $lvl1)
-            <div class="mb-5">
-                <div class="flex items-center justify-between">
-                    <div class="font-bold text-slate-900">{{ $lvl1->nama_kategori }}</div>
-                    <div class="text-xs text-slate-500">Sub-categories: {{ isset($level2_grouped[$lvl1->kategori_id]) ? $level2_grouped[$lvl1->kategori_id]->count() : 0 }}</div>
-                </div>
-
-                @php
-                    $subs = $level2_grouped[$lvl1->kategori_id] ?? collect();
-                @endphp
-                <div class="mt-3 overflow-x-auto">
-                    <div class="flex gap-3">
-                        @forelse($subs as $sub)
-                            @php
-                                $totalProducts = max(1, $subs->sum('count'));
-                                $pct = $sub['count'] / $totalProducts * 100;
-                            @endphp
-                            <div class="min-w-[220px] rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                                <div class="flex items-center justify-between">
-                                    <div class="text-sm font-semibold text-slate-900">{{ $sub['nama'] }}</div>
-                                    <div class="text-xs text-slate-500">{{ number_format($pct,1) }}%</div>
+                <!-- Level 2 Children -->
+                @if($level1->children && $level1->children->isNotEmpty())
+                    <div class="divide-y divide-gray-50">
+                        @foreach($level1->children as $level2)
+                            <div class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group">
+                                <!-- Indent indicator -->
+                                <div class="flex items-center gap-2 pl-4 flex-shrink-0">
+                                    <div class="w-px h-4 bg-gray-200"></div>
+                                    <div class="w-3 h-px bg-gray-200"></div>
                                 </div>
-                                <div class="mt-2 h-2 w-full bg-white rounded-full overflow-hidden">
-                                    <div class="h-full bg-teal-500" style="width:{{ min(100,$pct) }}%"></div>
+                                <div class="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
                                 </div>
-                                <div class="mt-2 text-xs text-slate-600">{{ $sub['count'] }} products</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="font-semibold text-gray-700 text-sm">{{ $level2->nama_kategori }}</p>
+                                        <span class="text-[10px] bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-bold">Sub</span>
+                                    </div>
+                                    <p class="text-xs text-gray-400 font-mono">/{{ $level2->slug }}
+                                        <span class="font-sans ml-2">· {{ $level2->produk_count ?? $level2->produk()->count() }} produk</span>
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
+                                    <button @click="openEditModal({{ $level2->kategori_id }}, '{{ addslashes($level2->nama_kategori) }}', '{{ $level2->slug }}', {{ $level1->kategori_id }})"
+                                            class="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center hover:bg-amber-100 transition" title="Edit Sub-Kategori">
+                                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <form action="{{ route('admin.category.destroy', $level2->kategori_id) }}" method="POST" onsubmit="return confirm('Hapus sub-kategori {{ addslashes($level2->nama_kategori) }}?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center hover:bg-red-100 transition">
+                                            <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                        @empty
-                            <div class="text-sm text-slate-500">No sub categories.</div>
-                        @endforelse
+                        @endforeach
                     </div>
-                </div>
+                @else
+                    <div class="px-5 py-4 text-sm text-gray-400 italic flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Belum ada sub-kategori.
+                        <button @click="openAddSubModal({{ $level1->kategori_id }}, '{{ addslashes($level1->nama_kategori) }}')" class="text-admin font-semibold hover:underline ml-1">Tambah sekarang →</button>
+                    </div>
+                @endif
             </div>
         @empty
-            <div class="text-sm text-slate-500">Belum ada data kategori hierarchy.</div>
+            <div class="bg-white rounded-2xl border border-gray-200 p-16 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                </div>
+                <p class="text-gray-500 font-semibold mb-1">Belum ada kategori</p>
+                <p class="text-gray-400 text-sm">Mulai tambahkan kategori utama untuk produk Anda</p>
+            </div>
         @endforelse
     </div>
 
-    {{-- Master Category Explorer table (dengan PRODUK) --}}
-    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center justify-between gap-4 mb-4">
-            <h2 class="font-bold text-slate-900">Master Category Explorer</h2>
+    <!-- ======================= ADD/EDIT MODAL ======================= -->
+    <div x-show="modalOpen"
+         x-cloak
+         @click.self="modalOpen = false"
+         class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
 
-            <form method="GET" class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
-                <input type="text" name="q" placeholder="Search by category or product name" value="{{ request('q') }}" class="rounded-xl border border-slate-200 px-3 py-2 text-sm w-full sm:w-64">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
 
-                <select name="category_id" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                    <option value="">All categories</option>
-                    @foreach(($top_level ?? collect()) as $cat)
-                        <option value="{{ $cat->kategori_id }}" {{ request('category_id') == $cat->kategori_id ? 'selected' : '' }}>{{ $cat->nama_kategori }}</option>
-                    @endforeach
-                </select>
+            <!-- Modal Header -->
+            <div class="px-5 py-4 flex items-center justify-between"
+                 :class="editMode ? 'bg-amber-500' : 'bg-admin'">
+                <div>
+                    <h3 class="font-bold text-white" x-text="modalTitle"></h3>
+                    <p class="text-xs text-white/70 mt-0.5" x-text="modalSubtitle"></p>
+                </div>
+                <button @click="modalOpen = false" class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
 
-                <button type="submit" class="rounded-xl bg-teal-600 text-white px-4 py-2 text-sm font-semibold hover:bg-teal-700">Apply</button>
+            <!-- Modal Form -->
+            <form :action="formAction" method="POST" class="p-5 space-y-4">
+                @csrf
+                <input type="hidden" name="_method" x-bind:value="editMode ? 'PUT' : 'POST'">
+                <input type="hidden" name="parent_id" x-bind:value="form.parent_id">
+                <input type="hidden" name="urutan" value="0">
+                <input type="hidden" name="is_active" value="1">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nama Kategori *</label>
+                    <input type="text" name="nama_kategori" required
+                           x-model="form.nama"
+                           @input="if (!editMode || !slugManuallyEdited) { form.slug = form.nama.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') }"
+                           placeholder="Contoh: Clothing, Running Shoes..."
+                           class="w-full px-4 py-3 border-2 border-gray-200 focus:border-admin rounded-xl text-sm focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Slug (Auto)</label>
+                    <input type="text" name="slug"
+                           x-model="form.slug"
+                           @input="slugManuallyEdited = true"
+                           placeholder="auto-generated"
+                           class="w-full px-4 py-3 border-2 border-gray-200 focus:border-admin rounded-xl text-sm font-mono focus:outline-none transition">
+                    <p class="text-xs text-gray-400 mt-1">URL-friendly identifier, digenerate otomatis dari nama.</p>
+                </div>
+
+                <div x-show="form.parent_id" class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700 flex items-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Sub-kategori dari: <strong x-text="parentName" class="ml-1"></strong>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" @click="modalOpen = false" class="flex-1 py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Batal</button>
+                    <button type="submit"
+                            :class="editMode ? 'bg-amber-500 hover:bg-amber-600' : 'bg-admin hover:bg-admin-dark'"
+                            class="flex-[2] py-3 text-white rounded-xl font-bold text-sm transition"
+                            x-text="editMode ? '💾 Update Kategori' : '+ Simpan Kategori'">
+                    </button>
+                </div>
             </form>
         </div>
-
-        {{-- Tabel: produk per kategori --}}
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead>
-                    <tr class="text-left text-xs uppercase tracking-wider text-slate-500">
-                        <th class="py-3 px-2">ID</th>
-                        <th class="py-3 px-2">PRODUCT</th>
-                        <th class="py-3 px-2">CATEGORY</th>
-                        <th class="py-3 px-2">SPECS</th>
-                        <th class="py-3 px-2">GENDER</th>
-                        <th class="py-3 px-2">SPORTS TYPE</th>
-                        <th class="py-3 px-2">PRICE</th>
-                        <th class="py-3 px-2">STATUS</th>
-                        <th class="py-3 px-2">ACTION</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($categories ?? collect() as $prod)
-                        <tr class="border-t border-slate-100">
-                            <td class="py-3 px-2">{{ $prod->formatted_id ?? $prod->produk_id }}</td>
-                            <td class="py-3 px-2">
-                                <div class="font-medium text-slate-900">{{ $prod->nama_produk }}</div>
-                                <div class="text-xs text-slate-500">{{ $prod->slug ?? '-' }}</div>
-                            </td>
-                            <td class="py-3 px-2">{{ $prod->kategori->nama_kategori ?? '-' }}</td>
-                            <td class="py-3 px-2">{{ $prod->spesifikasi ?? '-' }}</td>
-                            <td class="py-3 px-2">{{ ucfirst($prod->gender ?? '-') }}</td>
-                            <td class="py-3 px-2">{{ $prod->tipe_olahraga ?? '-' }}</td>
-                            <td class="py-3 px-2">Rp {{ number_format($prod->harga_dasar ?? 0, 0, ',', '.') }}</td>
-                            <td class="py-3 px-2">
-                                @if(($prod->is_active ?? 0) == 1)
-                                    <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full font-medium">ACTIVE</span>
-                                @else
-                                    <span class="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-full font-medium">INACTIVE</span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-2">
-                                <div class="flex gap-2 items-center">
-                                    <a href="{{ route('admin.master-product.detail', $prod->produk_id) }}" class="text-slate-600" title="View">👁</a>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr class="border-t border-slate-100">
-                            <td class="py-3 px-2 text-slate-600" colspan="9">Belum ada data.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- pagination --}}
-        @if(method_exists($categories ?? null,'links'))
-            <div class="mt-4">{{ $categories->links() }}</div>
-        @endif
-    </div>
-</div>
-
-{{-- Add Category Modal (simple) --}}
-<div id="addCategoryModal" class="hidden fixed inset-0 bg-black/30 z-50">
-    <div class="relative w-full max-w-3xl mx-auto mt-14 bg-white rounded-3xl shadow-lg p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-xl text-slate-900">Add Category</h3>
-            <button type="button" class="text-slate-500" onclick="document.getElementById('addCategoryModal').classList.add('hidden')">✕</button>
-        </div>
-
-        <form method="POST" action="{{ route('admin.category.store') }}">
-            @csrf
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-semibold text-slate-500">Nama Kategori</label>
-                    <input type="text" name="nama_kategori" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-500">Slug (optional)</label>
-                    <input type="text" name="slug" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                </div>
-
-                <div>
-                    <label class="text-xs font-semibold text-slate-500">Parent Kategori</label>
-                    <select name="parent_id" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        <option value="">(none)</option>
-                        @foreach(($top_level ?? collect()) as $cat)
-                            <option value="{{ $cat->kategori_id }}">{{ $cat->nama_kategori }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label class="text-xs font-semibold text-slate-500">Urutan</label>
-                    <input type="number" name="urutan" value="0" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="text-xs font-semibold text-slate-500">Banner URL (optional)</label>
-                    <input type="text" name="banner_url" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="text-xs font-semibold text-slate-500">Status</label>
-                    <select name="is_active" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        <option value="1">Aktif</option>
-                        <option value="0">Nonaktif</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-3 mt-6">
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" onclick="document.getElementById('addCategoryModal').classList.add('hidden')">Cancel</button>
-                <button type="submit" class="rounded-xl bg-teal-600 text-white px-4 py-2 text-sm font-semibold hover:bg-teal-700">Save</button>
-            </div>
-        </form>
     </div>
 </div>
 @endsection
-
-<!-- FullCalendar CSS + JS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const calendarEl = document.getElementById('fullCalendarCat');
-  if (!calendarEl) return;
+function categoryMgmt() {
+    return {
+        modalOpen: false,
+        editMode: false,
+        editId: null,
+        modalTitle: '',
+        modalSubtitle: '',
+        formAction: '{{ route('admin.category.store') }}',
+        parentName: '',
+        slugManuallyEdited: false,
+        form: {
+            nama: '',
+            slug: '',
+            parent_id: '',
+        },
 
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    initialDate: '2026-05-01',
-    height: 300,
-    headerToolbar: { left: 'prev next today', center: 'title', right: '' },
-    events: function(fetchInfo, successCallback, failureCallback) {
-      const params = new URLSearchParams({ start: fetchInfo.startStr, end: fetchInfo.endStr });
-      fetch(`{{ route('admin.category.events') }}?` + params.toString())
-        .then(r => r.json())
-        .then(data => {
-          const evs = data.map(e => ({
-            title: e.count + ' new',
-            start: e.date,
-            allDay: true,
-            color: '#16a34a'
-          }));
-          successCallback(evs);
-        }).catch(failureCallback);
-    }
-  });
+        openAddModal() {
+            this.editMode = false;
+            this.editId = null;
+            this.slugManuallyEdited = false;
+            this.modalTitle = 'Tambah Kategori Utama';
+            this.modalSubtitle = 'Buat kategori level 1 baru (contoh: MAN, WOMEN, KIDS)';
+            this.formAction = '{{ route('admin.category.store') }}';
+            this.parentName = '';
+            this.form = { nama: '', slug: '', parent_id: '' };
+            this.modalOpen = true;
+        },
 
-  calendar.render();
-});
+        openAddSubModal(parentId, parentNameStr) {
+            this.editMode = false;
+            this.editId = null;
+            this.slugManuallyEdited = false;
+            this.modalTitle = 'Tambah Sub-Kategori';
+            this.modalSubtitle = 'Sub-kategori di bawah ' + parentNameStr;
+            this.formAction = '{{ route('admin.category.store') }}';
+            this.parentName = parentNameStr;
+            this.form = { nama: '', slug: '', parent_id: parentId };
+            this.modalOpen = true;
+        },
+
+        openEditModal(id, nama, slug, parentId) {
+            this.editMode = true;
+            this.editId = id;
+            this.slugManuallyEdited = false;
+            this.modalTitle = 'Edit Kategori';
+            this.modalSubtitle = 'Ubah nama atau slug kategori ini';
+            this.formAction = `{{ url('/admin/category') }}/${id}`;
+            this.parentName = '';
+            this.form = { nama: nama, slug: slug, parent_id: parentId || '' };
+            this.modalOpen = true;
+        },
+    };
+}
 </script>
 @endsection
-

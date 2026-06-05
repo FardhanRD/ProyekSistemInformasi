@@ -192,6 +192,18 @@ class ProductController extends Controller
                 ->isNotEmpty();
         }
 
+        // Track viewed products in session for home page recommendations
+        $viewed = session()->get('viewed_products', []);
+        if (!isset($viewed[$product->produk_id])) {
+            $viewed[$product->produk_id] = 0;
+        }
+        $viewed[$product->produk_id]++;
+        if (count($viewed) > 20) {
+            asort($viewed);
+            $viewed = array_slice($viewed, -20, null, true);
+        }
+        session()->put('viewed_products', $viewed);
+
         return view('buyer.product.detail', compact(
             'product',
             'produk',

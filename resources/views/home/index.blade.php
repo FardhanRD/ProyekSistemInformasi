@@ -20,13 +20,13 @@
     <a href="{{ url('/produk') }}" class="text-decoration-none">{{ __('ui.view_all') }}</a>
 </div>
 
-<div class="row g-3">
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
     @forelse($featured as $p)
         @php
             $img = $p->images->first()->url_gambar ?? 'https://via.placeholder.com/400x300?text=No+Image';
             $detail = $p->details->first();
         @endphp
-        <div class="col-6 col-md-4 col-lg-3">
+        <div>
             @include('components.product-card',[
                 'image'=>$img,
                 'title'=>$p->nama_produk,
@@ -40,7 +40,7 @@
             ])
         </div>
     @empty
-        <div class="col-12">
+        <div class="col-span-4">
             <div class="alert alert-warning mb-0">{{ __('ui.no_featured_products') }}</div>
         </div>
     @endforelse

@@ -139,7 +139,12 @@ class SupplierOrderController extends Controller
 
     public function show($id)
     {
-        $po = SupplierOrder::with(['supplier', 'admin', 'details.detailProduk.produk'])
+        $po = SupplierOrder::with([
+            'supplier',
+            'admin.pengguna',
+            'details.detailProduk.produk',
+            'details.detailProduk.warna',
+        ])
             ->findOrFail($id);
 
         return view('admin.supplier-order.show', [
@@ -214,5 +219,17 @@ class SupplierOrderController extends Controller
         return view('admin.supplier-order.invoice-pdf', [
             'po' => $po,
         ]);
+    }
+
+    public function invoice($id)
+    {
+        $po = SupplierOrder::with([
+            'supplier',
+            'admin.pengguna',
+            'details.detailProduk.produk',
+            'details.detailProduk.warna',
+        ])->findOrFail($id);
+
+        return view('admin.supplier-order.invoice', compact('po'));
     }
 }

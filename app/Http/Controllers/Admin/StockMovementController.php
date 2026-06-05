@@ -25,7 +25,7 @@ class StockMovementController extends Controller
         $start_date = $request->get('start_date');
         $end_date = $request->get('end_date');
 
-        $movements = StockMovement::with(['detailProduk.produk', 'detailProduk.warna'])
+        $movements = StockMovement::with(['detailProduk.produk', 'detailProduk.warna', 'operator'])
             ->when($jenis, fn($q) => $q->where('jenis', strtolower($jenis)))
             ->when($produk_id, fn($q) => $q->whereHas('detailProduk.produk', fn($sq) => $sq->where('produk_id', $produk_id)))
             ->when($start_date, fn($q) => $q->where('created_at', '>=', $start_date . ' 00:00:00'))
@@ -60,7 +60,7 @@ class StockMovementController extends Controller
         $start_date = $request->get('start_date');
         $end_date = $request->get('end_date');
 
-        $movements = StockMovement::with(['detailProduk.produk', 'detailProduk.warna'])
+        $movements = StockMovement::with(['detailProduk.produk', 'detailProduk.warna', 'operator'])
             ->when($jenis, fn($q) => $q->where('jenis', strtolower($jenis)))
             ->when($produk_id, fn($q) => $q->whereHas('detailProduk.produk', fn($sq) => $sq->where('produk_id', $produk_id)))
             ->when($start_date, fn($q) => $q->where('created_at', '>=', $start_date . ' 00:00:00'))

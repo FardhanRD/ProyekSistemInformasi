@@ -26,18 +26,20 @@ class StockController extends Controller
         $status = $request->get('status');
 
         $variants = DetailProduk::with(['produk'])
-            ->when($produk_id, fn($q) => $q->where('produk_id', $produk_id))
+            ->select('detail_produk.*')
+            ->join('produk', 'detail_produk.produk_id', '=', 'produk.produk_id')
+            ->when($produk_id, fn($q) => $q->where('detail_produk.produk_id', $produk_id))
             ->when($status, function($q) use ($status) {
                 if ($status === 'low') {
-                    return $q->whereRaw('stok <= stok_minimum');
+                    return $q->whereRaw('detail_produk.stok <= produk.stok_minimum');
                 } elseif ($status === 'out') {
-                    return $q->where('stok', 0);
+                    return $q->where('detail_produk.stok', 0);
                 } elseif ($status === 'ok') {
-                    return $q->whereRaw('stok > stok_minimum');
+                    return $q->whereRaw('detail_produk.stok > produk.stok_minimum');
                 }
             })
-            ->orderBy('produk_id')
-            ->orderBy('detail_produk_id')
+            ->orderBy('detail_produk.produk_id')
+            ->orderBy('detail_produk.detail_produk_id')
             ->paginate(20)
             ->withQueryString();
 
@@ -45,8 +47,10 @@ class StockController extends Controller
             ->orderBy('nama_produk')
             ->get();
 
-        $low_stock_count = Schema::hasTable('detail_produk')
-            ? DetailProduk::whereRaw('stok <= stok_minimum')->count()
+        $low_stock_count = Schema::hasTable('detail_produk') && Schema::hasTable('produk')
+            ? DetailProduk::join('produk', 'detail_produk.produk_id', '=', 'produk.produk_id')
+                ->whereRaw('detail_produk.stok <= produk.stok_minimum')
+                ->count()
             : 0;
 
         return view('admin.stock.index', [

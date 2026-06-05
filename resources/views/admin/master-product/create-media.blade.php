@@ -79,7 +79,9 @@
                             <div class="grid grid-cols-3 gap-4">
                                 <template x-for="(src,i) in previews" :key="i">
                                     <div class="relative group">
-                                        <img :src="src" class="w-full h-40 object-cover rounded-xl border border-slate-200" />
+                                        <div class="aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                            <img :src="src" class="h-full w-full object-cover" />
+                                        </div>
                                         <div class="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                                             <span :class="i===0 ? 'bg-[#2B9BAF]' : 'bg-slate-600'" class="text-white text-xs px-3 py-1 rounded-full">
                                                 <span x-text="i===0 ? '📌 Thumbnail' : 'Gambar ' + (i+1)"></span>

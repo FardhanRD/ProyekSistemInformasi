@@ -51,7 +51,7 @@
             </div>
 
             <div class="flex flex-col gap-2">
-                <a href="{{ route('admin.master-product.edit', $produk->produk_id) }}" class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">Edit Product</a>
+                <a href="{{ route('admin.master-product.edit-confirm', $produk->produk_id) }}" class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">Edit Product</a>
                 <a href="{{ route('product.show.alias', $produk->slug) }}" target="_blank" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Preview Buyer View</a>
             </div>
         </div>

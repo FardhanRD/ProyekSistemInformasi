@@ -20,7 +20,8 @@ class WishlistController extends Controller
                 $items = Wishlist::with(['produk.images'])->where($ownerColumn, $ownerId)->get();
             }
         }
-        return view('buyer.wishlist.index', compact('items'), ['wishlists' => $items]);
+        // Pastikan view selalu menerima variable `wishlists`
+        return view('buyer.wishlist.index', ['wishlists' => $items]);
     }
 
     public function toggle(Request $request)

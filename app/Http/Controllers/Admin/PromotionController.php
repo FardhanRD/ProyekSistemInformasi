@@ -8,6 +8,7 @@ use App\Models\Promo;
 use App\Models\Produk;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class PromotionController extends Controller
@@ -24,6 +25,20 @@ class PromotionController extends Controller
 
         $products = Produk::where('is_active', 1)->orderBy('nama_produk')->get();
         $variants = DetailProduk::with(['produk'])->where('is_active', 1)->orderBy('nama_produk')->get();
+        $produkDiskon = Produk::with([
+            'gambarUtama',
+            'detailProduk',
+            'supplier',
+        ])
+            ->whereHas('detailProduk', function ($q) {
+                $q->where('harga', '<', DB::raw(
+                    '(SELECT MAX(dp2.harga) FROM detail_produk dp2 WHERE dp2.produk_id = detail_produk.produk_id)'
+                ));
+            })
+            ->where('is_active', 1)
+            ->orderBy('nama_produk')
+            ->limit(20)
+            ->get();
 
         return view('admin.promotion.index', [
             'vouchers' => $vouchers,
@@ -31,6 +46,7 @@ class PromotionController extends Controller
             'flashSale' => $flashSale,
             'products' => $products,
             'variants' => $variants,
+            'produkDiskon' => $produkDiskon,
         ]);
     }
 

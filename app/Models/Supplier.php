@@ -20,12 +20,16 @@ class Supplier extends Model
         'no_telepon',
         'email',
         'alamat_toko',
+        'latitude',
+        'longitude',
         'foto_toko',
         'is_verified',
     ];
 
     protected $casts = [
         'is_verified' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     public function pengguna(): BelongsTo

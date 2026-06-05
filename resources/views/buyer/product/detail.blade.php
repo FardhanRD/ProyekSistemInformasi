@@ -73,10 +73,10 @@
            }
          }">
       {{-- Main Image --}}
-      <div class="relative bg-[#F8FAFB] rounded-2xl overflow-hidden h-[380px] sm:h-[460px] md:h-[520px] flex items-center justify-center group">
+            <div class="relative bg-[#F8FAFB] rounded-2xl overflow-hidden aspect-square flex items-center justify-center group border border-slate-100">
         <img :src="activeImage"
              :alt="@json($product->nama_produk)"
-             class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500">
+              class="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500">
         
         {{-- Badge --}}
         @if($product->is_featured)
@@ -136,7 +136,7 @@
                   :class="{
                     'ring-2 ring-[#63A2BB] border-[#63A2BB]': activeImage === img
                   }"
-                  class="h-16 rounded-xl overflow-hidden bg-gray-50 border-2 border-gray-200 hover:border-[#63A2BB] transition">
+                  class="aspect-square rounded-xl overflow-hidden bg-gray-50 border-2 border-gray-200 hover:border-[#63A2BB] transition">
             <img :src="img"
                  class="w-full h-full object-cover object-center">
           </button>
@@ -320,123 +320,69 @@
   </div>
 
   {{-- Product Tabs --}}
-  <div class="mt-16 bg-white rounded-3xl overflow-hidden shadow-sm"
-       x-data="{ activeTab: 'description' }">
-    {{-- Tab Buttons --}}
-    <div class="flex border-b-2 border-gray-100 overflow-x-auto">
-      <button @click="activeTab = 'description'"
-              :class="{ 
-                'text-[#63A2BB] border-b-2 border-[#63A2BB]': activeTab === 'description',
-                'text-gray-500': activeTab !== 'description'
-              }"
-              class="px-6 py-4 text-sm font-bold transition">
-        Deskripsi
-      </button>
-      <button @click="activeTab = 'specification'"
-              :class="{ 
-                'text-[#63A2BB] border-b-2 border-[#63A2BB]': activeTab === 'specification',
-                'text-gray-500': activeTab !== 'specification'
-              }"
-              class="px-6 py-4 text-sm font-bold transition">
-        Spesifikasi
-      </button>
-      <button @click="activeTab = 'reviews'"
-              :class="{ 
-                'text-[#63A2BB] border-b-2 border-[#63A2BB]': activeTab === 'reviews',
-                'text-gray-500': activeTab !== 'reviews'
-              }"
-              class="px-6 py-4 text-sm font-bold transition">
-        Ulasan ({{ $ratingStats['total'] ?? 0 }})
-      </button>
-    </div>
+      <div class="mt-16 space-y-4">
+        <details class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <summary class="flex cursor-pointer list-none items-center justify-between px-6 py-4 text-sm font-bold text-slate-900">
+            <span>Deskripsi Produk</span>
+            <i class="fas fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+          </summary>
+          <div class="border-t border-slate-100 px-6 py-5 text-sm leading-7 text-slate-600">
+            <div class="whitespace-pre-wrap">{!! nl2br(e($product->deskripsi ?? '')) !!}</div>
 
-    {{-- Tab Content --}}
-    <div class="p-8">
-      {{-- Deskripsi --}}
-      <div x-show="activeTab === 'description'" class="prose prose-sm max-w-none">
-        <div class="text-gray-600 leading-relaxed whitespace-pre-wrap">
-          {!! nl2br(e($product->deskripsi ?? '')) !!}
-        </div>
-      </div>
-
-      {{-- Spesifikasi --}}
-      <div x-show="activeTab === 'specification'">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-4">
-            <div class="pb-4 border-b border-gray-100">
-              <p class="text-xs font-bold text-gray-500 uppercase mb-1">
-                Kode Produk
-              </p>
-              <p class="text-gray-900 font-semibold">
-                {{ $product->kode_produk }}
-              </p>
-            </div>
-            <div class="pb-4 border-b border-gray-100">
-              <p class="text-xs font-bold text-gray-500 uppercase mb-1">
-                Kategori
-              </p>
-              <p class="text-gray-900 font-semibold">
-                {{ $product->kategori->nama_kategori ?? '-' }}
-              </p>
-            </div>
-            <div class="pb-4 border-b border-gray-100">
-              <p class="text-xs font-bold text-gray-500 uppercase mb-1">
-                Gender
-              </p>
-              <p class="text-gray-900 font-semibold capitalize">
-                {{ $product->gender ?? 'Unisex' }}
-              </p>
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl bg-slate-50 p-4">
+                <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Kode Produk</div>
+                <div class="mt-1 font-semibold text-slate-900">{{ $product->kode_produk }}</div>
+              </div>
+              <div class="rounded-2xl bg-slate-50 p-4">
+                <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Kategori</div>
+                <div class="mt-1 font-semibold text-slate-900">{{ $product->kategori->nama_kategori ?? '-' }}</div>
+              </div>
+              <div class="rounded-2xl bg-slate-50 p-4">
+                <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Gender</div>
+                <div class="mt-1 font-semibold text-slate-900">{{ $product->gender ?? 'Unisex' }}</div>
+              </div>
+              <div class="rounded-2xl bg-slate-50 p-4">
+                <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Tipe Olahraga</div>
+                <div class="mt-1 font-semibold text-slate-900">{{ $product->tipe_olahraga ?? '-' }}</div>
+              </div>
             </div>
           </div>
-          <div class="space-y-4">
-            <div class="pb-4 border-b border-gray-100">
-              <p class="text-xs font-bold text-gray-500 uppercase mb-1">
-                Tipe Olahraga
-              </p>
-              <p class="text-gray-900 font-semibold">
-                {{ $product->tipe_olahraga ?? '-' }}
-              </p>
-            </div>
-            <div class="pb-4 border-b border-gray-100">
-              <p class="text-xs font-bold text-gray-500 uppercase mb-1">
-                Berat
-              </p>
-              <p class="text-gray-900 font-semibold">
-                {{ $product->detailProduk->first()?->berat_gram ?? '0' }} gram
-              </p>
-            </div>
-            <div class="pb-4 border-b border-gray-100">
-              <p class="text-xs font-bold text-gray-500 uppercase mb-1">
-                Stok Total
-              </p>
-              <p class="text-gray-900 font-semibold">
-                {{ $product->detailProduk->sum('stok') }} unit
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </details>
 
-      {{-- Ulasan --}}
-      <div x-show="activeTab === 'reviews'">
-        @include('components.product-reviews', [
-          'ratingStats' => $ratingStats,
-          'product' => $product,
-          'hasPurchased' => $hasPurchased ?? false,
-          'hasReviewed' => $hasReviewed ?? false
-        ])
+        <details class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm" open>
+          <summary class="flex cursor-pointer list-none items-center justify-between px-6 py-4 text-sm font-bold text-slate-900">
+            <span>Ulasan ({{ $product->ratings->count() }})</span>
+            <i class="fas fa-chevron-down text-slate-400 transition-transform duration-200 rotate-180"></i>
+          </summary>
+          <div class="border-t border-slate-100 px-6 py-5">
+            @include('components.product-reviews', [
+              'ratingStats' => $ratingStats,
+              'product' => $product,
+              'hasPurchased' => $hasPurchased ?? false,
+              'hasReviewed' => $hasReviewed ?? false
+            ])
+          </div>
+        </details>
       </div>
-    </div>
-  </div>
 
   {{-- Similar Products --}}
   <div class="mt-16">
     <h2 class="text-2xl font-black text-gray-900 mb-8">
       Produk Serupa
     </h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       @forelse($similarProducts ?? [] as $item)
-        <x-product-card :produk="$item" />
+        <a href="{{ route('product.show', $item->slug) }}" class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+          <div class="aspect-square overflow-hidden bg-slate-50">
+            <img src="{{ optional($item->gambarUtama)->url_lengkap ?? optional($item->gambarUtama)->url_safe ?? asset('images/placeholder.png') }}" alt="{{ $item->nama_produk }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+          </div>
+          <div class="p-4">
+            <div class="text-xs text-slate-500">{{ $item->kategori->nama_kategori ?? 'Item' }}</div>
+            <div class="mt-1 truncate text-sm font-bold text-slate-900">{{ $item->nama_produk }}</div>
+            <div class="mt-2 text-sm font-bold text-slate-900">Rp {{ number_format($item->harga_dasar ?? 0, 0, ',', '.') }}</div>
+          </div>
+        </a>
       @empty
         <div class="col-span-full text-center py-12 text-gray-500">
           Produk serupa tidak ditemukan

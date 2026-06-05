@@ -41,6 +41,19 @@
                             <textarea name="deskripsi" required rows="5" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]">{{ old('deskripsi') }}</textarea>
                         </div>
 
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Product URL</label>
+                            <div class="flex flex-col gap-2 sm:flex-row">
+                                <input id="product-url-input" type="url" placeholder="https://example.com/produk"
+                                       class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]" />
+                                <button type="button" onclick="insertUrlToDescription()"
+                                        class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">
+                                    Masukkan ke Deskripsi
+                                </button>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500">URL akan disisipkan ke textarea deskripsi di posisi kursor aktif.</p>
+                        </div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">Category *</label>
@@ -206,5 +219,30 @@
         </div>
     </form>
 </div>
+
+<script>
+function insertUrlToDescription() {
+    const urlInput = document.getElementById('product-url-input');
+    const description = document.querySelector('textarea[name="deskripsi"]');
+
+    if (!urlInput || !description) return;
+
+    const url = urlInput.value.trim();
+    if (!url) {
+        alert('Isi URL terlebih dahulu.');
+        return;
+    }
+
+    const start = description.selectionStart ?? description.value.length;
+    const end = description.selectionEnd ?? description.value.length;
+    const before = description.value.substring(0, start);
+    const after = description.value.substring(end);
+    const separator = before && !before.endsWith('\n') ? '\n' : '';
+
+    description.value = before + separator + url + after;
+    description.focus();
+    urlInput.value = '';
+}
+</script>
 @endsection
 

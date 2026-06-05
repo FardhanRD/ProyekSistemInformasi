@@ -5,14 +5,14 @@
 @section('content')
 <div class="mx-auto max-w-7xl px-4 py-6">
     <div class="mb-4">
-        <a href="{{ route('admin.supplier.index') }}" class="text-slate-600">← Back to Suppliers</a>
+        <a href="{{ route('admin.supplier.index') }}" class="text-slate-600 hover:text-slate-900">← Back to Suppliers</a>
     </div>
 
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm mb-6">
         <div class="flex items-start justify-between gap-6">
             <div>
                 <div class="flex items-center gap-4">
-                    <div class="h-14 w-14 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
+                    <div class="h-14 w-14 rounded-full bg-[#63A2BB] text-white flex items-center justify-center font-bold">
                         {{ strtoupper(substr(($supplier->nama_owner ?? $supplier->nama_toko ?? '-'),0,1)) }}
                     </div>
                     <div>
@@ -46,8 +46,8 @@
             </div>
 
             <div class="flex flex-col gap-2">
-                <a href="#" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit Profile</a>
-                <a href="#" class="rounded-xl bg-teal-600 text-white px-4 py-2 text-sm font-semibold hover:bg-teal-700">Contact Supplier</a>
+                <a href="{{ route('admin.supplier.create') }}" class="rounded-xl bg-[#63A2BB] text-white px-4 py-2 text-sm font-semibold hover:bg-[#4A8BA3]">Tambah Supplier</a>
+                <a href="#" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Contact Supplier</a>
             </div>
         </div>
 
@@ -59,17 +59,20 @@
                     <li><span class="text-slate-500">Email:</span> {{ $supplier->email ?? '-' }}</li>
                     <li><span class="text-slate-500">Phone:</span> {{ $supplier->no_telepon ?? '-' }}</li>
                     <li><span class="text-slate-500">Registered Address:</span> {{ $supplier->alamat_toko ?? '-' }}</li>
+                    <li><span class="text-slate-500">Latitude:</span> {{ $supplier->latitude ?? '-' }}</li>
+                    <li><span class="text-slate-500">Longitude:</span> {{ $supplier->longitude ?? '-' }}</li>
                 </ul>
             </div>
 
             <div class="lg:col-span-2">
-                <div class="text-sm font-bold text-slate-900 mb-2">Registered Address</div>
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                    Map placeholder
-                </div>
+                <div class="text-sm font-bold text-slate-900 mb-2">Lokasi Toko</div>
+                @if($supplier->latitude && $supplier->longitude)
+                    <div id="supplier-map-view" class="w-full h-72 rounded-2xl overflow-hidden border-2 border-gray-200"></div>
+                @else
+                    <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Koordinat belum tersedia.</div>
+                @endif
             </div>
         </div>
-
     </div>
 
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -79,7 +82,8 @@
                 <div class="text-sm text-slate-500">Total item: {{ isset($produkList) ? count($produkList) : 0 }}</div>
             </div>
             <form method="POST" action="{{ route('admin.supplier.destroy', $supplier->supplier_id) }}" onsubmit="return confirm('Delete supplier?')">
-                @csrf @method('DELETE')
+                @csrf
+                @method('DELETE')
                 <button type="submit" class="rounded-xl bg-red-600 text-white px-4 py-2 text-sm font-semibold hover:bg-red-700">Delete Supplier</button>
             </form>
         </div>
@@ -131,5 +135,24 @@
         </div>
     </div>
 </div>
+
+@if($supplier->latitude && $supplier->longitude)
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lat = {{ $supplier->latitude }};
+        const lng = {{ $supplier->longitude }};
+        const map = L.map('supplier-map-view').setView([lat, lng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup('<strong>{{ $supplier->nama_toko }}</strong><br>{{ $supplier->alamat_toko ?? '' }}')
+            .openPopup();
+    });
+    </script>
+@endif
 @endsection
 

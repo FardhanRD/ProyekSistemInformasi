@@ -14,48 +14,41 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        // Query aman untuk kondisi tabel belum ada (terutama untuk environment test)
-        if (!DB::getSchemaBuilder()->hasTable('kategori')) {
-            $products = collect();
-            $total_categories_active = 0;
-        } else {
-            $total_categories_active = Kategori::where('is_active', 1)->count();
-        }
-
-        if (!DB::getSchemaBuilder()->hasTable('produk')) {
-            $products = collect();
-        } else {
-            $q = $request->get('q');
-            $category_id = $request->get('category_id');
-
-            $products = Produk::with(['kategori'])
-                ->where('is_active', 1)
-                ->when($q, fn($qq) => $qq->where('nama_produk', 'like', "%{$q}%"))
-                ->when($category_id, fn($qq) => $qq->where('kategori_id', $category_id))
-                ->orderBy('penyimpanan_waktu', 'desc')
-                ->paginate(20)
-                ->withQueryString();
-        }
-
-        $active_products = DB::getSchemaBuilder()->hasTable('produk')
-            ? Produk::where('is_active', 1)->where('status_publish', 'publish')->count()
-            : 0;
-
-        // placeholder margin (sesuai requirement boleh kosong)
+        $total_categories_active = 0;
+        $active_products = 0;
         $avg_margin = null;
+        $categories = collect();
+        $top_level = collect();
+        $level2 = collect();
+        $favorite_categories = collect();
 
-        $top_level = [];
         if (DB::getSchemaBuilder()->hasTable('kategori')) {
+            $total_categories_active = Kategori::where('is_active', 1)->count();
+
+            $categories = Kategori::query()
+                ->with([
+                    'children' => function ($query) {
+                        $query->where('is_active', 1)
+                            ->orderBy('urutan')
+                            ->with([
+                                'children' => function ($childQuery) {
+                                    $childQuery->where('is_active', 1)->orderBy('urutan');
+                                },
+                            ]);
+                    },
+                ])
+                ->whereNull('parent_id')
+                ->where('is_active', 1)
+                ->orderBy('urutan')
+                ->paginate(12)
+                ->withQueryString();
+
             $top_level = Kategori::query()
                 ->whereNull('parent_id')
                 ->where('is_active', 1)
                 ->orderBy('urutan')
                 ->get();
-        }
 
-        // Basic distribution level 2 by product count
-        $level2 = collect();
-        if (DB::getSchemaBuilder()->hasTable('kategori') && DB::getSchemaBuilder()->hasTable('produk')) {
             $level2 = Kategori::query()
                 ->where('is_active', 1)
                 ->whereNotNull('parent_id')
@@ -73,10 +66,7 @@ class CategoryController extends Controller
                     ];
                 })
                 ->groupBy('parent_id');
-        }
 
-        $favorite_categories = collect();
-        if (DB::getSchemaBuilder()->hasTable('kategori') && DB::getSchemaBuilder()->hasTable('produk')) {
             $favorite_categories = Kategori::query()
                 ->where('is_active', 1)
                 ->withCount(['produk as inventory_count' => function ($q) {
@@ -87,11 +77,15 @@ class CategoryController extends Controller
                 ->get();
         }
 
+        if (DB::getSchemaBuilder()->hasTable('produk')) {
+            $active_products = Produk::where('is_active', 1)->where('status_publish', 'publish')->count();
+        }
+
         return view('admin.category.index', [
             'total_categories_active' => $total_categories_active,
             'active_products' => $active_products,
             'avg_margin' => $avg_margin,
-            'categories' => $products, // renamed: products now displayed in Master Category Explorer
+            'categories' => $categories,
             'top_level' => $top_level,
             'level2_grouped' => $level2,
             'favorite_categories' => $favorite_categories,

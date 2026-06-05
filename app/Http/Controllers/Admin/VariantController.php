@@ -6,68 +6,66 @@ use App\Http\Controllers\Controller;
 use App\Models\DetailProduk;
 use App\Models\Produk;
 use App\Models\WarnaProduk;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class VariantController extends Controller
 {
     public function index(Request $request)
     {
-        // Total variants + stats
-        if (!Schema::hasTable('detail_produk')) {
-            $variants = collect();
-            $total_variants = 0;
-        } else {
-            $search = $request->get('q');
-            $color = $request->get('color');
-            $size = $request->get('size');
-            $status = $request->get('status');
+        $products = collect();
+        $selectedProductId = null;
+        $selectedProduct = null;
+        $existingVariants = collect();
 
-            $baseQuery = DetailProduk::query()
-                ->with(['produk'])
-                ->when($search, fn($q) => $q->whereHas('produk', fn($sq) => $sq->where('nama_produk', 'like', "%{$search}%")))
-                ->when($size, fn($q) => $q->where('ukuran', $size))
-                ->orderBy('detail_produk_id', 'desc');
+        if (Schema::hasTable('produk')) {
+            $products = Produk::query()
+                ->with(['kategori', 'supplier', 'gambarUtama', 'detailProduk'])
+                ->where('is_active', 1)
+                ->orderBy('nama_produk')
+                ->get();
 
-            $variants = $baseQuery->paginate(20);
-            $total_variants = (clone $baseQuery)->count();
+            $selectedProductId = $request->get('produk_id');
+
+            if ($selectedProductId) {
+                $selectedProduct = Produk::query()
+                    ->with(['kategori', 'supplier'])
+                    ->find($selectedProductId);
+            }
+
+            if (Schema::hasTable('detail_produk') && $selectedProductId) {
+                $existingVariants = DetailProduk::query()
+                    ->with(['warna'])
+                    ->where('produk_id', $selectedProductId)
+                    ->orderByDesc('detail_produk_id')
+                    ->get()
+                    ->map(function (DetailProduk $variant) {
+                        return [
+                            'id' => $variant->detail_produk_id,
+                            'warna' => $variant->warna?->nama_warna ?? ($variant->nama_produk ?? ''),
+                            'kode_hex' => $variant->warna?->kode_hex ?? '#000000',
+                            'ukuran' => (string) ($variant->ukuran ?? ''),
+                            'stok' => (int) ($variant->stok ?? 0),
+                            'harga' => (float) ($variant->harga ?? 0),
+                            'sku' => (string) ($variant->sku ?? ''),
+                            'stok_minimum' => (int) ($variant->stok_minimum ?? 5),
+                        ];
+                    })
+                    ->values();
+            }
         }
 
-        // Unique colors - disabled since warna_id column doesn't exist in detail_produk
-        $unique_colors = collect();
-
-        // Unique sizes
-        $unique_sizes = collect();
-        if (Schema::hasTable('detail_produk')) {
-            $unique_sizes = DetailProduk::distinct()
-                ->whereNotNull('ukuran')
-                ->pluck('ukuran')
-                ->map(fn($s) => ['id' => $s, 'nama' => $s])
-                ->unique('id');
+        // If AJAX request for variants JSON
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['variants' => $existingVariants]);
         }
-
-        // Low stock alert count
-        $low_stock_alert = 0;
-        if (Schema::hasTable('detail_produk')) {
-            $low_stock_alert = DetailProduk::whereRaw('stok < 5')->count();
-        }
-
-        // Last sync timestamp
-        $last_sync = now();
 
         return view('admin.variant.index', [
-            'variants' => $variants,
-            'total_variants' => $total_variants,
-            'unique_colors' => $unique_colors,
-            'unique_sizes' => $unique_sizes,
-            'low_stock_alert' => $low_stock_alert,
-            'last_sync' => $last_sync,
-            'search' => $search,
-            'color' => $color,
-            'size' => $size,
-            'status' => $status,
+            'products' => $products,
+            'selectedProductId' => $selectedProductId,
+            'selectedProduct' => $selectedProduct,
+            'existingVariants' => $existingVariants,
         ]);
     }
 
@@ -103,40 +101,72 @@ class VariantController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'produk_id' => 'required|exists:produk,produk_id',
-            'type' => 'required|in:color,size',
-            'value' => 'required|string',
+            'warna' => 'required|string|max:50',
+            'kode_hex' => 'nullable|string|max:20',
+            'ukuran' => 'required|string|max:20',
+            'stok' => 'required|integer|min:0',
+            'harga' => 'required|numeric|min:1',
+            'sku' => 'nullable|string|max:100',
+            'stok_minimum' => 'nullable|integer|min:0',
         ]);
 
-        if ($request->get('type') === 'color') {
-            $warna = WarnaProduk::create([
-                'nama_warna' => $request->get('value'),
-                'kode_hex' => '#000000', // placeholder
-            ]);
+        $warnaRecord = WarnaProduk::firstOrCreate(
+            ['nama_warna' => trim($data['warna'])],
+            ['kode_hex' => $data['kode_hex'] ?? '#000000']
+        );
 
-            DetailProduk::create([
-                'produk_id' => $request->get('produk_id'),
-                'warna_id' => $warna->warna_id,
-                'ukuran' => null,
-                'stok_total' => 0,
-                'stok_minimum' => 0,
-                'harga_pokok' => 0,
-                'status_stok' => 'available',
-            ]);
-        } elseif ($request->get('type') === 'size') {
-            DetailProduk::create([
-                'produk_id' => $request->get('produk_id'),
-                'warna_id' => null,
-                'ukuran' => $request->get('value'),
-                'stok_total' => 0,
-                'stok_minimum' => 0,
-                'harga_pokok' => 0,
-                'status_stok' => 'available',
-            ]);
+        $duplikat = DetailProduk::query()
+            ->where('produk_id', $data['produk_id'])
+            ->where('warna_id', $warnaRecord->warna_id)
+            ->where('ukuran', $data['ukuran'])
+            ->exists();
+
+        if ($duplikat) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Varian ' . $data['warna'] . ' ukuran ' . $data['ukuran'] . ' sudah ada!',
+            ], 422);
         }
 
-        return response()->json(['success' => true], 201);
+        $produk = Produk::findOrFail($data['produk_id']);
+        $sku = trim((string) ($data['sku'] ?? ''));
+
+        if ($sku === '') {
+            $warnaSlug = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $data['warna']), 0, 3));
+            $ukuranSlug = strtoupper(preg_replace('/\s+/', '', $data['ukuran']));
+            $sku = 'SKU-' . str_pad((string) $produk->produk_id, 3, '0', STR_PAD_LEFT) . '-' . ($warnaSlug ?: 'VAR') . '-' . ($ukuranSlug ?: 'STD');
+        }
+
+        $detail = new DetailProduk();
+        $detail->forceFill([
+            'produk_id' => $produk->produk_id,
+            'warna_id' => $warnaRecord->warna_id,
+            'nama_produk' => $produk->nama_produk,
+            'ukuran' => $data['ukuran'],
+            'stok' => $data['stok'],
+            'harga' => $data['harga'],
+            'sku' => $sku,
+            'stok_minimum' => $data['stok_minimum'] ?? 5,
+            'is_active' => 1,
+        ]);
+        $detail->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Varian berhasil disimpan',
+            'variant' => [
+                'id' => $detail->detail_produk_id,
+                'warna' => $data['warna'],
+                'kode_hex' => $data['kode_hex'] ?? '#000000',
+                'ukuran' => $data['ukuran'],
+                'stok' => (int) $data['stok'],
+                'harga' => (float) $data['harga'],
+                'sku' => $sku,
+                'stok_minimum' => (int) ($data['stok_minimum'] ?? 5),
+            ],
+        ]);
     }
 
     public function update(Request $request, $id)

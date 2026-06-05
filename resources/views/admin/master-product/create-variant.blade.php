@@ -1,195 +1,272 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
-@section('title','Add Product — Step 2 Variants')
+@section('title', 'Add Product — Step 2 Variants')
 
 @section('content')
-<div class="mx-auto max-w-7xl px-4 py-6">
-
-    <div class="flex items-center gap-4 mb-6">
+@php($step1Slug = data_get(session('product_step1', []), 'slug', '000'))
+<div class="mx-auto max-w-4xl px-4 py-6">
+    {{-- Step Indicator --}}
+    <div class="flex items-center gap-3 mb-8">
         <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-full bg-[#2B9BAF] text-white flex items-center justify-center text-sm font-bold">✓</span>
-            <span class="font-semibold text-slate-800">General Info</span>
+            <span class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">✓</span>
+            <span class="font-semibold text-gray-600 text-sm">General Info</span>
         </div>
-        <div class="flex-1 h-px bg-gray-200"></div>
+        <div class="flex-1 h-0.5 bg-admin"></div>
         <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-full bg-[#2B9BAF] text-white flex items-center justify-center text-sm font-bold">2</span>
-            <span class="font-semibold text-[#2B9BAF]">Variants</span>
+            <span class="w-8 h-8 rounded-full bg-admin text-white flex items-center justify-center text-sm font-bold">2</span>
+            <span class="font-bold text-admin">Variants</span>
         </div>
-        <div class="flex-1 h-px bg-gray-200"></div>
+        <div class="flex-1 h-0.5 bg-gray-200"></div>
         <div class="flex items-center gap-2">
             <span class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold">3</span>
-            <span class="text-gray-500 font-semibold">Media</span>
+            <span class="text-gray-400 font-semibold text-sm">Media</span>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-3">
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="font-bold text-slate-900 mb-3">Ringkasan Step 1</h3>
-                <div class="text-sm text-slate-700"><span class="font-semibold">Nama:</span> {{ $step1['nama_produk'] }}</div>
-                <div class="text-sm text-slate-700 mt-2"><span class="font-semibold">Kategori ID:</span> {{ $step1['kategori_id'] }}</div>
-                <div class="text-sm text-slate-700 mt-2"><span class="font-semibold">Harga Dasar:</span> Rp {{ number_format($step1['harga_dasar'],0,',','.') }}</div>
-            </div>
-        </div>
+    <div x-data="{
+        variants: @json(session('product_step2', [])),
+        form: { warna: '', kode_hex: '#000000', ukuran: '', stok: 0, harga: 0, sku: '', stok_minimum: 5 },
+        saving: false,
+        errors: {},
+        savedCount: @json(count(session('product_step2', []))),
+        isDuplicate() {
+            return this.variants.some(v =>
+                String(v.nama_warna || v.warna || '').toLowerCase() === String(this.form.warna || '').toLowerCase() &&
+                String(v.ukuran || '').toLowerCase() === String(this.form.ukuran || '').toLowerCase()
+            );
+        },
+        autoSku() {
+            const warna = String(this.form.warna || '').substring(0, 3).toUpperCase();
+            const ukuran = String(this.form.ukuran || '').toUpperCase();
+            this.form.sku = 'SKU-{{ $step1Slug }}-' + (warna || 'VRN') + '-' + (ukuran || 'SZ');
+        },
+        resetForm() {
+            this.form = { warna: '', kode_hex: '#000000', ukuran: '', stok: 0, harga: 0, sku: '', stok_minimum: 5 };
+            this.errors = {};
+        },
+        validateForm() {
+            this.errors = {};
+            if (!String(this.form.warna).trim()) { this.errors.warna = 'Warna wajib diisi'; return false; }
+            if (!String(this.form.ukuran).trim()) { this.errors.ukuran = 'Ukuran wajib diisi'; return false; }
+            if (Number(this.form.harga) <= 0) { this.errors.harga = 'Harga wajib diisi'; return false; }
+            if (this.isDuplicate()) { this.errors.duplikat = 'Kombinasi warna + ukuran sudah ada!'; return false; }
+            return true;
+        },
+        saveVariant() {
+            if (!this.validateForm()) return;
+            this.variants.push({
+                nama_variant: this.form.warna,
+                nama_warna: this.form.warna,
+                kode_hex: this.form.kode_hex,
+                ukuran: this.form.ukuran,
+                stok_awal: this.form.stok,
+                stok_minimum: this.form.stok_minimum,
+                price_adjustment: this.form.harga,
+                is_active: '1',
+                sku_preview: this.form.sku,
+            });
+            this.savedCount = this.variants.length;
+            this.resetForm();
+            this.$nextTick(() => document.getElementById('input-warna-step2')?.focus());
+        },
+        removeVariant(index) {
+            this.variants.splice(index, 1);
+            this.savedCount = this.variants.length;
+        },
+    }">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            {{-- LEFT: Saved Variants List --}}
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm sticky top-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">Varian Tersimpan</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Daftar varian yang akan ditambahkan</p>
+                        </div>
+                        <span class="bg-admin/10 text-admin text-xs font-bold px-2.5 py-1 rounded-full" x-text="variants.length + ' varian'"></span>
+                    </div>
 
-        <div class="lg:col-span-9">
-            <form method="POST" action="{{ route('admin.master-product.variant.store') }}" enctype="multipart/form-data">
-                @csrf
-                <div x-data="{
-                    variants: [{
-                        id: Date.now(),
-                        nama: '', ukuran: 'S',
-                        nama_variant: '',
-                        warna: 'Hitam', hex: '#000000',
-                        stok: 0, min_stok: 5, price_adj: 0,
-                        is_active: '1', sku: '',
-                        kode_hex: '#000000',
-                        nama_warna: 'Hitam'
-                    }],
-                    addVariant() {
-                        this.variants.push({
-                            id: Date.now(),
-                            nama: '', ukuran: 'S',
-                            nama_variant: '',
-                            warna: 'Hitam', hex: '#000000',
-                            stok: 0, min_stok: 5, price_adj: 0,
-                            is_active: '1', sku: '',
-                            kode_hex: '#000000',
-                            nama_warna: 'Hitam'
-                        });
-                    },
-                    removeVariant(id) {
-                        if(this.variants.length > 1) {
-                            this.variants = this.variants.filter(v => v.id !== id);
-                        }
-                    },
-                    generateSKU(v, i) {
-                        v.sku = 'SKU-' + String(i+1).padStart(3,'0')
-                            + '-' + v.ukuran
-                            + '-' + (v.nama_warna || v.warna).toLowerCase().replace(/\s+/g,'-');
-                    },
-                    updateColor(v, warna, hex) {
-                        v.warna = warna;
-                        v.hex = hex;
-                        v.nama_warna = warna;
-                        v.kode_hex = hex;
-                    }
-                }" class="space-y-5">
+                    <div x-show="variants.length === 0" class="text-center py-8 text-gray-400">
+                        <div class="w-12 h-12 bg-gray-100 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                        </div>
+                        <p class="text-xs font-medium">Belum ada varian</p>
+                        <p class="text-xs text-gray-300 mt-1">Isi form di sebelah kanan, lalu klik Save</p>
+                    </div>
 
-                    <template x-for="(v,i) in variants" :key="v.id">
-                        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <div class="flex items-start justify-between gap-4 mb-4">
-                                <div>
-                                    <div class="text-sm text-slate-500">Variant #<span x-text="i+1"></span></div>
-                                    <div class="font-bold text-slate-900">Configure</div>
+                    <div x-show="variants.length > 0" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        <template x-for="(v, idx) in variants" :key="idx">
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl group">
+                                <div class="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0" :style="'background:' + (v.kode_hex || '#000000')"></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-gray-800 truncate" x-text="(v.nama_warna || '-') + ' / ' + (v.ukuran || '-')"></p>
+                                    <p class="text-[10px] text-gray-400" x-text="'Stok: ' + (v.stok_awal ?? 0) + ' · Rp ' + Number(v.price_adjustment ?? 0).toLocaleString('id-ID')"></p>
                                 </div>
-                                <button type="button" class="text-red-600 hover:text-red-700 text-sm" x-show="variants.length > 1" @click="removeVariant(v.id)">🗑 Remove</button>
+                                <button type="button" @click="removeVariant(idx)" class="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-100 transition flex-shrink-0">
+                                    <svg class="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
                             </div>
+                        </template>
+                    </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                <div class="md:col-span-8 space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">Variant Name</label>
-                                        <input type="text"
-                                               x-model="v.nama"
-                                               @input="v.nama_variant = v.nama; generateSKU(v,i)"
-                                               x-init="generateSKU(v,i)"
-                                               :name="`variants[${i}][nama_variant]`"
-                                               class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]" />
+                    <p x-show="savedCount > 0" x-cloak class="text-center text-xs text-green-600 font-semibold mt-3 py-2 bg-green-50 rounded-xl">
+                        ✅ <span x-text="savedCount"></span> varian siap disimpan
+                    </p>
+                </div>
+            </div>
 
-                                        <div class="mt-1 text-xs text-slate-400">
-                                            SKU: <span x-text="v.sku"></span>
-                                        </div>
-                                        <input type="hidden" :name="`variants[${i}][sku_preview]`" :value="v.sku">
-                                    </div>
+            {{-- RIGHT: Add Variant Form --}}
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="bg-gradient-to-r from-admin to-admin-dark px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white font-bold text-lg">＋</div>
+                            <div>
+                                <p class="font-bold text-white">Tambah Varian Baru</p>
+                                <p class="text-white/75 text-xs mt-0.5">Klik <strong>Save Varian</strong> untuk tambah ke list. Klik <strong>Next →</strong> jika sudah selesai.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-semibold text-slate-700 mb-1">Size</label>
-                                            <select x-model="v.ukuran" @change="generateSKU(v,i)" :name="`variants[${i}][ukuran]`" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]">
-                                                @foreach($ukurans as $u)
-                                                    <option value="{{ $u }}">{{ $u }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                    <div class="p-5 space-y-4">
+                        {{-- Duplicate Error --}}
+                        <div x-show="errors.duplikat" x-cloak class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-red-600 text-xs font-medium" x-text="errors.duplikat"></p>
+                        </div>
 
-                                        <div>
-                                            <label class="block text-sm font-semibold text-slate-700 mb-1">Color</label>
-                                            <select
-                                                :name="`variants[${i}][nama_warna]`"
-                                                @change="updateColor(v,$event.target.value,$event.target.options[$event.target.selectedIndex].dataset.hex); generateSKU(v,i)"
-                                                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]">
-                                                @foreach($daftarWarna as $nama => $hex)
-                                                    <option value="{{ $nama }}" data-hex="{{ $hex }}" :selected="v.nama_warna === '{{ $nama }}'">{{ $nama }}</option>
-                                                @endforeach
-                                            </select>
-
-                                            <div class="mt-2 flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded border" :style="`background-color:${v.hex}`"></div>
-                                                <div class="text-xs text-slate-500">Preview</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" :name="`variants[${i}][kode_hex]`" :value="v.kode_hex">
-                                    <input type="hidden" :name="`variants[${i}][nama_warna]`" x-model="v.nama_warna">
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-semibold text-slate-700 mb-1">Initial Stock</label>
-                                            <input type="number" min="0" x-model="v.stok" :name="`variants[${i}][stok_awal]`" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]" />
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-semibold text-slate-700 mb-1">Min Stock</label>
-                                            <input type="number" min="0" x-model="v.min_stok" :name="`variants[${i}][stok_minimum]`" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]" />
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-semibold text-slate-700 mb-1">Price Adjustment</label>
-                                            <input type="number" x-model="v.price_adj" :name="`variants[${i}][price_adjustment]`" step="0.01" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]" placeholder="0" />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-2">Visibility</label>
-                                        <div class="flex items-center gap-4">
-                                            <label class="inline-flex items-center gap-2">
-                                                <input type="radio" :name="`variants[${i}][is_active]`" value="1" x-model="v.is_active" />
-                                                <span class="text-sm text-slate-700">Active</span>
-                                            </label>
-                                            <label class="inline-flex items-center gap-2">
-                                                <input type="radio" :name="`variants[${i}][is_active]`" value="0" x-model="v.is_active" />
-                                                <span class="text-sm text-slate-700">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="md:col-span-4 space-y-3">
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-2">Variant Media</label>
-                                        <input type="file" :name="`variant_gambar_${i}[]`" multiple accept="image/*" class="w-full" />
-                                        <div class="text-xs text-slate-500 mt-1">(Upload multiple, max terserah backend)</div>
-                                    </div>
-                                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-                                        Preview gambar variant dapat ditambahkan jika diperlukan. 
-                                    </div>
+                        {{-- Warna --}}
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nama Warna *</label>
+                                <input id="input-warna-step2"
+                                       type="text"
+                                       x-model="form.warna"
+                                       @input="autoSku(); errors.warna=''; errors.duplikat=''"
+                                       placeholder="Black, Navy, Off White..."
+                                       :class="errors.warna ? 'border-red-300' : 'border-gray-200 focus:border-admin'"
+                                       class="w-full px-3 py-2.5 border-2 rounded-xl text-sm focus:outline-none transition">
+                                <p x-show="errors.warna" x-cloak x-text="errors.warna" class="text-red-500 text-xs mt-1"></p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Kode Warna</label>
+                                <div class="flex gap-1.5">
+                                    <input type="color" x-model="form.kode_hex" class="w-10 h-[42px] rounded-xl border-2 border-gray-200 cursor-pointer p-1 flex-shrink-0">
+                                    <input type="text" x-model="form.kode_hex" class="flex-1 min-w-0 px-2 py-2.5 border-2 border-gray-200 focus:border-admin rounded-xl text-xs font-mono focus:outline-none">
                                 </div>
                             </div>
                         </div>
-                    </template>
 
-                    <button type="button" @click="addVariant()" class="border-2 border-dashed border-[#2B9BAF] text-[#2B9BAF] w-full py-3 rounded-lg font-semibold">+ Add Another Variant</button>
+                        {{-- Ukuran --}}
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Ukuran *</label>
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                @foreach($ukurans as $sz)
+                                    <button type="button"
+                                            @click="form.ukuran = '{{ $sz }}'; autoSku(); errors.ukuran=''; errors.duplikat=''"
+                                            :class="form.ukuran === '{{ $sz }}' ? 'bg-admin text-white border-admin' : 'bg-white text-gray-600 border-gray-200 hover:border-admin'"
+                                            class="px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition">{{ $sz }}</button>
+                                @endforeach
+                            </div>
+                            <input type="text"
+                                   x-model="form.ukuran"
+                                   @input="autoSku(); errors.ukuran=''; errors.duplikat=''"
+                                   placeholder="Atau ketik ukuran manual..."
+                                   class="w-full px-3 py-2 border-2 border-gray-200 focus:border-admin rounded-xl text-sm focus:outline-none transition">
+                            <p x-show="errors.ukuran" x-cloak x-text="errors.ukuran" class="text-red-500 text-xs mt-1"></p>
+                        </div>
 
-                    <div class="flex items-center justify-between gap-4">
-                        <a href="{{ route('admin.master-product.create') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">← Back</a>
-                        <button type="submit" class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">Next →</button>
+                        {{-- Stok & Harga --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Stok Awal *</label>
+                                <input type="number" x-model.number="form.stok" min="0"
+                                       class="w-full px-3 py-2.5 border-2 border-gray-200 focus:border-admin rounded-xl text-sm focus:outline-none transition"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Stok Minimum</label>
+                                <input type="number" x-model.number="form.stok_minimum" min="1"
+                                       class="w-full px-3 py-2.5 border-2 border-gray-200 focus:border-admin rounded-xl text-sm focus:outline-none transition"
+                                       placeholder="5">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Harga Jual *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Rp</span>
+                                <input type="number"
+                                       x-model.number="form.harga"
+                                       min="0"
+                                       :class="errors.harga ? 'border-red-300' : 'border-gray-200 focus:border-admin'"
+                                       class="w-full pl-9 pr-3 py-2.5 border-2 rounded-xl text-sm focus:outline-none transition"
+                                       placeholder="0">
+                            </div>
+                            <p x-show="errors.harga" x-cloak x-text="errors.harga" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">SKU (Auto-generated)</label>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="form.sku"
+                                       class="flex-1 px-3 py-2.5 border-2 border-gray-200 focus:border-admin rounded-xl text-sm font-mono bg-gray-50 focus:outline-none transition">
+                                <button type="button" @click="autoSku()" class="px-3 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition">Auto</button>
+                            </div>
+                        </div>
+
+                        {{-- ACTIONS: Save + Next as separate clear buttons --}}
+                        <div class="pt-2 border-t border-gray-100">
+                            {{-- Save Varian button --}}
+                            <button type="button"
+                                    @click="saveVariant()"
+                                    :disabled="!!errors.duplikat"
+                                    :class="!!errors.duplikat ? 'opacity-60 cursor-not-allowed bg-gray-100 text-gray-400' : 'bg-admin text-white hover:bg-admin-dark hover:shadow-lg hover:shadow-admin/30'"
+                                    class="w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 mb-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                💾 Save Varian
+                            </button>
+
+                            <p class="text-center text-xs text-gray-400 mb-3">Setelah klik Save, form akan kosong otomatis untuk varian berikutnya.</p>
+
+                            {{-- Next button (submit ke step 3) --}}
+                            <form action="{{ route('admin.master-product.variant.store') }}" method="POST">
+                                @csrf
+                                <template x-for="(v, idx) in variants" :key="'hidden-' + idx">
+                                    <div>
+                                        <input type="hidden" :name="`variants[${idx}][nama_variant]`" :value="v.nama_variant">
+                                        <input type="hidden" :name="`variants[${idx}][ukuran]`" :value="v.ukuran">
+                                        <input type="hidden" :name="`variants[${idx}][nama_warna]`" :value="v.nama_warna">
+                                        <input type="hidden" :name="`variants[${idx}][kode_hex]`" :value="v.kode_hex">
+                                        <input type="hidden" :name="`variants[${idx}][stok_awal]`" :value="v.stok_awal">
+                                        <input type="hidden" :name="`variants[${idx}][stok_minimum]`" :value="v.stok_minimum">
+                                        <input type="hidden" :name="`variants[${idx}][price_adjustment]`" :value="v.price_adjustment">
+                                        <input type="hidden" :name="`variants[${idx}][is_active]`" :value="v.is_active">
+                                    </div>
+                                </template>
+                                <button type="submit"
+                                        :disabled="variants.length === 0"
+                                        :class="variants.length === 0 ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200' : 'bg-white text-admin border-admin hover:bg-admin hover:text-white'"
+                                        class="w-full py-3 rounded-xl font-bold text-sm border-2 transition-all duration-200 flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                    <span x-text="variants.length === 0 ? 'Simpan minimal 1 varian dulu' : 'Next → Media (' + variants.length + ' varian)'"></span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 @endsection
-

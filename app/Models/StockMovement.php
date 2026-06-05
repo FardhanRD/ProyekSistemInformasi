@@ -32,5 +32,10 @@ class StockMovement extends Model
     {
         return $this->belongsTo(DetailProduk::class, 'detail_produk_id', 'detail_produk_id');
     }
+
+    public function operator()
+    {
+        return $this->belongsTo(Pengguna::class, 'dibuat_oleh', 'pengguna_id');
+    }
 }
 

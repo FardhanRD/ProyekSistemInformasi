@@ -1,334 +1,205 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title','Master Product')
 
 @section('content')
 <div class="mx-auto max-w-7xl px-4 py-6">
-    <div class="flex items-start justify-between gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-            <h1 class="font-bold text-2xl text-slate-900">Product Master Analysis</h1>
-            <p class="text-sm text-slate-500 mt-1">
-                Real-time inventory and catalog distribution metrics for {{ now()->isoFormat('MMM D, YYYY') }}
-            </p>
+            <p class="text-xs font-bold text-admin uppercase tracking-widest mb-1">MOVR ADMIN</p>
+            <h1 class="text-2xl font-black text-gray-900">Master Product</h1>
+            <p class="text-sm text-gray-400 mt-1">Referensi produk — read-only. Gunakan "Detail" untuk lihat histori, atau buat produk baru.</p>
         </div>
+        <a href="{{ route('admin.master-product.create') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-admin text-white rounded-xl text-sm font-bold shadow-lg shadow-admin/25 hover:bg-admin-dark hover:-translate-y-0.5 hover:shadow-xl hover:shadow-admin/30 transition-all duration-200 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Tambah Produk
+        </a>
+    </div>
 
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.master-product.export') }}?{{ http_build_query(request()->only(['search','status','gender','start_date','end_date'])) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                Export CSV
-            </a>
-            <a href="{{ route('admin.master-product.export') }}?{{ http_build_query(array_merge(request()->only(['search','status','gender','start_date','end_date']), ['format' => 'pdf'])) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                Export PDF
-            </a>
-            <a href="{{ route('admin.master-product.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">
-                + Add Product
-            </a>
+    <!-- Info read-only notice -->
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5 flex items-start gap-3">
+        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-amber-800 text-sm font-bold">Master Produk bersifat Read-Only</p>
+            <p class="text-amber-700 text-xs mt-0.5">Data produk master tidak dapat diubah langsung dari halaman ini. Gunakan tombol <strong>"Detail"</strong> untuk melihat informasi lengkap, atau <strong>"Varian"</strong> / <strong>"Media"</strong> untuk mengelola konten produk.</p>
         </div>
     </div>
 
-    {{-- CALENDAR / DATE RANGE --}}
-    <div class="flex items-center gap-4 mb-6">
-        <div class="flex items-center gap-2">
-            <label class="text-sm text-slate-700">From</label>
-            <input type="date" id="startDate" name="start_date" value="{{ request('start_date') }}" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-            <label class="text-sm text-slate-700">To</label>
-            <input type="date" id="endDate" name="end_date" value="{{ request('end_date') }}" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-            <button id="applyCalendar" class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">Apply Calendar</button>
-        </div>
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-5 shadow-sm">
+        <form method="GET" action="{{ route('admin.master-product.index') }}">
+            <!-- Search Row -->
+            <div class="relative mb-3">
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" name="search" value="{{ request('search', $search ?? '') }}" placeholder="Cari nama produk, slug, atau SKU..." class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:border-admin focus:outline-none transition bg-gray-50 focus:bg-white">
+            </div>
 
-        <div id="fullCalendar" class="ml-auto w-80"></div>
-    </div>
-
-    {{-- STAT CARDS --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">ACTIVE MASTER CATALOG</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">{{ $total_products }}</div>
-                </div>
-                <div class="flex flex-col items-end">
-                    <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600">
-                        +12.5%
+            <!-- Filters Row -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Date Range -->
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-1.5 px-3 py-2 border-2 border-gray-200 rounded-xl focus-within:border-admin transition bg-gray-50">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <input type="date" name="start_date" value="{{ request('start_date') }}" class="bg-transparent text-sm focus:outline-none text-gray-700 w-36">
+                    </div>
+                    <span class="text-gray-400 font-medium">—</span>
+                    <div class="flex items-center gap-1.5 px-3 py-2 border-2 border-gray-200 rounded-xl focus-within:border-admin transition bg-gray-50">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}" class="bg-transparent text-sm focus:outline-none text-gray-700 w-36">
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">ACROSS BUSINESS UNITS</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">{{ $total_categories }}</div>
-                </div>
-                <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500">
-                    Static
-                </div>
-            </div>
-        </div>
+                <select name="status" class="px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-admin focus:outline-none bg-gray-50 transition">
+                    <option value="">Semua Status</option>
+                    <option value="publish" {{ ($status_filter ?? '') === 'publish' ? 'selected' : '' }}>Publish</option>
+                    <option value="draft" {{ ($status_filter ?? '') === 'draft' ? 'selected' : '' }}>Draft</option>
+                    <option value="scheduled" {{ ($status_filter ?? '') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+                </select>
 
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">ITEMS BELOW THRESHOLD</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">{{ $low_stock_alert }}</div>
-                </div>
-                <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600">
-                    Alert
-                </div>
-            </div>
-        </div>
+                <select name="gender" class="px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-admin focus:outline-none bg-gray-50 transition">
+                    <option value="">Semua Gender</option>
+                    <option value="men" {{ ($gender_filter ?? '') === 'men' ? 'selected' : '' }}>Men</option>
+                    <option value="women" {{ ($gender_filter ?? '') === 'women' ? 'selected' : '' }}>Women</option>
+                    <option value="unisex" {{ ($gender_filter ?? '') === 'unisex' ? 'selected' : '' }}>Unisex</option>
+                    <option value="kids" {{ ($gender_filter ?? '') === 'kids' ? 'selected' : '' }}>Kids</option>
+                </select>
 
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-xs text-slate-400 font-semibold">CURRENT ASSET ESTIMATE</div>
-                    <div class="text-3xl font-bold text-slate-900 mt-2">Rp {{ number_format($inventory_value,0,',','.') }}</div>
-                </div>
-                <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600">
-                    +5.2%
-                </div>
+                <button type="submit" class="px-5 py-2.5 bg-admin text-white rounded-xl text-sm font-bold hover:bg-admin-dark transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    Filter
+                </button>
+                <a href="{{ route('admin.master-product.index') }}" class="px-4 py-2.5 border-2 border-gray-200 text-gray-500 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Reset</a>
             </div>
-        </div>
+        </form>
     </div>
 
-    {{-- SECTION TENGAH --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div class="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="font-bold text-slate-900">Popular Products</h2>
-            </div>
-
-            @foreach($popular_products as $p)
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-semibold text-slate-700">{{ $p->nama_produk }}</span>
-                    <span class="text-teal-600 text-sm font-medium">{{ number_format($p->total_terjual) }} Sales</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
-                    <div class="bg-teal-500 h-2 rounded-full" style="width:{{ $max_terjual > 0 ? ($p->total_terjual / $max_terjual * 100) : 0 }}%"></div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="font-bold text-slate-900">Gender Distribution</h2>
-            <div class="mt-4">
-                <canvas id="genderChart" height="200"></canvas>
-            </div>
-            <ul class="mt-4 space-y-2 text-sm">
-                @foreach($gender_distribution as $g)
-                    @php
-                        $colors = [
-                            'men' => '#2B9BAF',
-                            'women' => '#F6C90E',
-                            'kids' => '#FF6B6B',
-                            'unisex' => '#95E1D3'
-                        ];
-                        $c = $colors[$g->gender] ?? '#ccc';
-                    @endphp
-                    <li class="flex items-center justify-between gap-3">
-                        <span class="inline-flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full" style="background-color:{{ $c }}"></span>
-                            {{ ucfirst($g->gender) }}
-                        </span>
-                        <span class="font-semibold text-slate-800">{{ $g->total }}</span>
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    </div>
-
-    {{-- MASTER PRODUCT LIST --}}
-    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center justify-between gap-4 mb-4">
-            <h2 class="font-bold text-slate-900">Master Product List</h2>
-
-            <div class="flex flex-col sm:flex-row gap-2">
-                <input type="text" name="search" value="{{ $search }}" placeholder="Search by product name..." form="masterProductFilters" class="rounded-xl border border-slate-200 px-3 py-2 text-sm w-full sm:w-64" />
-
-                <form id="masterProductFilters" method="GET" action="{{ route('admin.master-product.index') }}" class="hidden"></form>
-
-                <form method="GET" action="{{ route('admin.master-product.index') }}" class="flex gap-2">
-                    <input type="hidden" name="search" value="{{ $search }}">
-                    <select name="status" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        <option value="">Status (All)</option>
-                        <option value="publish" {{ $status_filter === 'publish' ? 'selected' : '' }}>Publish</option>
-                        <option value="draft" {{ $status_filter === 'draft' ? 'selected' : '' }}>Draft</option>
-                        <option value="scheduled" {{ $status_filter === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                    </select>
-                    <select name="gender" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        <option value="">Gender (All)</option>
-                        <option value="men" {{ $gender_filter === 'men' ? 'selected' : '' }}>Men</option>
-                        <option value="women" {{ $gender_filter === 'women' ? 'selected' : '' }}>Women</option>
-                        <option value="unisex" {{ $gender_filter === 'unisex' ? 'selected' : '' }}>Unisex</option>
-                        <option value="kids" {{ $gender_filter === 'kids' ? 'selected' : '' }}>Kids</option>
-                    </select>
-                    <button type="submit" class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#237f88]">Filter</button>
-                </form>
-            </div>
-        </div>
-
+    <!-- Product Table -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
+            <table class="w-full text-sm">
                 <thead>
-                    <tr class="text-left text-xs uppercase tracking-wider text-slate-500">
-                        <th class="py-3 px-2">ID</th>
-                        <th class="py-3 px-2">IMAGE</th>
-                        <th class="py-3 px-2">PRODUCT NAME</th>
-                        <th class="py-3 px-2">CATEGORY</th>
-                        <th class="py-3 px-2">SUPPLIER</th>
-                        <th class="py-3 px-2">GENDER</th>
-                        <th class="py-3 px-2">SPORT TYPE</th>
-                        <th class="py-3 px-2">PRICE</th>
-                        <th class="py-3 px-2">STATUS</th>
-                        <th class="py-3 px-2">ACTION</th>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">ID</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Gambar</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Produk</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Kategori</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Supplier</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Gender</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Harga</th>
+                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Stok</th>
+                        <th class="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($produk_list as $produk)
-                        <tr class="border-t border-slate-100">
-                            <td class="py-3 px-2">{{ $produk->formatted_id }}</td>
-                            <td class="py-3 px-2">
+                    @forelse($produk_list as $produk)
+                        @php
+                            $minStok = $produk->detailProduk->min('stok') ?? 0;
+                            $totalStok = $produk->detailProduk->sum('stok') ?? 0;
+                            $varianCount = $produk->detailProduk->count();
+                            $statusBadge = $minStok === 0
+                                ? ['bg-red-100 text-red-600', 'Out of Stock']
+                                : ($minStok <= 5
+                                    ? ['bg-yellow-100 text-yellow-700', 'Low Stock']
+                                    : ['bg-green-100 text-green-700', 'Available']);
+                        @endphp
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="px-4 py-3">
+                                <span class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{{ $produk->formatted_id }}</span>
+                            </td>
+                            <td class="px-4 py-3">
                                 @if($produk->gambarUtama)
-                                    <img src="{{ Storage::url($produk->gambarUtama->url_gambar) }}" class="w-10 h-10 rounded object-cover" alt="{{ $produk->nama_produk }}" />
+                                    <img src="{{ $produk->gambarUtama->url_safe ?? asset('images/placeholder.png') }}" class="w-12 h-12 rounded-xl object-cover bg-gray-50" alt="{{ $produk->nama_produk }}">
                                 @else
-                                    <div class="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
-                                        <span class="text-gray-400">—</span>
+                                    <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-300">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                     </div>
                                 @endif
                             </td>
-                            <td class="py-3 px-2">
-                                <div class="font-medium">{{ $produk->nama_produk }}</div>
-                                <div class="text-xs text-gray-400">{{ $produk->slug }}</div>
+                            <td class="px-4 py-3">
+                                <p class="font-semibold text-gray-800 text-sm">{{ $produk->nama_produk }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $produk->slug }}</p>
                             </td>
-                            <td class="py-3 px-2">{{ $produk->kategori->nama_kategori ?? '-' }}</td>
-                            <td class="py-3 px-2">{{ $produk->supplier->nama_toko ?? '-' }}</td>
-                            <td class="py-3 px-2">{{ ucfirst($produk->gender) }}</td>
-                            <td class="py-3 px-2">{{ $produk->tipe_olahraga ?? '-' }}</td>
-                            <td class="py-3 px-2">Rp {{ number_format($produk->harga_dasar,0,',','.') }}</td>
-                            <td class="py-3 px-2">
-                                @php $status = $produk->status_stok; @endphp
-                                @if($status === 'available')
-                                    <span class="text-green-600 font-semibold text-sm">AVAILABLE</span>
-                                @elseif($status === 'low_stock')
-                                    <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-medium">LOW STOCK</span>
-                                @else
-                                    <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium">OUT OF STOCK</span>
-                                @endif
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ $produk->kategori->nama_kategori ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ $produk->supplier->nama_toko ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ ucfirst($produk->gender ?? '-') }}</td>
+                            <td class="px-4 py-3 font-semibold text-gray-800 text-sm">Rp {{ number_format($produk->harga_dasar, 0, ',', '.') }}</td>
+                            <td class="px-4 py-3">
+                                <div>
+                                    <span class="inline-flex text-xs font-bold px-2.5 py-1 rounded-full {{ $statusBadge[0] }}">{{ $statusBadge[1] }}</span>
+                                    <p class="text-[10px] text-gray-400 mt-1">{{ $varianCount }} varian · {{ $totalStok }} stok</p>
+                                </div>
                             </td>
-                            <td class="py-3 px-2">
-                                <div class="flex gap-2 items-center">
-                                    <a href="{{ route('admin.master-product.detail', $produk->produk_id) }}" class="text-slate-600" title="View">👁</a>
-                                    <a href="{{ route('admin.master-product.edit', $produk->produk_id) }}" class="text-slate-600" title="Edit">✏</a>
-                                    <form method="POST" action="{{ route('admin.master-product.destroy', $produk->produk_id) }}" onsubmit="return confirm('Nonaktifkan produk ini?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-slate-600" title="Hapus">🗑</button>
-                                    </form>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <a href="{{ route('admin.master-product.detail', $produk->produk_id) }}"
+                                       class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-admin/10 hover:text-admin text-gray-500 transition"
+                                       title="Lihat Detail">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </a>
+                                    <a href="{{ route('admin.variant.index', ['produk_id' => $produk->produk_id]) }}"
+                                       class="w-8 h-8 bg-admin/10 rounded-lg flex items-center justify-center hover:bg-admin hover:text-white text-admin transition"
+                                       title="Kelola Varian ({{ $varianCount }} varian)">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7"/>
+                                        </svg>
+                                    </a>
+                                    <a href="{{ route('admin.media.index', ['produk_id' => $produk->produk_id]) }}"
+                                       class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center hover:bg-purple-100 text-purple-600 transition"
+                                       title="Kelola Media">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-4 py-16 text-center text-gray-400">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-500 mb-1">Belum ada produk</p>
+                                        <p class="text-sm text-gray-400">Mulai tambahkan produk pertama Anda</p>
+                                    </div>
+                                    <a href="{{ route('admin.master-product.create') }}" class="flex items-center gap-2 px-5 py-2.5 bg-admin text-white rounded-xl text-sm font-bold hover:bg-admin-dark transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                        Tambah Produk Pertama
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
 
-        {{ $produk_list->links() }}
-        <p class="text-sm text-gray-500 mt-2">
-            Showing {{ $produk_list->firstItem() }}–{{ $produk_list->lastItem() }} of {{ $produk_list->total() }} items
-        </p>
+        @if(isset($produk_list) && $produk_list->hasPages())
+            <div class="mt-4 flex items-center justify-between px-4 pb-4">
+                <p class="text-sm text-gray-400">Menampilkan {{ $produk_list->firstItem() }}–{{ $produk_list->lastItem() }} dari {{ $produk_list->total() }} produk</p>
+                {{ $produk_list->appends(request()->query())->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection
-
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-const genderData = @json($gender_distribution);
-const labels = genderData.map(d => d.gender);
-const data = genderData.map(d => d.total);
-const colors = {
-  men:'#2B9BAF', women:'#F6C90E',
-  kids:'#FF6B6B', unisex:'#95E1D3'
-};
-
-const el = document.getElementById('genderChart');
-if (el) {
-  new Chart(el, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: labels.map(l => colors[l] || '#ccc'),
-        borderWidth: 0
-      }]
-    },
-    options: {
-      cutout: '70%',
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-</script>
-<!-- FullCalendar -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('fullCalendar');
-    const startInput = document.getElementById('startDate');
-    const endInput = document.getElementById('endDate');
-    const applyBtn = document.getElementById('applyCalendar');
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        initialDate: '2026-05-01',
-        height: 350,
-        selectable: true,
-        headerToolbar: { left: '', center: 'title', right: '' },
-        select: function(info) {
-            // set inputs to selected range
-            startInput.value = info.startStr;
-            // endStr is exclusive in FullCalendar's select -> use previous day
-            const endDate = new Date(info.end);
-            endDate.setDate(endDate.getDate() - 1);
-            endInput.value = endDate.toISOString().slice(0,10);
-        },
-        eventClick: function(info) {
-            // event has date in info.event.startStr
-            const d = info.event.startStr.slice(0,10);
-            startInput.value = d; endInput.value = d;
-            // apply immediately
-            const params = new URLSearchParams(window.location.search);
-            params.set('start_date', d); params.set('end_date', d);
-            window.location = `${window.location.pathname}?${params.toString()}`;
-        },
-        events: function(fetchInfo, successCallback, failureCallback) {
-            const params = new URLSearchParams({ start: fetchInfo.startStr, end: fetchInfo.endStr });
-            fetch(`{{ route('admin.master-product.events') }}?` + params.toString())
-                .then(r => r.json())
-                .then(data => {
-                    const evs = data.map(e => ({
-                        title: e.type === 'new' ? (e.count + ' New') : (e.count + ' Campaign'),
-                        start: e.date,
-                        allDay: true,
-                        color: e.type === 'new' ? '#16a34a' : '#2563eb'
-                    }));
-                    successCallback(evs);
-                }).catch(failureCallback);
-        }
-    });
-
-    calendar.render();
-
-    applyBtn?.addEventListener('click', () => {
-        const s = startInput.value;
-        const e = endInput.value;
-        const params = new URLSearchParams(window.location.search);
-        if (s) params.set('start_date', s); else params.delete('start_date');
-        if (e) params.set('end_date', e); else params.delete('end_date');
-        window.location = `${window.location.pathname}?${params.toString()}`;
-    });
-});
-</script>
-@endsection
-

@@ -73,6 +73,8 @@ class SupplierController extends Controller
             'no_telepon' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
             'alamat_toko' => 'required|string|max:1000',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'foto_toko' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg|max:10240',
         ]);
 
@@ -94,6 +96,8 @@ class SupplierController extends Controller
             'no_telepon' => $validated['no_telepon'] ?? null,
             'email' => $validated['email'] ?? null,
             'alamat_toko' => $validated['alamat_toko'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'foto_toko' => $fotoPath,
             'is_verified' => 0,
         ]);

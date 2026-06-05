@@ -3,187 +3,306 @@
 @section('title', 'Home - MOVR')
 
 @section('content')
-<div class="section-shell py-8 sm:py-10 space-y-10">
-    <section class="relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl shadow-slate-200/40" x-data="heroSlider()" x-init="init()" data-banners='@json($banners ?? [])'>
-        <div class="absolute inset-0 bg-gradient-to-r from-[#63A2BB]/95 via-[#4A8BA3]/90 to-slate-950"></div>
-        <div class="relative">
-            <template x-for="(banner, index) in banners" :key="index">
-                <div x-show="current === index" x-transition class="grid min-h-[360px] items-center gap-10 px-6 py-10 md:grid-cols-2 md:px-12 md:py-16">
-                    <div>
-                        <p class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-white/70">{{ __('ui.hero_new_collection') }}</p>
-                        <h1 class="max-w-xl text-4xl font-black leading-tight md:text-6xl" x-text="banner.judul || @json(__('ui.hero_default_title'))"></h1>
-                        <p class="mt-4 max-w-xl text-base leading-7 text-white/80 md:text-lg" x-text="banner.sub_judul || @json(__('ui.hero_default_subtitle'))"></p>
-                        <div class="mt-8 flex flex-wrap gap-3">
-                            <a :href="banner.url_link || '/produk'" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-[#63A2BB] transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg">
-                                {{ __('ui.hero_shop_now') }}
-                            </a>
-                            <a href="{{ route('product.index') }}" class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition-all duration-200 ease-in-out hover:bg-white/10 hover:scale-[1.02]">
-                                {{ __('ui.hero_view_catalog') }}
-                            </a>
-                        </div>
+@php
+    $heroProduct = $newArrivals->first();
+    $heroImage = optional($heroProduct?->gambarUtama)->url_lengkap
+        ?? optional($heroProduct?->gambarUtama)->url_safe
+        ?? asset('images/default-banner.svg');
+
+    $tickerItems = ['Running', 'Basketball', 'Football', 'Gym', 'Tennis', 'Cycling', 'Swimming', 'Yoga', 'Boxing', 'Training'];
+    $sportCards = [
+        [
+            'image' => 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=600&q=80', 
+            'title' => 'Running', 
+            'subtitle' => 'Shoes, apparel, and endurance gear'
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80', 
+            'title' => 'Gym & Training', 
+            'subtitle' => 'Strength essentials and activewear'
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=600&q=80', 
+            'title' => 'Football', 
+            'subtitle' => 'Kits, boots, and match-day equipment'
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=600&q=80', 
+            'title' => 'Racket Sports', 
+            'subtitle' => 'Fast play gear for tennis and more'
+        ],
+    ];
+    $featureStats = [
+        ['value' => '2K+', 'label' => 'Products curated'],
+        ['value' => '15+', 'label' => 'Sport categories'],
+        ['value' => '98%', 'label' => 'Satisfaction rate'],
+    ];
+@endphp
+
+<div class="space-y-16 py-6 sm:py-10">
+    <style>
+        @keyframes movrTicker {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        @keyframes movrFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .movr-ticker-track {
+            animation: movrTicker 22s linear infinite;
+        }
+
+        .movr-float {
+            animation: movrFloat 4s ease-in-out infinite;
+        }
+
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
+    <section class="section-shell">
+        <div class="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-[#0A1020] text-white shadow-2xl shadow-slate-300/20">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,162,187,0.36),transparent_34%),linear-gradient(125deg,rgba(10,16,32,0.96),rgba(13,23,44,0.92))]"></div>
+            <div class="absolute -right-12 top-12 h-56 w-56 rounded-full border border-white/10"></div>
+            <div class="absolute -left-16 bottom-0 h-72 w-72 rounded-full border border-[#63A2BB]/15"></div>
+
+            <div class="relative grid gap-10 px-6 py-10 md:grid-cols-2 md:px-12 md:py-16 lg:px-16 lg:py-20">
+                <div class="space-y-6">
+                    <div class="inline-flex items-center gap-3 rounded-full border border-[#63A2BB]/30 bg-[#63A2BB]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-[#8FD0E3]">
+                        <span class="h-2 w-2 rounded-full bg-[#63A2BB] shadow-[0_0_0_6px_rgba(99,162,187,0.18)]"></span>
+                        New Drop 2026
                     </div>
 
-                    <div class="hidden md:block">
-                        <div class="rounded-[2rem] border border-white/15 bg-white/10 p-4 backdrop-blur-md shadow-2xl">
-                            <img :src="banner.url_gambar || '{{ asset('images/default-banner.svg') }}'" alt="Banner" class="h-[320px] w-full rounded-[1.5rem] object-cover">
-                        </div>
+                    <div class="space-y-4">
+                        <p class="text-sm font-semibold uppercase tracking-[0.32em] text-white/55">PUSH YOUR LIMITS</p>
+                        <h1 class="max-w-xl text-4xl font-black leading-[0.9] tracking-tight sm:text-5xl lg:text-7xl">
+                            <span class="block">PUSH</span>
+                            <span class="block text-transparent [-webkit-text-stroke:2px_#63A2BB]">YOUR</span>
+                            <span class="block text-[#63A2BB]">LIMITS</span>
+                        </h1>
+                        <p class="max-w-xl text-sm leading-7 text-white/70 sm:text-base">
+                            Premium sportswear, footwear, and gear untuk latihan, kompetisi, dan lifestyle aktif yang bergerak cepat.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{{ route('product.index') }}" class="inline-flex items-center justify-center rounded-full bg-[#63A2BB] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#63A2BB]/30 transition hover:-translate-y-0.5 hover:bg-[#4e8fa8]">
+                            Shop Now
+                            <span class="ml-1">→</span>
+                        </a>
+                        <a href="#shop-by-sport" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:border-[#63A2BB]/40 hover:bg-white/10">
+                            Explore Sports
+                        </a>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        @foreach($featureStats as $stat)
+                            <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm">
+                                <div class="text-2xl font-black text-white">{{ $stat['value'] }}</div>
+                                <div class="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{{ $stat['label'] }}</div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
-            </template>
 
-            @if(empty($banners) || (is_countable($banners) && count($banners) === 0))
-                <div class="grid min-h-[360px] items-center gap-10 px-6 py-10 md:grid-cols-2 md:px-12 md:py-16">
-                    <div>
-                        <p class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-white/70">{{ __('ui.hero_new_collection') }} 2026</p>
-                        <h1 class="max-w-xl text-4xl font-black leading-tight md:text-6xl">Move With <span class="text-white/80">Style & Comfort</span></h1>
-                        <p class="mt-4 max-w-xl text-base leading-7 text-white/80 md:text-lg">{{ __('ui.hero_default_subtitle') }}</p>
-                        <div class="mt-8 flex flex-wrap gap-3">
-                            <a href="{{ route('product.index') }}" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-[#63A2BB] transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg">{{ __('ui.hero_shop_now') }}</a>
-                            <a href="{{ route('category.show', 'all') }}" class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition-all duration-200 ease-in-out hover:bg-white/10 hover:scale-[1.02]">{{ __('ui.view_all') }}</a>
+                <div class="relative flex items-center justify-center">
+                    <div class="movr-float relative w-full max-w-sm rounded-[2rem] border border-white/10 bg-white/8 p-4 backdrop-blur-xl">
+                        <div class="absolute -left-4 top-8 rounded-2xl bg-white px-4 py-3 text-slate-900 shadow-2xl">
+                            <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-[#63A2BB]">Top Pick</div>
+                            <div class="mt-1 text-sm font-black">Sports Ready</div>
+                        </div>
+
+                        <div class="overflow-hidden rounded-[1.5rem] bg-slate-900/40">
+                            <img src="{{ $heroImage }}" alt="Hero product" class="h-[350px] w-full object-cover object-center">
+                        </div>
+
+                        <div class="mt-4 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">Featured product</div>
+                                    <div class="mt-1 text-base font-bold text-white">{{ $heroProduct->nama_produk ?? 'Training Essential' }}</div>
+                                    <div class="text-sm text-white/55">{{ $heroProduct->tipe_olahraga ?? 'Performance gear for every session' }}</div>
+                                </div>
+                                <div class="rounded-2xl bg-[#63A2BB] px-4 py-3 text-right text-white">
+                                    <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/80">From</div>
+                                    <div class="text-lg font-black">Rp {{ number_format($heroProduct->harga_dasar ?? 349000, 0, ',', '.') }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="hidden md:block">
-                        <div class="rounded-[2rem] border border-white/15 bg-white/10 p-4 backdrop-blur-md shadow-2xl">
-                            <img src="{{ asset('images/default-banner.svg') }}" alt="Banner default" class="h-[320px] w-full rounded-[1.5rem] object-cover">
-                        </div>
-                    </div>
-                </div>
-            @endif
 
-            @if((is_countable($banners) ? count($banners) : 0) > 1)
-                <button @click="prev()" class="absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/25">‹</button>
-                <button @click="next()" class="absolute right-4 top-1/2 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/25">›</button>
-            @endif
-        </div>
-    </section>
-
-    <section class="grid gap-4 md:grid-cols-3">
-        @foreach([
-            ['label' => 'Quick Shipping', 'value' => 'Pengiriman cepat dan aman', 'icon' => 'truck'],
-            ['label' => 'Secure Payment', 'value' => 'Pembayaran nyaman dan terverifikasi', 'icon' => 'shield'],
-            ['label' => 'Premium Picks', 'value' => 'Koleksi pilihan untuk gaya modern', 'icon' => 'sparkles'],
-        ] as $feature)
-            <div class="card-surface card-hover p-5">
-                <div class="flex items-center gap-4">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#63A2BB]/10 text-[#63A2BB]">
-                        @if($feature['icon'] === 'truck')
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h11v8H3zM14 9h4l3 3v3h-7zM7 18a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z" /></svg>
-                        @elseif($feature['icon'] === 'shield')
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z" /></svg>
-                        @else
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 3l2.7 5.5L21 10l-4 3.8 1 5.7-5-2.6-5 2.6 1-5.7L5 10l5.3-1.5L13 3z" /></svg>
-                        @endif
-                    </div>
-                    <div>
-                        <div class="font-bold text-slate-900">{{ $feature['label'] }}</div>
-                        <div class="text-sm text-slate-500">{{ $feature['value'] }}</div>
+                    <div class="absolute -bottom-5 right-6 rounded-2xl border border-white/10 bg-white px-4 py-3 text-slate-900 shadow-2xl shadow-black/20">
+                        <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-[#63A2BB]">4.9 / 5.0</div>
+                        <div class="text-sm font-semibold">Rated by athletes</div>
                     </div>
                 </div>
             </div>
-        @endforeach
+        </div>
     </section>
 
-    <section class="space-y-5">
-        <div class="flex items-end justify-between gap-3">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Produk Unggulan</p>
-                <h2 class="mt-1 text-2xl font-black text-slate-900">New Arrivals</h2>
-            </div>
-            <a href="{{ route('product.index') }}?sort=terbaru" class="text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:text-[#4A8BA3]">Lihat Semua</a>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            @foreach($newArrivals as $p)
-                <x-product-card :produk="$p" :badge="'NEW'" :showWishlistBtn="true" />
+    <section class="overflow-hidden border-y border-[#63A2BB]/15 bg-[#63A2BB] py-4 text-white">
+        <div class="movr-ticker-track flex w-max items-center gap-10 whitespace-nowrap px-4 text-xs font-black uppercase tracking-[0.35em] sm:text-sm">
+            @foreach(array_merge($tickerItems, $tickerItems) as $tickerItem)
+                <span class="inline-flex items-center gap-3">
+                    <span class="h-1.5 w-1.5 rounded-full bg-white/70"></span>
+                    {{ $tickerItem }}
+                </span>
             @endforeach
         </div>
     </section>
 
-    <section class="space-y-5 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-        <div class="flex items-end justify-between gap-3">
+    <section id="shop-by-sport" class="section-shell space-y-6">
+        <div class="flex items-end justify-between gap-4">
             <div>
-                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Terpopuler</p>
-                <h2 class="mt-1 text-2xl font-black text-slate-900">Best Sellers</h2>
+                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Shop by Sport</p>
+                <h2 class="mt-1 text-3xl font-black text-slate-900">Find your next move</h2>
             </div>
-            <a href="{{ route('product.index') }}?sort=terlaris" class="text-sm font-semibold text-[#63A2BB] transition-all duration-200 hover:text-[#4A8BA3]">Lihat Semua</a>
+            <a href="{{ route('product.index') }}" class="text-sm font-semibold text-[#63A2BB] hover:text-[#4e8fa8]">View all →</a>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            @foreach($bestSellers as $p)
-                <x-product-card :produk="$p" :showWishlistBtn="true" />
-            @endforeach
-        </div>
-    </section>
+        <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            @foreach($sportCards as $card)
+                <a href="{{ route('product.index') }}?q={{ urlencode($card['title']) }}" class="group relative block h-[320px] overflow-hidden rounded-[2rem] shadow-md transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-[#63A2BB]/18">
+                    <!-- Background Image -->
+                    <img src="{{ $card['image'] }}" alt="{{ $card['title'] }}" class="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110">
+                    
+                    <!-- Dark Gradient Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent opacity-85 transition-opacity duration-300 group-hover:opacity-90"></div>
+                    
+                    <!-- Border Highlight -->
+                    <div class="absolute inset-0 border-2 border-transparent rounded-[2rem] transition-colors duration-300 group-hover:border-[#63A2BB]/30"></div>
 
-    @if($flashProducts->isNotEmpty())
-        <section class="space-y-5 rounded-[2rem] border border-[#63A2BB]/15 bg-[#63A2BB]/5 p-6">
-            <div class="flex items-end justify-between gap-3">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Limited Time</p>
-                    <h2 class="mt-1 text-2xl font-black text-slate-900">Flash Sale</h2>
-                </div>
-                <div x-data="{ end: '{{ optional($flashProducts->first()->promo->selesai ?? now())->toDateTimeString() }}', diff:0, tick(){ let d = new Date(this.end) - new Date(); if(d < 0) d = 0; this.diff = d; setTimeout(() => this.tick(), 1000); }, h(){ return Math.floor(this.diff/3600000)%24 }, m(){ return Math.floor(this.diff/60000)%60 }, s(){ return Math.floor(this.diff/1000)%60 } }" x-init="tick()" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                    Berakhir dalam <span x-text="h()"></span>j <span x-text="m()"></span>m <span x-text="s()"></span>s
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                @foreach($flashProducts as $fp)
-                    @php $p = $fp->produk; $promo = $fp->promo; @endphp
-                    <x-product-card :produk="$p" :promo="$promo" :badge="'SALE'" :showWishlistBtn="true" />
-                @endforeach
-            </div>
-        </section>
-    @endif
-
-    <section class="space-y-5">
-        <div class="flex items-end justify-between gap-3">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Cepat Menjelajah</p>
-                <h2 class="mt-1 text-2xl font-black text-slate-900">Kategori Cepat</h2>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            @foreach($quickCategories as $c)
-                <a href="{{ route('category.show', $c->slug) }}" class="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-xl hover:shadow-[#63A2BB]/15">
-                    <div class="aspect-[4/3] overflow-hidden bg-[#F1F5F8]">
-                        <img src="{{ $c->banner_url ?? asset('images/default-category.svg') }}" class="h-full w-full object-cover transition-all duration-300 group-hover:scale-105" alt="{{ $c->nama_kategori }}">
-                    </div>
-                    <div class="p-5">
-                        <div class="text-sm font-bold text-slate-900">{{ $c->nama_kategori }}</div>
-                        <div class="mt-1 text-sm text-slate-500">Buka kategori</div>
+                    <!-- Content -->
+                    <div class="absolute inset-x-0 bottom-0 p-6 flex flex-col justify-end z-10">
+                        <span class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-white mb-3 transition-transform duration-300 group-hover:translate-x-1">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </span>
+                        <h3 class="text-lg font-black text-white tracking-tight">{{ $card['title'] }}</h3>
+                        <p class="mt-1 text-[11px] text-white/70 leading-normal font-medium">{{ $card['subtitle'] }}</p>
                     </div>
                 </a>
             @endforeach
         </div>
     </section>
+
+    <section class="section-shell space-y-6">
+        <div class="flex items-end justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Deals & Highlights</p>
+                <h2 class="mt-1 text-3xl font-black text-slate-900">Promo banners built for motion</h2>
+            </div>
+            <a href="{{ route('product.index') }}?sort=terbaru" class="text-sm font-semibold text-[#63A2BB] hover:text-[#4e8fa8]">See collections →</a>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+            <!-- Main Banner with Background Image -->
+            <div class="relative overflow-hidden rounded-[2rem] h-[360px] shadow-xl border border-slate-800 transition-all duration-500 hover:shadow-2xl hover:shadow-[#63A2BB]/12 group">
+                <img src="https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1200&q=80" alt="Summer Sport Collection" class="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-90"></div>
+                <div class="absolute inset-0 border-2 border-transparent rounded-[2rem] transition-colors duration-300 group-hover:border-[#63A2BB]/30"></div>
+                
+                <div class="absolute inset-x-0 bottom-0 p-8 flex flex-col justify-end z-10">
+                    <div>
+                        <span class="inline-flex rounded-full border border-[#63A2BB]/40 bg-[#63A2BB]/15 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-[#8FD0E3] shadow-sm">Flash Sale · Up to 40% Off</span>
+                    </div>
+                    <h3 class="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">Summer Sport Collection</h3>
+                    <p class="mt-2 max-w-lg text-sm text-white/80 font-medium">
+                        Gear ringan, breathable, dan siap dipakai untuk sesi latihan intens maupun gaya sehari-hari.
+                    </p>
+                    <div class="mt-6">
+                        <a href="{{ route('product.index') }}" class="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                            Shop the Sale
+                            <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column Banner Cards with Photo Backgrounds -->
+            <div class="grid gap-6">
+                <!-- Card 1 -->
+                <div class="relative overflow-hidden rounded-[2rem] h-[168px] border border-slate-800 shadow-lg transition-all duration-500 hover:shadow-2xl hover:border-[#63A2BB]/40 group">
+                    <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80" alt="Basketball Ready" class="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent opacity-90"></div>
+                    
+                    <div class="absolute inset-0 p-6 flex flex-col justify-center z-10">
+                        <div class="text-[9px] font-black uppercase tracking-[0.25em] text-[#8FD0E3]">New Arrivals</div>
+                        <h4 class="mt-1 text-xl font-black tracking-tight text-white">Basketball Ready</h4>
+                        <p class="mt-1 text-xs text-white/70 max-w-xs leading-normal">Curated pieces for faster footwork and cleaner looks.</p>
+                        <a href="{{ route('product.index') }}?q=basketball" class="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#8FD0E3] transition-all duration-200 group-hover:gap-3">
+                            Explore <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="relative overflow-hidden rounded-[2rem] h-[168px] border border-slate-800 shadow-lg transition-all duration-500 hover:shadow-2xl hover:border-[#63A2BB]/40 group">
+                    <img src="https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=600&q=80" alt="Racket Sports" class="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent opacity-90"></div>
+                    
+                    <div class="absolute inset-0 p-6 flex flex-col justify-center z-10">
+                        <div class="text-[9px] font-black uppercase tracking-[0.25em] text-[#8FD0E3]">Limited Edition</div>
+                        <h4 class="mt-1 text-xl font-black tracking-tight text-white">Racket Sports</h4>
+                        <p class="mt-1 text-xs text-white/70 max-w-xs leading-normal">Fast-match essentials for training and competition.</p>
+                        <a href="{{ route('product.index') }}?q=tennis" class="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#8FD0E3] transition-all duration-200 group-hover:gap-3">
+                            Explore <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- Recommended Products (Horizontal Carousel) --}}
+    @if(isset($recommendedProducts) && $recommendedProducts->isNotEmpty())
+        <section class="section-shell space-y-6">
+            <div class="flex items-end justify-between gap-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Rekomendasi Untuk Anda</p>
+                    <h2 class="mt-1 text-3xl font-black text-slate-900">Recommended Products</h2>
+                </div>
+                <span class="text-xs text-slate-400 font-semibold hidden sm:inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    Swipe ke kanan / kiri
+                </span>
+            </div>
+
+            <div class="flex overflow-x-auto pb-4 gap-6 scroll-smooth snap-x snap-mandatory scrollbar-none" style="-webkit-overflow-scrolling: touch;">
+                @foreach($recommendedProducts as $product)
+                    <div class="w-[260px] sm:w-[280px] flex-shrink-0 snap-start">
+                        <x-product-card :produk="$product" :badge="'FOR YOU'" :showWishlistBtn="true" />
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    {{-- New Arrivals --}}
+    @if($newArrivals->isNotEmpty())
+        <section class="section-shell space-y-6">
+            <div class="flex items-end justify-between gap-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-[#63A2BB]">Fresh Drop</p>
+                    <h2 class="mt-1 text-3xl font-black text-slate-900">New Arrivals</h2>
+                </div>
+                <a href="{{ route('product.index') }}?sort=terbaru" class="text-sm font-semibold text-[#63A2BB] hover:text-[#4e8fa8]">View all →</a>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                @foreach($newArrivals as $product)
+                    <x-product-card :produk="$product" :badge="'NEW'" :showWishlistBtn="true" />
+                @endforeach
+            </div>
+        </section>
+    @endif
 </div>
-@endsection
-
-@section('scripts')
-<script>
-    function heroSlider() {
-        return {
-            current: 0,
-            banners: [],
-            init() {
-                const rawBanners = this.$el.dataset.banners || '[]';
-                this.banners = JSON.parse(rawBanners);
-
-                if (this.banners.length > 1) {
-                    setInterval(() => this.next(), 5000);
-                }
-            },
-            next() {
-                if (!this.banners.length) return;
-                this.current = (this.current + 1) % this.banners.length;
-            },
-            prev() {
-                if (!this.banners.length) return;
-                this.current = (this.current - 1 + this.banners.length) % this.banners.length;
-            },
-        }
-    }
-</script>
 @endsection

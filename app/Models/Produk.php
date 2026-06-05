@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Schema;
+use App\Models\WarnaProduk;
+use App\Models\DetailProduk;
 use Illuminate\Support\Str;
 use App\Models\RatingProduk;
 
@@ -80,9 +84,28 @@ class Produk extends Model
         return $this->gambarProduk();
     }
 
-    public function warnaProduk(): HasMany
+    // Warna list accessor — return collection of WarnaProduk related to this product
+    // Uses detail_produk.warna_id when available; otherwise returns empty collection.
+    public function getWarnaProdukAttribute()
     {
-        return $this->hasMany(WarnaProduk::class, 'produk_id', 'produk_id');
+        // If detail_produk has a warna_id column, gather warna ids from variants
+        if (Schema::hasColumn('detail_produk', 'warna_id')) {
+            $warnaIds = DetailProduk::where('produk_id', $this->produk_id)
+                ->whereNotNull('warna_id')
+                ->pluck('warna_id')
+                ->unique()
+                ->values()
+                ->all();
+
+            if (empty($warnaIds)) {
+                return collect();
+            }
+
+            return WarnaProduk::whereIn('warna_id', $warnaIds)->get();
+        }
+
+        // Fallback: no linkage available, return empty collection
+        return collect();
     }
 
     public function detailProduk(): HasMany

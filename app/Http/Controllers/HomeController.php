@@ -117,6 +117,66 @@ class HomeController extends Controller
         }
 
 
-        return view('buyer.home', compact('banners','newArrivals','bestSellers','flashProducts','quickCategories'));
+        // Recommended Products based on view history
+        $recommendedProducts = collect();
+        if (Schema::hasTable('produk')) {
+            $viewed = session()->get('viewed_products', []);
+            if (!empty($viewed)) {
+                arsort($viewed);
+                $mostViewedIds = array_keys($viewed);
+                $categoryIds = Produk::whereIn('produk_id', $mostViewedIds)
+                    ->where('is_active', 1)
+                    ->pluck('kategori_id')
+                    ->unique()
+                    ->toArray();
+
+                if (!empty($categoryIds)) {
+                    $recommendedProducts = Produk::with([
+                            'gambarUtama',
+                            'gambarProduk' => fn ($q) => $q->orderBy('urutan'),
+                            'kategori',
+                            'supplier',
+                            'detailProduk',
+                        ])
+                        ->where('is_active', 1)
+                        ->whereIn('kategori_id', $categoryIds)
+                        ->whereNotIn('produk_id', $mostViewedIds)
+                        ->limit(8)
+                        ->get();
+
+                    if ($recommendedProducts->count() < 8) {
+                        $extra = Produk::with([
+                                'gambarUtama',
+                                'gambarProduk' => fn ($q) => $q->orderBy('urutan'),
+                                'kategori',
+                                'supplier',
+                                'detailProduk',
+                            ])
+                            ->where('is_active', 1)
+                            ->whereIn('kategori_id', $categoryIds)
+                            ->whereNotIn('produk_id', $recommendedProducts->pluck('produk_id')->toArray())
+                            ->limit(8 - $recommendedProducts->count())
+                            ->get();
+                        $recommendedProducts = $recommendedProducts->merge($extra);
+                    }
+                }
+            }
+
+            if ($recommendedProducts->isEmpty()) {
+                $recommendedProducts = Produk::with([
+                        'gambarUtama',
+                        'gambarProduk' => fn ($q) => $q->orderBy('urutan'),
+                        'kategori',
+                        'supplier',
+                        'detailProduk',
+                    ])
+                    ->where('is_active', 1)
+                    ->inRandomOrder()
+                    ->limit(8)
+                    ->get();
+            }
+        }
+
+        return view('buyer.home', compact('banners','newArrivals','bestSellers','flashProducts','quickCategories','recommendedProducts'));
     }
 }

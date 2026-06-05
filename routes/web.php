@@ -143,6 +143,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/export', [\App\Http\Controllers\Admin\DashboardExportController::class, 'export'])->name('dashboard.export');
+    Route::get('/dashboard/import', function () {
+        return redirect()->route('admin.dashboard')->with('info', 'Fitur import belum tersedia.');
+    })->name('dashboard.import');
 
     Route::get('/notifications/unread', [NotificationAdminController::class, 'unread'])->name('notifications.unread');
     Route::post('/notifications/{id}/read', [NotificationAdminController::class, 'markRead'])->name('notifications.read');
@@ -163,6 +166,7 @@ Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group
     Route::post('/master-product/media', [\App\Http\Controllers\Admin\MasterProductCreateController::class, 'storeMedia'])->name('master-product.media.store');
     // Parameterized routes come last
     Route::get('/master-product/{id}', [\App\Http\Controllers\Admin\MasterProductController::class, 'show'])->name('master-product.detail');
+    Route::get('/master-product/{id}/edit-confirm', [\App\Http\Controllers\Admin\MasterProductController::class, 'editConfirm'])->name('master-product.edit-confirm');
     Route::get('/master-product/{id}/edit', [\App\Http\Controllers\Admin\MasterProductController::class, 'edit'])->name('master-product.edit');
     Route::put('/master-product/{id}', [\App\Http\Controllers\Admin\MasterProductController::class, 'update'])->name('master-product.update');
     Route::delete('/master-product/{id}', [\App\Http\Controllers\Admin\MasterProductController::class, 'destroy'])->name('master-product.destroy');
@@ -265,7 +269,8 @@ Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group
     Route::post('/supplier-order', [\App\Http\Controllers\Admin\SupplierOrderController::class, 'store'])->name('supplier-order.store');
     Route::get('/supplier-order/{id}', [\App\Http\Controllers\Admin\SupplierOrderController::class, 'show'])->name('supplier-order.show');
     Route::post('/supplier-order/{id}/receive', [\App\Http\Controllers\Admin\SupplierOrderController::class, 'receive'])->name('supplier-order.receive');
-    Route::get('/supplier-order/{id}/invoice', [\App\Http\Controllers\Admin\SupplierOrderController::class, 'invoicePdf'])->name('supplier-order.invoice-pdf');
+    Route::get('/supplier-order/{id}/invoice', [\App\Http\Controllers\Admin\SupplierOrderController::class, 'invoice'])->name('supplier-order.invoice');
+    Route::get('/supplier-order/{id}/invoice-pdf', [\App\Http\Controllers\Admin\SupplierOrderController::class, 'invoicePdf'])->name('supplier-order.invoice-pdf');
 });
 Route::get('/api/search-suggest', [SearchController::class, 'suggest']);
 

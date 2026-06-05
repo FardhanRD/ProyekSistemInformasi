@@ -108,6 +108,18 @@ class MasterProductController extends Controller
         return view('admin.master-product.edit', compact('produk', 'kategoris', 'suppliers'));
     }
 
+    public function editConfirm($id)
+    {
+        $produk = Produk::with([
+            'kategori',
+            'supplier',
+            'detailProduk',
+            'gambarProduk',
+        ])->findOrFail($id);
+
+        return view('admin.master-product.edit-confirm', compact('produk'));
+    }
+
     public function update(Request $request, $id)
     {
         $produk = Produk::findOrFail($id);

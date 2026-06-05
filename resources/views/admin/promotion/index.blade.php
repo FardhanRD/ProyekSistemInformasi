@@ -3,175 +3,497 @@
 @section('title', 'Promotion Management')
 
 @section('content')
-<div x-data="promotionPage()" class="space-y-6">
-    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">Promotion Management</h1>
-                <p class="text-slate-600">Kelola voucher, diskon produk, dan flash sale.</p>
-            </div>
-            <div class="flex gap-2 flex-wrap">
-                <button @click="tab='voucher'" :class="tab==='voucher' ? activeTab : inactiveTab" class="px-4 py-2 rounded-xl text-sm font-semibold">Voucher</button>
-                <button @click="tab='diskon'" :class="tab==='diskon' ? activeTab : inactiveTab" class="px-4 py-2 rounded-xl text-sm font-semibold">Diskon Produk</button>
-                <button @click="tab='flash'" :class="tab==='flash' ? activeTab : inactiveTab" class="px-4 py-2 rounded-xl text-sm font-semibold">Flash Sale</button>
-            </div>
+<div x-data="promotionPage()" style="padding: 28px 28px 40px; display: flex; flex-direction: column; gap: 24px;">
+    
+    {{-- Page Header --}}
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div>
+            <p style="font-size:11px; font-weight:700; color:#63A2BB; text-transform:uppercase; letter-spacing:0.1em; margin:0 0 4px;">Pemasaran</p>
+            <h1 class="page-header-title" style="margin:0 0 4px;">Promotion Management</h1>
+            <p class="page-header-sub" style="margin:0; color:#94A3B8;">Kelola voucher, diskon produk, dan flash sale.</p>
+        </div>
+        
+        {{-- Elegant Tab Navigation --}}
+        <div style="display:flex; background:white; padding:4px; border-radius:12px; border:1px solid #E2E8F0; gap:2px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <button @click="tab='voucher'" 
+                class="border-none cursor-pointer text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-150"
+                :class="tab==='voucher' ? 'bg-[#63A2BB] text-white font-bold shadow-[0_2px_8px_rgba(99,162,187,0.3)]' : 'bg-transparent text-slate-500 hover:text-slate-800'">
+                🎫 Voucher
+            </button>
+            <button @click="tab='diskon'" 
+                class="border-none cursor-pointer text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-150"
+                :class="tab==='diskon' ? 'bg-[#63A2BB] text-white font-bold shadow-[0_2px_8px_rgba(99,162,187,0.3)]' : 'bg-transparent text-slate-500 hover:text-slate-800'">
+                🏷️ Diskon Produk
+            </button>
+            <button @click="tab='flash'" 
+                class="border-none cursor-pointer text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-150"
+                :class="tab==='flash' ? 'bg-[#63A2BB] text-white font-bold shadow-[0_2px_8px_rgba(99,162,187,0.3)]' : 'bg-transparent text-slate-500 hover:text-slate-800'">
+                ⚡ Flash Sale
+            </button>
         </div>
     </div>
 
-    <template x-if="tab==='voucher'">
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-900">Voucher</h2>
-                <button class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-white font-semibold" @click="openVoucherModal('create')">+ Tambah Voucher</button>
+    {{-- ===== VOUCHER TAB ===== --}}
+    <div x-show="tab==='voucher'" x-cloak x-transition>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 15px; font-weight: 800; color: #1E293B; margin: 0;">Voucher Toko Aktif</h2>
+                <button class="btn-primary" style="height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;" @click="openVoucherModal('create')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    Tambah Voucher
+                </button>
             </div>
-            <div class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50">
-                            <tr class="text-left text-xs uppercase text-slate-600">
-                                <th class="px-4 py-3">Kode</th><th class="px-4 py-3">Nama</th><th class="px-4 py-3">Jenis Diskon</th><th class="px-4 py-3">Nilai</th><th class="px-4 py-3">Min Belanja</th><th class="px-4 py-3">Kuota/Terpakai</th><th class="px-4 py-3">Periode</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Aksi</th>
+            
+            <div class="panel">
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Kode Voucher</th>
+                                <th>Nama Voucher</th>
+                                <th>Jenis Diskon</th>
+                                <th style="text-align: right; width: 140px;">Nilai Diskon</th>
+                                <th style="text-align: right; width: 140px;">Min. Belanja</th>
+                                <th style="text-align: center; width: 130px;">Kuota / Terpakai</th>
+                                <th style="width: 160px;">Masa Berlaku</th>
+                                <th style="text-align: center; width: 110px;">Status</th>
+                                <th style="text-align: center; width: 180px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($vouchers as $voucher)
-                                <tr class="border-t border-slate-100">
-                                    <td class="px-4 py-3 font-mono">{{ $voucher->kode_voucher }}</td>
-                                    <td class="px-4 py-3">{{ $voucher->nama_voucher }}</td>
-                                    <td class="px-4 py-3">{{ ucfirst($voucher->jenis_diskon) }}</td>
-                                    <td class="px-4 py-3">{{ $voucher->jenis_diskon === 'persen' ? $voucher->nilai_diskon.'%' : 'Rp '.number_format($voucher->nilai_diskon,0,',','.') }}</td>
-                                    <td class="px-4 py-3">Rp {{ number_format($voucher->min_belanja ?? 0,0,',','.') }}</td>
-                                    <td class="px-4 py-3">{{ $voucher->kuota ?? 'Unlimited' }} / {{ $voucher->kuota_terpakai ?? 0 }}</td>
-                                    <td class="px-4 py-3 text-xs">{{ $voucher->berlaku_mulai }}<br>{{ $voucher->berlaku_sampai }}</td>
-                                    <td class="px-4 py-3">@if($voucher->is_active)<span class="px-2 py-1 rounded-full bg-green-100 text-green-700">Aktif</span>@else<span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Nonaktif</span>@endif</td>
-                                    <td class="px-4 py-3 flex gap-2">
-                                        <button class="text-blue-600" @click='openVoucherModal("edit", @json($voucher))'>Edit</button>
-                                        <form method="POST" action="{{ route('admin.promotion.voucher.destroy', $voucher->voucher_id) }}" onsubmit="return confirm('Hapus voucher ini?')">
-                                            @csrf @method('DELETE')
-                                            <button class="text-red-600" type="submit">Hapus</button>
-                                        </form>
+                                <tr>
+                                    <td style="font-family: monospace; font-weight: 700; color: #0F172A; font-size: 13.5px;">{{ $voucher->kode_voucher }}</td>
+                                    <td style="font-weight: 600; color: #334155;">{{ $voucher->nama_voucher }}</td>
+                                    <td>
+                                        <span class="badge badge-admin">{{ ucfirst($voucher->jenis_diskon) }}</span>
+                                    </td>
+                                    <td style="text-align: right; font-weight: 800; color: #63A2BB; font-family: monospace;">
+                                        {{ $voucher->jenis_diskon === 'persen' ? $voucher->nilai_diskon.'%' : 'Rp '.number_format($voucher->nilai_diskon,0,',','.') }}
+                                    </td>
+                                    <td style="text-align: right; font-weight: 700; color: #475569; font-family: monospace;">
+                                        Rp {{ number_format($voucher->min_belanja ?? 0,0,',','.') }}
+                                    </td>
+                                    <td style="text-align: center; font-weight: 600; color: #334155;">
+                                        {{ $voucher->kuota ?? 'Unlimited' }} / <span style="color: #63A2BB;">{{ $voucher->kuota_terpakai ?? 0 }}</span>
+                                    </td>
+                                    <td style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                                        Mulai: {{ $voucher->berlaku_mulai }}<br>
+                                        Selesai: {{ $voucher->berlaku_sampai }}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        @if($voucher->is_active)
+                                            <span class="badge badge-success">Aktif</span>
+                                        @else
+                                            <span class="badge" style="background: #F1F5F9; color: #64748B;">Nonaktif</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                                            <button class="btn-secondary" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" @click='openVoucherModal("edit", @json($voucher))'>
+                                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                Edit
+                                            </button>
+                                            <form method="POST" action="{{ route('admin.promotion.voucher.destroy', $voucher->voucher_id) }}" onsubmit="return confirm('Hapus voucher ini?')" style="margin:0;">
+                                                @csrf 
+                                                @method('DELETE')
+                                                <button class="btn-danger" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" type="submit">
+                                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="9" class="px-4 py-6 text-center text-slate-500">Belum ada voucher.</td></tr>
+                                <tr>
+                                    <td colspan="9" style="text-align: center; color: #94A3B8; padding: 36px;">Belum ada voucher terdaftar.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Discounted Products Card --}}
+            <div class="panel" style="margin-top: 12px;">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">🏷️ Produk dengan Harga Diskon</h3>
+                        <p style="margin: 2px 0 0; font-size: 12px; color: #94A3B8;">Daftar varian produk yang memiliki harga promo di bawah harga modal dasarnya.</p>
+                    </div>
+                    <a href="{{ route('admin.master-product.index') }}" class="text-xs font-semibold text-admin hover:underline">Kelola Produk →</a>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th style="text-align: right; width: 160px;">Harga Normal</th>
+                                <th style="text-align: right; width: 160px;">Harga Diskon</th>
+                                <th style="text-align: center; width: 120px;">Hemat</th>
+                                <th style="text-align: center; width: 120px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($produkDiskon ?? [] as $p)
+                                @php
+                                    $hargaNormal = $p->detailProduk->max('harga');
+                                    $hargaDiskon = $p->detailProduk->min('harga');
+                                    $hemat = max(0, $hargaNormal - $hargaDiskon);
+                                    $persen = $hargaNormal > 0 ? round($hemat / $hargaNormal * 100) : 0;
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <img src="{{ $p->gambarUtama?->url_safe ?? asset('images/placeholder.png') }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #E2E8F0;" alt="{{ $p->nama_produk }}">
+                                            <div>
+                                                <p style="font-weight: 700; color: #0F172A; margin: 0;">{{ $p->nama_produk }}</p>
+                                                <p style="font-size: 11px; color: #94A3B8; margin: 2px 0 0;">Supplier: {{ $p->supplier->nama_toko ?? '-' }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; text-decoration: line-through; color: #94A3B8; font-family: monospace;">Rp {{ number_format($hargaNormal, 0, ',', '.') }}</td>
+                                    <td style="text-align: right; font-weight: 800; color: #63A2BB; font-family: monospace;">Rp {{ number_format($hargaDiskon, 0, ',', '.') }}</td>
+                                    <td style="text-align: center;">
+                                        <span class="badge" style="background: #FEE2E2; color: #EF4444;">-{{ $persen }}%</span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        @if($p->is_active)
+                                            <span class="badge badge-success">Aktif</span>
+                                        @else
+                                            <span class="badge" style="background: #F1F5F9; color: #64748B;">Nonaktif</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #94A3B8; padding: 28px;">Belum ada produk dengan harga diskon.</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 
-    <template x-if="tab==='diskon'">
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-900">Diskon Produk</h2>
-                <button class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-white font-semibold" @click="openPromoModal('create', 'diskon_produk')">+ Tambah Promo</button>
+    {{-- ===== PROMO DISKON TAB ===== --}}
+    <div x-show="tab==='diskon'" x-cloak x-transition>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 15px; font-weight: 800; color: #1E293B; margin: 0;">Promo Diskon Produk</h2>
+                <button class="btn-primary" style="height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;" @click="openPromoModal('create', 'diskon_produk')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    Tambah Promo
+                </button>
             </div>
-            <div class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50">
-                            <tr class="text-left text-xs uppercase text-slate-600"><th class="px-4 py-3">Nama Promo</th><th class="px-4 py-3">Produk/Variant</th><th class="px-4 py-3">Diskon</th><th class="px-4 py-3">Periode</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Aksi</th></tr>
+            
+            <div class="panel">
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nama Promo</th>
+                                <th>Produk / Variant</th>
+                                <th style="text-align: center; width: 120px;">Diskon (%)</th>
+                                <th>Masa Berlaku</th>
+                                <th style="text-align: center; width: 110px;">Status</th>
+                                <th style="text-align: center; width: 180px;">Aksi</th>
+                            </tr>
                         </thead>
                         <tbody>
                             @forelse($diskonProduk as $promo)
-                                <tr class="border-t border-slate-100">
-                                    <td class="px-4 py-3">{{ $promo->nama_promo }}</td>
-                                    <td class="px-4 py-3">{{ $promo->detailProduk?->produk?->nama_produk ?? $promo->produk?->nama_produk ?? '-' }} @if($promo->detailProduk) / {{ $promo->detailProduk?->warna?->nama_warna ?? '' }} @endif</td>
-                                    <td class="px-4 py-3">{{ $promo->persen_diskon }}%</td>
-                                    <td class="px-4 py-3 text-xs">{{ $promo->mulai }}<br>{{ $promo->selesai }}</td>
-                                    <td class="px-4 py-3">@if($promo->is_active)<span class="px-2 py-1 rounded-full bg-green-100 text-green-700">Aktif</span>@else<span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Nonaktif</span>@endif</td>
-                                    <td class="px-4 py-3 flex gap-2">
-                                        <button class="text-blue-600" @click='openPromoModal("edit", @json($promo), "diskon_produk")'>Edit</button>
-                                        <form method="POST" action="{{ route('admin.promotion.promo.destroy', $promo->promo_id) }}" onsubmit="return confirm('Hapus promo ini?')">@csrf @method('DELETE')<button class="text-red-600" type="submit">Hapus</button></form>
+                                <tr>
+                                    <td style="font-weight: 700; color: #0F172A;">{{ $promo->nama_promo }}</td>
+                                    <td>
+                                        <div style="font-weight: 600; color: #334155;">
+                                            {{ $promo->detailProduk?->produk?->nama_produk ?? $promo->produk?->nama_produk ?? '-' }}
+                                        </div>
+                                        @if($promo->detailProduk)
+                                            <div style="font-size:11px; color:#63A2BB; margin-top:2px; font-weight:600;">
+                                                Varian: {{ $promo->detailProduk?->warna?->nama_warna ?? '-' }} | Size: {{ $promo->detailProduk?->ukuran ?? '-' }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center; font-weight: 800; color: #EF4444; font-family: monospace;">{{ $promo->persen_diskon }}%</td>
+                                    <td style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                                        Mulai: {{ $promo->mulai }}<br>
+                                        Selesai: {{ $promo->selesai }}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        @if($promo->is_active)
+                                            <span class="badge badge-success">Aktif</span>
+                                        @else
+                                            <span class="badge" style="background: #F1F5F9; color: #64748B;">Nonaktif</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                                            <button class="btn-secondary" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" @click='openPromoModal("edit", @json($promo), "diskon_produk")'>
+                                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                Edit
+                                            </button>
+                                            <form method="POST" action="{{ route('admin.promotion.promo.destroy', $promo->promo_id) }}" onsubmit="return confirm('Hapus promo ini?')" style="margin:0;">
+                                                @csrf 
+                                                @method('DELETE')
+                                                <button class="btn-danger" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" type="submit">
+                                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="px-4 py-6 text-center text-slate-500">Belum ada diskon produk.</td></tr>
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #94A3B8; padding: 36px;">Belum ada diskon produk terdaftar.</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 
-    <template x-if="tab==='flash'">
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-900">Flash Sale</h2>
-                <button class="rounded-xl bg-[#2B9BAF] px-4 py-2 text-white font-semibold" @click="openPromoModal('create', 'flash_sale')">+ Tambah Flash Sale</button>
+    {{-- ===== FLASH SALE TAB ===== --}}
+    <div x-show="tab==='flash'" x-cloak x-transition>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 15px; font-weight: 800; color: #1E293B; margin: 0;">Flash Sale Terjadwal</h2>
+                <button class="btn-primary" style="height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;" @click="openPromoModal('create', 'flash_sale')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    Tambah Flash Sale
+                </button>
             </div>
-            <div class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50">
-                            <tr class="text-left text-xs uppercase text-slate-600"><th class="px-4 py-3">Nama Promo</th><th class="px-4 py-3">Produk/Variant</th><th class="px-4 py-3">Diskon</th><th class="px-4 py-3">Stok Flash</th><th class="px-4 py-3">Periode</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Aksi</th></tr>
+            
+            <div class="panel">
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nama Promo</th>
+                                <th>Produk / Variant</th>
+                                <th style="text-align: center; width: 110px;">Diskon (%)</th>
+                                <th style="text-align: center; width: 120px;">Stok Flash</th>
+                                <th>Masa Berlaku</th>
+                                <th style="text-align: center; width: 110px;">Status</th>
+                                <th style="text-align: center; width: 180px;">Aksi</th>
+                            </tr>
                         </thead>
                         <tbody>
                             @forelse($flashSale as $promo)
-                                <tr class="border-t border-slate-100">
-                                    <td class="px-4 py-3">{{ $promo->nama_promo }}</td>
-                                    <td class="px-4 py-3">{{ $promo->detailProduk?->produk?->nama_produk ?? $promo->produk?->nama_produk ?? '-' }} @if($promo->detailProduk) / {{ $promo->detailProduk?->warna?->nama_warna ?? '' }} @endif</td>
-                                    <td class="px-4 py-3">{{ $promo->persen_diskon }}%</td>
-                                    <td class="px-4 py-3">{{ $promo->stok_flash_sale ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-xs">{{ $promo->mulai }}<br>{{ $promo->selesai }}</td>
-                                    <td class="px-4 py-3">@if($promo->is_active)<span class="px-2 py-1 rounded-full bg-green-100 text-green-700">Aktif</span>@else<span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600">Nonaktif</span>@endif</td>
-                                    <td class="px-4 py-3 flex gap-2">
-                                        <button class="text-blue-600" @click='openPromoModal("edit", @json($promo), "flash_sale")'>Edit</button>
-                                        <form method="POST" action="{{ route('admin.promotion.promo.destroy', $promo->promo_id) }}" onsubmit="return confirm('Hapus flash sale ini?')">@csrf @method('DELETE')<button class="text-red-600" type="submit">Hapus</button></form>
+                                <tr>
+                                    <td style="font-weight: 700; color: #0F172A;">{{ $promo->nama_promo }}</td>
+                                    <td>
+                                        <div style="font-weight: 600; color: #334155;">
+                                            {{ $promo->detailProduk?->produk?->nama_produk ?? $promo->produk?->nama_produk ?? '-' }}
+                                        </div>
+                                        @if($promo->detailProduk)
+                                            <div style="font-size:11px; color:#63A2BB; margin-top:2px; font-weight:600;">
+                                                Varian: {{ $promo->detailProduk?->warna?->nama_warna ?? '-' }} | Size: {{ $promo->detailProduk?->ukuran ?? '-' }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center; font-weight: 800; color: #EF4444; font-family: monospace;">{{ $promo->persen_diskon }}%</td>
+                                    <td style="text-align: center; font-weight: 700; color: #0F172A; font-family: monospace;">{{ $promo->stok_flash_sale ?? '-' }} pcs</td>
+                                    <td style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                                        Mulai: {{ $promo->mulai }}<br>
+                                        Selesai: {{ $promo->selesai }}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        @if($promo->is_active)
+                                            <span class="badge badge-success">Aktif</span>
+                                        @else
+                                            <span class="badge" style="background: #F1F5F9; color: #64748B;">Nonaktif</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                                            <button class="btn-secondary" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" @click='openPromoModal("edit", @json($promo), "flash_sale")'>
+                                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                Edit
+                                            </button>
+                                            <form method="POST" action="{{ route('admin.promotion.promo.destroy', $promo->promo_id) }}" onsubmit="return confirm('Hapus flash sale ini?')" style="margin:0;">
+                                                @csrf 
+                                                @method('DELETE')
+                                                <button class="btn-danger" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" type="submit">
+                                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="px-4 py-6 text-center text-slate-500">Belum ada flash sale.</td></tr>
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: #94A3B8; padding: 36px;">Belum ada promo flash sale terdaftar.</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 
-    {{-- Voucher Modal --}}
-    <div x-show="voucherModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" style="display:none;">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-xl">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold" x-text="voucherMode==='create' ? 'Tambah Voucher' : 'Edit Voucher'"></h3><button class="text-slate-500" @click="voucherModal=false">✕</button></div>
-            <form :action="voucherAction" method="POST" class="grid sm:grid-cols-2 gap-4">
+    {{-- ===== VOUCHER MODAL ===== --}}
+    <div x-show="voucherModal" x-cloak style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;" @click.self="voucherModal=false">
+        <div style="background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 580px; overflow: hidden; border: 1px solid #E2E8F0;"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
+            
+            <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-size: 15px; font-weight: 800; color: #0F172A; margin: 0;" x-text="voucherMode==='create' ? 'Tambah Voucher Baru' : 'Edit Detail Voucher'"></h3>
+                <button type="button" style="background: none; border: none; cursor: pointer; color: #94A3B8; font-size: 16px;" @click="voucherModal=false">✕</button>
+            </div>
+
+            <form :action="voucherAction" method="POST" style="padding: 20px 24px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 @csrf
                 <input type="hidden" name="_method" :value="voucherMethod">
-                <div><label class="text-sm font-semibold">Kode</label><input name="kode_voucher" x-model="voucherForm.kode_voucher" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Nama Voucher</label><input name="nama_voucher" x-model="voucherForm.nama_voucher" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Jenis Diskon</label><select name="jenis_diskon" x-model="voucherForm.jenis_diskon" class="w-full rounded-xl border px-4 py-2"><option value="persen">Persen</option><option value="nominal">Nominal</option><option value="ongkir">Ongkir</option></select></div>
-                <div><label class="text-sm font-semibold">Nilai Diskon</label><input type="number" step="0.01" name="nilai_diskon" x-model="voucherForm.nilai_diskon" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Min Belanja</label><input type="number" step="0.01" name="min_belanja" x-model="voucherForm.min_belanja" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Maks Diskon</label><input type="number" step="0.01" name="maks_diskon" x-model="voucherForm.maks_diskon" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Kuota</label><input type="number" name="kuota" x-model="voucherForm.kuota" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Berlaku Mulai</label><input type="datetime-local" name="berlaku_mulai" x-model="voucherForm.berlaku_mulai" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Berlaku Sampai</label><input type="datetime-local" name="berlaku_sampai" x-model="voucherForm.berlaku_sampai" class="w-full rounded-xl border px-4 py-2"></div>
-                <label class="flex items-center gap-2"><input type="checkbox" name="is_active" value="1" x-model="voucherForm.is_active"> Aktif</label>
-                <div class="sm:col-span-2 flex justify-end gap-2 pt-2"><button type="button" @click="voucherModal=false" class="px-4 py-2 border rounded-xl">Batal</button><button class="px-4 py-2 rounded-xl bg-[#2B9BAF] text-white">Simpan</button></div>
+                
+                <div>
+                    <label class="form-label">Kode Voucher <span style="color: #EF4444;">*</span></label>
+                    <input name="kode_voucher" x-model="voucherForm.kode_voucher" required placeholder="Contoh: MERDEKA50" class="form-input" style="height: 38px; font-family: monospace; font-weight: 700; text-transform: uppercase;">
+                </div>
+                <div>
+                    <label class="form-label">Nama Voucher <span style="color: #EF4444;">*</span></label>
+                    <input name="nama_voucher" x-model="voucherForm.nama_voucher" required placeholder="Contoh: Voucher Diskon Kemerdekaan" class="form-input" style="height: 38px;">
+                </div>
+                <div>
+                    <label class="form-label">Jenis Diskon</label>
+                    <select name="jenis_diskon" x-model="voucherForm.jenis_diskon" class="form-input" style="height: 38px; cursor: pointer;">
+                        <option value="persen">Persen (%)</option>
+                        <option value="nominal">Nominal (Rupiah)</option>
+                        <option value="ongkir">Gratis / Potongan Ongkir</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Nilai Diskon <span style="color: #EF4444;">*</span></label>
+                    <input type="number" step="0.01" min="0" name="nilai_diskon" x-model="voucherForm.nilai_diskon" required class="form-input" style="height: 38px; font-family: monospace;">
+                </div>
+                <div>
+                    <label class="form-label">Min Belanja</label>
+                    <input type="number" step="0.01" min="0" name="min_belanja" x-model="voucherForm.min_belanja" class="form-input" style="height: 38px; font-family: monospace;">
+                </div>
+                <div>
+                    <label class="form-label">Maks Diskon</label>
+                    <input type="number" step="0.01" min="0" name="maks_diskon" x-model="voucherForm.maks_diskon" class="form-input" style="height: 38px; font-family: monospace;" placeholder="Kosongkan jika tidak dibatasi">
+                </div>
+                <div>
+                    <label class="form-label">Kuota Penggunaan</label>
+                    <input type="number" min="0" name="kuota" x-model="voucherForm.kuota" class="form-input" style="height: 38px;" placeholder="Kosongkan jika tak terbatas">
+                </div>
+                <div>&nbsp;</div>
+                <div>
+                    <label class="form-label">Berlaku Mulai</label>
+                    <input type="datetime-local" name="berlaku_mulai" x-model="voucherForm.berlaku_mulai" class="form-input" style="height: 38px;">
+                </div>
+                <div>
+                    <label class="form-label">Berlaku Sampai</label>
+                    <input type="datetime-local" name="berlaku_sampai" x-model="voucherForm.berlaku_sampai" class="form-input" style="height: 38px;">
+                </div>
+                
+                <div style="grid-column: 1 / -1; padding: 4px 0;">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #334155;">
+                        <input type="checkbox" name="is_active" value="1" x-model="voucherForm.is_active" style="width: 16px; height: 16px; accent-color: #63A2BB; cursor: pointer;">
+                        Aktifkan voucher ini agar dapat diklaim oleh pembeli
+                    </label>
+                </div>
+                
+                <div style="grid-column: 1 / -1; margin-top: 10px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #F1F5F9; padding-top: 14px;">
+                    <button type="button" class="btn-secondary" style="height: 38px; padding: 0 16px;" @click="voucherModal=false">Batal</button>
+                    <button type="submit" class="btn-primary" style="height: 38px; padding: 0 20px;">Simpan Voucher</button>
+                </div>
             </form>
         </div>
     </div>
 
-    {{-- Promo Modal --}}
-    <div x-show="promoModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" style="display:none;">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-auto">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold" x-text="promoMode==='create' ? 'Tambah Promo' : 'Edit Promo'"></h3><button class="text-slate-500" @click="promoModal=false">✕</button></div>
-            <form :action="promoAction" method="POST" class="grid sm:grid-cols-2 gap-4">
+    {{-- ===== PROMO MODAL ===== --}}
+    <div x-show="promoModal" x-cloak style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;" @click.self="promoModal=false">
+        <div style="background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 580px; overflow: hidden; border: 1px solid #E2E8F0;"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
+            
+            <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-size: 15px; font-weight: 800; color: #0F172A; margin: 0;" x-text="promoMode==='create' ? 'Tambah Promo Baru' : 'Edit Detail Promo'"></h3>
+                <button type="button" style="background: none; border: none; cursor: pointer; color: #94A3B8; font-size: 16px;" @click="promoModal=false">✕</button>
+            </div>
+
+            <form :action="promoAction" method="POST" style="padding: 20px 24px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 @csrf
                 <input type="hidden" name="_method" :value="promoMethod">
-                <div><label class="text-sm font-semibold">Jenis</label><select name="jenis" x-model="promoForm.jenis" class="w-full rounded-xl border px-4 py-2"><option value="diskon_produk">Diskon Produk</option><option value="flash_sale">Flash Sale</option></select></div>
-                <div><label class="text-sm font-semibold">Nama Promo</label><input name="nama_promo" x-model="promoForm.nama_promo" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Produk</label><select name="produk_id" x-model="promoForm.produk_id" class="w-full rounded-xl border px-4 py-2"><option value="">Global / pilih produk</option>@foreach($products as $product)<option value="{{ $product->produk_id }}">{{ $product->nama_produk }}</option>@endforeach</select></div>
-                <div><label class="text-sm font-semibold">Variant</label><select name="detail_produk_id" x-model="promoForm.detail_produk_id" class="w-full rounded-xl border px-4 py-2"><option value="">Pilih variant</option>@foreach($variants as $variant)<option value="{{ $variant->detail_produk_id }}">{{ $variant->produk?->nama_produk }} - {{ $variant->warna?->nama_warna ?? $variant->nama_produk }}</option>@endforeach</select></div>
-                <div><label class="text-sm font-semibold">Persen Diskon</label><input type="number" step="0.01" name="persen_diskon" x-model="promoForm.persen_diskon" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Nominal Diskon</label><input type="number" step="0.01" name="nominal_diskon" x-model="promoForm.nominal_diskon" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Stok Flash Sale</label><input type="number" name="stok_flash_sale" x-model="promoForm.stok_flash_sale" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Mulai</label><input type="datetime-local" name="mulai" x-model="promoForm.mulai" class="w-full rounded-xl border px-4 py-2"></div>
-                <div><label class="text-sm font-semibold">Selesai</label><input type="datetime-local" name="selesai" x-model="promoForm.selesai" class="w-full rounded-xl border px-4 py-2"></div>
-                <label class="flex items-center gap-2"><input type="checkbox" name="is_active" value="1" x-model="promoForm.is_active"> Aktif</label>
-                <div class="sm:col-span-2 flex justify-end gap-2 pt-2"><button type="button" @click="promoModal=false" class="px-4 py-2 border rounded-xl">Batal</button><button class="px-4 py-2 rounded-xl bg-[#2B9BAF] text-white">Simpan</button></div>
+                
+                <div>
+                    <label class="form-label">Tipe Promosi</label>
+                    <select name="jenis" x-model="promoForm.jenis" class="form-input" style="height: 38px; cursor: pointer;">
+                        <option value="diskon_produk">Diskon Produk</option>
+                        <option value="flash_sale">Flash Sale</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Nama Promosi <span style="color: #EF4444;">*</span></label>
+                    <input name="nama_promo" x-model="promoForm.nama_promo" required placeholder="Contoh: Diskon Gajian Akhir Bulan" class="form-input" style="height: 38px;">
+                </div>
+                
+                <div>
+                    <label class="form-label">Pilih Produk Master</label>
+                    <select name="produk_id" x-model="promoForm.produk_id" class="form-input" style="height: 38px; cursor: pointer;">
+                        <option value="">Global / Berlaku Semua Varian</option>
+                        @foreach($products as $product)
+                            <option value="{{ $product->produk_id }}">{{ $product->nama_produk }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Pilih Varian Spesifik (Opsional)</label>
+                    <select name="detail_produk_id" x-model="promoForm.detail_produk_id" class="form-input" style="height: 38px; cursor: pointer;">
+                        <option value="">Semua Varian Produk</option>
+                        @foreach($variants as $variant)
+                            <option value="{{ $variant->detail_produk_id }}">{{ $variant->produk?->nama_produk }} — {{ $variant->warna?->nama_warna ?? '-' }} (Size: {{ $variant->ukuran ?? 'OS' }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="form-label">Persen Diskon (%) <span style="color: #EF4444;">*</span></label>
+                    <input type="number" step="0.01" min="0" max="100" name="persen_diskon" x-model="promoForm.persen_diskon" required class="form-input" style="height: 38px; font-family: monospace;">
+                </div>
+                <div>
+                    <label class="form-label">Nominal Diskon (Rupiah)</label>
+                    <input type="number" step="0.01" min="0" name="nominal_diskon" x-model="promoForm.nominal_diskon" class="form-input" style="height: 38px; font-family: monospace;" placeholder="Opsional">
+                </div>
+                
+                <div x-show="promoForm.jenis === 'flash_sale'">
+                    <label class="form-label">Stok Kuota Flash Sale <span style="color: #EF4444;">*</span></label>
+                    <input type="number" min="0" name="stok_flash_sale" x-model="promoForm.stok_flash_sale" :required="promoForm.jenis === 'flash_sale'" class="form-input" style="height: 38px;" placeholder="Jumlah kuota unit flash sale">
+                </div>
+                <div x-show="promoForm.jenis === 'flash_sale'">&nbsp;</div>
+                
+                <div>
+                    <label class="form-label">Mulai Tanggal & Jam</label>
+                    <input type="datetime-local" name="mulai" x-model="promoForm.mulai" class="form-input" style="height: 38px;">
+                </div>
+                <div>
+                    <label class="form-label">Selesai Tanggal & Jam</label>
+                    <input type="datetime-local" name="selesai" x-model="promoForm.selesai" class="form-input" style="height: 38px;">
+                </div>
+                
+                <div style="grid-column: 1 / -1; padding: 4px 0;">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #334155;">
+                        <input type="checkbox" name="is_active" value="1" x-model="promoForm.is_active" style="width: 16px; height: 16px; accent-color: #63A2BB; cursor: pointer;">
+                        Aktifkan promosi ini agar langsung memotong harga jual
+                    </label>
+                </div>
+                
+                <div style="grid-column: 1 / -1; margin-top: 10px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #F1F5F9; padding-top: 14px;">
+                    <button type="button" class="btn-secondary" style="height: 38px; padding: 0 16px;" @click="promoModal=false">Batal</button>
+                    <button type="submit" class="btn-primary" style="height: 38px; padding: 0 20px;">Simpan Promo</button>
+                </div>
             </form>
         </div>
     </div>
@@ -191,8 +513,7 @@ function promotionPage() {
         promoMethod: 'POST',
         voucherForm: { kode_voucher:'', nama_voucher:'', jenis_diskon:'persen', nilai_diskon:0, min_belanja:0, maks_diskon:'', kuota:'', berlaku_mulai:'', berlaku_sampai:'', is_active:true },
         promoForm: { jenis:'diskon_produk', nama_promo:'', produk_id:'', detail_produk_id:'', persen_diskon:0, nominal_diskon:'', stok_flash_sale:'', mulai:'', selesai:'', is_active:true },
-        activeTab: 'bg-[#2B9BAF] text-white',
-        inactiveTab: 'bg-slate-100 text-slate-700',
+        
         openVoucherModal(mode, voucher = {}) {
             this.voucherMode = mode;
             this.voucherModal = true;
