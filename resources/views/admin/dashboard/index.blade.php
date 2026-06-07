@@ -71,12 +71,13 @@
         @endphp
 
         {{-- KPI cards --}}
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px;">
             @foreach([
                 ['label'=>'Total Revenue','value'=>'Rp '.number_format($totalRevenue,0,',','.'),'change'=>number_format($revenueChange,2),'up'=>$revUp,'icon'=>'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z','iconBg'=>'#EFF8FB','iconColor'=>'#63A2BB'],
                 ['label'=>'Total Orders','value'=>$totalOrders,'change'=>number_format($ordersChange,2),'up'=>$ordUp,'icon'=>'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z','iconBg'=>'#F0FDF4','iconColor'=>'#16A34A'],
                 ['label'=>'Active Customers','value'=>$activeCustomers,'change'=>'—','up'=>true,'icon'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z','iconBg'=>'#FEF9EE','iconColor'=>'#D97706'],
                 ['label'=>'Avg Order Value','value'=>'Rp '.number_format($avgOrderValue??0,0,',','.'),'change'=>number_format($avgChange,2),'up'=>$avgUp,'icon'=>'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','iconBg'=>'#FFF1F2','iconColor'=>'#E11D48'],
+                ['label'=>'Active Flash Sales','value'=>$activeFlashSalesCount,'change'=>'Kelola','url'=>route('admin.promotion.index').'?tab=flash','up'=>true,'icon'=>'M13 10V3L4 14h7v7l9-11h-7z','iconBg'=>'#FAF5FF','iconColor'=>'#7C3AED'],
             ] as $kpi)
             <div class="stat-card" style="padding:20px;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
@@ -84,9 +85,15 @@
                         <svg width="18" height="18" fill="none" stroke="{{ $kpi['iconColor'] }}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $kpi['icon'] }}"/></svg>
                     </div>
                     @if($kpi['change'] !== '—')
-                    <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:99px; {{ $kpi['up'] ? 'background:#DCFCE7; color:#16A34A;' : 'background:#FEE2E2; color:#DC2626;' }}">
-                        {{ $kpi['up'] ? '▲' : '▼' }} {{ $kpi['change'] }}%
-                    </span>
+                        @if(isset($kpi['url']))
+                            <a href="{{ $kpi['url'] }}" style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:99px; background:#F3E8FF; color:#7C3AED; text-decoration:none;">
+                                {{ $kpi['change'] }} →
+                            </a>
+                        @else
+                            <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:99px; {{ $kpi['up'] ? 'background:#DCFCE7; color:#16A34A;' : 'background:#FEE2E2; color:#DC2626;' }}">
+                                {{ $kpi['up'] ? '▲' : '▼' }} {{ $kpi['change'] }}%
+                            </span>
+                        @endif
                     @endif
                 </div>
                 <p style="font-size:11px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:0.06em; margin:0 0 6px;">{{ $kpi['label'] }}</p>

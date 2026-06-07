@@ -78,6 +78,7 @@ class HomeController extends Controller
 
         // Flash Sale (promos)
         $flashProducts = collect();
+        $flashEndTime = null;
         if (Schema::hasTable('promo')) {
             $now = Carbon::now();
             $flashPromos = DB::table('promo')
@@ -88,7 +89,13 @@ class HomeController extends Controller
                 ->get();
 
             $produk_ids = $flashPromos->pluck('produk_id')->unique()->toArray();
-            $products = Produk::whereIn('produk_id', $produk_ids)->with('images')->get()->keyBy('produk_id');
+            $products = Produk::whereIn('produk_id', $produk_ids)->with([
+                'gambarUtama',
+                'gambarProduk' => fn ($q) => $q->orderBy('urutan'),
+                'kategori',
+                'supplier',
+                'detailProduk',
+            ])->get()->keyBy('produk_id');
 
             foreach ($flashPromos as $promo) {
                 if (isset($promo->produk_id) && isset($products[$promo->produk_id])) {
@@ -103,6 +110,9 @@ class HomeController extends Controller
             }
 
             $flashProducts = $flashProducts->unique('produk.produk_id')->take(8);
+            if ($flashProducts->isNotEmpty()) {
+                $flashEndTime = Carbon::parse($flashPromos->min('selesai'))->toIso8601String();
+            }
         }
 
 
@@ -177,6 +187,6 @@ class HomeController extends Controller
             }
         }
 
-        return view('buyer.home', compact('banners','newArrivals','bestSellers','flashProducts','quickCategories','recommendedProducts'));
+        return view('buyer.home', compact('banners','newArrivals','bestSellers','flashProducts','flashEndTime','quickCategories','recommendedProducts'));
     }
 }

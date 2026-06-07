@@ -346,4 +346,59 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    public function cancel($kode_transaksi)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $transaksi = Transaksi::with(['pembayaran', 'details.detailProduk'])
+            ->where('kode_transaksi', $kode_transaksi)
+            ->where('pengguna_id', $user->pengguna_id)
+            ->first();
+
+        if (!$transaksi) {
+            return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        if ($transaksi->status !== 'menunggu_pembayaran') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak dapat dibatalkan pada status ini',
+            ], 422);
+        }
+
+        \DB::beginTransaction();
+        try {
+            $transaksi->update(['status' => 'dibatalkan']);
+
+            if ($transaksi->pembayaran) {
+                $transaksi->pembayaran->update([
+                    'status_pembayaran' => 'gagal',
+                ]);
+            }
+
+            foreach ($transaksi->details as $detail) {
+                if ($detail->detailProduk) {
+                    $detail->detailProduk->increment('stok', (int) $detail->quantity);
+                }
+            }
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil dibatalkan',
+            ]);
+        } catch (\Throwable $e) {
+            \DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

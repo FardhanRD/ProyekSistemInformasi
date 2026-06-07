@@ -18,7 +18,7 @@
       'id' => $i->keranjang_id,
       'checked' => true,
       'qty' => $i->jumlah ?? 1,
-      'harga' => $detail->harga ?? ($produk->harga_dasar ?? 0),
+      'harga' => $detail->harga_efektif ?? ($produk->harga_dasar ?? 0),
       'stok' => $detail->stok ?? 0,
       'nama' => $produk->nama_produk ?? ($detail->nama_produk ?? '-'),
       'gambar' => $gambarUtama,
@@ -230,11 +230,16 @@
                       justify-between mt-3 gap-3">
             
             {{-- Harga --}}
-            <span class="text-base font-black 
-                         text-[#63A2BB]">
-              Rp {{ number_format(
-                $item->detail->harga,0,',','.') }}
-            </span>
+            <div class="flex flex-col">
+              @if($item->detail->promo_aktif)
+                <span class="text-[10px] text-gray-400 line-through">
+                  Rp {{ number_format($item->detail->harga, 0, ',', '.') }}
+                </span>
+              @endif
+              <span class="text-base font-black text-[#63A2BB]">
+                Rp {{ number_format($item->detail->harga_efektif, 0, ',', '.') }}
+              </span>
+            </div>
 
             {{-- Qty Control --}}
             <div class="flex items-center gap-1">

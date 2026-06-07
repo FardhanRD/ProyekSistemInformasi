@@ -111,6 +111,8 @@ class PromotionController extends Controller
             'jenis' => 'required|in:diskon_produk,flash_sale',
             'nama_promo' => 'required|string|max:150',
             'produk_id' => 'nullable|exists:produk,produk_id',
+            'produk_ids' => 'nullable|array',
+            'produk_ids.*' => 'exists:produk,produk_id',
             'detail_produk_id' => 'nullable|exists:detail_produk,detail_produk_id',
             'persen_diskon' => 'required|numeric|min:0|max:100',
             'nominal_diskon' => 'nullable|numeric|min:0',
@@ -122,9 +124,25 @@ class PromotionController extends Controller
 
         $data['is_active'] = $request->boolean('is_active');
         $data['nominal_diskon'] = $data['nominal_diskon'] ?? null;
+        // removed typo line
         $data['stok_flash_sale'] = $data['jenis'] === 'flash_sale' ? ($data['stok_flash_sale'] ?? 1) : null;
 
-        Promo::create($data);
+        // Determine product IDs for promo creation
+        $productIds = [];
+        if (!empty($data['produk_ids'])) {
+            $productIds = $data['produk_ids'];
+        } elseif (!empty($data['produk_id'])) {
+            $productIds = [$data['produk_id']];
+        } else {
+            $productIds = [null]; // Global promo
+        }
+
+        foreach ($productIds as $pid) {
+            $promoData = $data;
+            $promoData['produk_id'] = $pid;
+            unset($promoData['produk_ids']);
+            Promo::create($promoData);
+        }
 
         return back()->with('success', 'Promo berhasil ditambahkan.');
     }

@@ -72,6 +72,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);
         Route::get('/orders/{kode_transaksi}/tracking', [\App\Http\Controllers\Api\OrderController::class, 'tracking']);
         Route::post('/orders/{kode_transaksi}/complete', [\App\Http\Controllers\Api\OrderController::class, 'complete']);
+        Route::post('/orders/{kode_transaksi}/cancel', [\App\Http\Controllers\Api\OrderController::class, 'cancel']);
         Route::post('/orders/{kode_transaksi}/rating', [\App\Http\Controllers\Api\OrderController::class, 'postRating']);
 
         // Payment API Routes
@@ -83,6 +84,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'read']);
         Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'readAll']);
         Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
+
+        // Voucher API Routes
+        Route::get('/vouchers', [\App\Http\Controllers\Api\VoucherController::class, 'index']);
+        Route::get('/vouchers/claimed', [\App\Http\Controllers\Api\VoucherController::class, 'claimed']);
+        Route::post('/vouchers/claim', [\App\Http\Controllers\Api\VoucherController::class, 'claim']);
 
         // Favorit / Wishlist (Menyelaraskan rute mobile dengan WishlistController bawaan web)
         Route::get('/favorites', [\App\Http\Controllers\Api\WishlistController::class, 'index']);

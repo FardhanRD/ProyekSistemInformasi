@@ -96,7 +96,7 @@ class CheckoutController extends Controller
         }
 
         $subtotalProduk = $cart->reduce(function ($carry, $item) {
-            return $carry + ((float) ($item->detail->harga ?? 0) * (int) ($item->jumlah ?? 1));
+            return $carry + ((float) ($item->detail->harga_efektif ?? 0) * (int) ($item->jumlah ?? 1));
         }, 0);
 
         // juga kirimkan alias 'subtotal' agar view yang menggunakan nama tersebut aman
@@ -165,7 +165,7 @@ class CheckoutController extends Controller
 
         $subtotal = 0;
         foreach ($cartItems as $c) {
-            $subtotal += (float) $c->detail->harga * (int) $c->jumlah;
+            $subtotal += (float) $c->detail->harga_efektif * (int) $c->jumlah;
         }
 
         // ongkir dihitung dari ekspedisi yang dipilih saat ini (jika ada)
@@ -214,7 +214,7 @@ class CheckoutController extends Controller
         try {
             $subtotal = 0;
             foreach ($cartItems as $c) {
-                $subtotal += (float) $c->detail->harga * (int) $c->jumlah;
+                $subtotal += (float) $c->detail->harga_efektif * (int) $c->jumlah;
             }
 
             $ongkir = (float) (Ekspedisi::where('ekspedisi_id', $request->ekspedisi_id)->value('ongkir_flat') ?? 0);
@@ -266,11 +266,11 @@ class CheckoutController extends Controller
                     'transaksi_id'=>$trans->transaksi_id,
                     'detail_produk_id'=>$c->detail->detail_produk_id,
                     'nama_produk_snap'=>$c->detail->nama_produk ?? $c->detail->produk->nama_produk,
-                    'harga_snap'=>$c->detail->harga,
+                    'harga_snap'=>$c->detail->harga_efektif,
                     'ukuran_snap'=>$c->detail->ukuran,
                     'warna_snap'=>null,
                     'quantity'=>$c->jumlah,
-                    'subtotal'=>$c->detail->harga * $c->jumlah
+                    'subtotal'=>$c->detail->harga_efektif * $c->jumlah
                 ]);
             }
 

@@ -40,4 +40,41 @@ class DetailProduk extends Model
     {
         return $this->hasMany(StockMovement::class, 'detail_produk_id', 'detail_produk_id');
     }
+
+    public function getPromoAktifAttribute()
+    {
+        $now = \Carbon\Carbon::now();
+        // check specific variant promo first
+        $promo = \App\Models\Promo::where('is_active', 1)
+            ->where('detail_produk_id', $this->detail_produk_id)
+            ->where('mulai', '<=', $now)
+            ->where('selesai', '>=', $now)
+            ->first();
+
+        if (!$promo) {
+            // check product-wide promo
+            $promo = \App\Models\Promo::where('is_active', 1)
+                ->where('produk_id', $this->produk_id)
+                ->whereNull('detail_produk_id')
+                ->where('mulai', '<=', $now)
+                ->where('selesai', '>=', $now)
+                ->first();
+        }
+
+        return $promo;
+    }
+
+    public function getHargaEfektifAttribute()
+    {
+        $promo = $this->promo_aktif;
+        if ($promo) {
+            $originalPrice = (float) $this->harga;
+            $nominal = (float) ($promo->nominal_diskon ?? 0);
+            if ($nominal <= 0 && !empty($promo->persen_diskon)) {
+                $nominal = $originalPrice * ((float) $promo->persen_diskon) / 100;
+            }
+            return max(0.0, $originalPrice - $nominal);
+        }
+        return (float) $this->harga;
+    }
 }

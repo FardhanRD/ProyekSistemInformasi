@@ -24,6 +24,15 @@ class DashboardController extends Controller
         $prevStart = (clone $start)->subMonth();
         $prevEnd = (clone $end)->subMonth();
 
+        // Active Flash Sales count
+        $activeFlashSalesCount = Schema::hasTable('promo')
+            ? \App\Models\Promo::where('jenis', 'flash_sale')
+                ->where('is_active', 1)
+                ->where('mulai', '<=', Carbon::now())
+                ->where('selesai', '>=', Carbon::now())
+                ->count()
+            : 0;
+
         // Stat Cards
         $totalRevenue = Transaksi::where('status', 'selesai')
             ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
@@ -167,6 +176,7 @@ class DashboardController extends Controller
             'storeRatingCount' => $storeRatingCount,
             'storeRatingLatest' => $storeRatingLatest,
             'recentActivities' => $recentActivities,
+            'activeFlashSalesCount' => $activeFlashSalesCount,
         ]);
     }
 

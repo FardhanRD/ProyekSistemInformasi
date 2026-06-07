@@ -441,13 +441,21 @@
                 </div>
                 
                 <div>
-                    <label class="form-label">Pilih Produk Master</label>
-                    <select name="produk_id" x-model="promoForm.produk_id" class="form-input" style="height: 38px; cursor: pointer;">
-                        <option value="">Global / Berlaku Semua Varian</option>
-                        @foreach($products as $product)
-                            <option value="{{ $product->produk_id }}">{{ $product->nama_produk }}</option>
-                        @endforeach
-                    </select>
+                    <div>
+                        <label class="form-label">Pilih Produk (Multi)</label>
+                        <div class="flex items-center gap-2 mb-1">
+                            <input type="text" placeholder="Cari produk..." x-model="promoSearchQuery" class="form-input" style="height: 34px;">
+                            <button type="button" class="btn-secondary" @click="toggleAllPromoProducts()">Pilih Semua</button>
+                        </div>
+                        <div style="max-height:200px; overflow-y:auto; border:1px solid #E2E8F0; padding:4px;">
+                            <template x-for="product in filteredPromoProducts()" :key="product.produk_id">
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="produk_ids[]" :value="product.produk_id" x-model="promoSelectedIds" class="mr-2">
+                                    <span x-text="product.nama_produk"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="form-label">Pilih Varian Spesifik (Opsional)</label>
@@ -502,7 +510,7 @@
 <script>
 function promotionPage() {
     return {
-        tab: 'voucher',
+        tab: new URLSearchParams(window.location.search).get('tab') || 'voucher',
         voucherModal: false,
         promoModal: false,
         voucherMode: 'create',
@@ -511,9 +519,25 @@ function promotionPage() {
         voucherMethod: 'POST',
         promoAction: '{{ route('admin.promotion.promo.store') }}',
         promoMethod: 'POST',
+        promoProducts: @json($products),
+        promoSearchQuery: '',
+        promoSelectedIds: [],
+        
         voucherForm: { kode_voucher:'', nama_voucher:'', jenis_diskon:'persen', nilai_diskon:0, min_belanja:0, maks_diskon:'', kuota:'', berlaku_mulai:'', berlaku_sampai:'', is_active:true },
         promoForm: { jenis:'diskon_produk', nama_promo:'', produk_id:'', detail_produk_id:'', persen_diskon:0, nominal_diskon:'', stok_flash_sale:'', mulai:'', selesai:'', is_active:true },
         
+        filteredPromoProducts() {
+            return this.promoProducts.filter(p => p.nama_produk.toLowerCase().includes(this.promoSearchQuery.toLowerCase()));
+        },
+        toggleAllPromoProducts() {
+            const ids = this.filteredPromoProducts().map(p => p.produk_id);
+            const allSelected = ids.every(id => this.promoSelectedIds.includes(id));
+            if(allSelected) {
+                this.promoSelectedIds = this.promoSelectedIds.filter(id => !ids.includes(id));
+            } else {
+                this.promoSelectedIds = [...new Set([...this.promoSelectedIds, ...ids])];
+            }
+        },
         openVoucherModal(mode, voucher = {}) {
             this.voucherMode = mode;
             this.voucherModal = true;
@@ -537,6 +561,7 @@ function promotionPage() {
             this.promoModal = true;
             this.promoAction = mode === 'create' ? '{{ route('admin.promotion.promo.store') }}' : '{{ route('admin.promotion.promo.update', ['id' => '__ID__']) }}'.replace('__ID__', promo.promo_id);
             this.promoMethod = mode === 'create' ? 'POST' : 'PUT';
+            this.promoSelectedIds = promo.produk_ids ?? [];
             this.promoForm = {
                 jenis: promoType ?? promo.jenis ?? 'diskon_produk',
                 nama_promo: promo.nama_promo ?? '',

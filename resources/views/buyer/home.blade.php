@@ -160,6 +160,119 @@
         </div>
     </section>
 
+    {{-- Flash Sale Section --}}
+    @if(isset($flashProducts) && $flashProducts->isNotEmpty())
+        <section class="section-shell space-y-6" x-data="countdown('{{ $flashEndTime }}')" x-init="init()">
+            <div class="rounded-[2rem] border border-[#FF4E4E]/30 bg-gradient-to-br from-[#1C0D0D] to-[#0A0505] p-6 sm:p-8 lg:p-10 shadow-xl shadow-red-950/20 relative overflow-hidden">
+                {{-- Decorative background glow --}}
+                <div class="absolute -right-24 -top-24 w-80 h-80 rounded-full bg-red-600/10 blur-[80px]"></div>
+                <div class="absolute -left-24 -bottom-24 w-80 h-80 rounded-full bg-[#63A2BB]/10 blur-[80px]"></div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-red-500/10 relative z-10">
+                    <div class="space-y-1">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1 text-xs font-black uppercase tracking-[0.2em] text-[#FF4E4E] shadow-sm animate-pulse">
+                            ⚡ FLASH SALE
+                        </div>
+                        <h2 class="text-3xl font-black text-white tracking-tight">Deals of the Day</h2>
+                        <p class="text-sm text-slate-400 font-medium">Beli sekarang sebelum kehabisan! Stok dan waktu terbatas.</p>
+                    </div>
+
+                    {{-- Countdown Timer --}}
+                    <div class="flex items-center gap-3 bg-black/40 border border-red-500/20 px-5 py-3 rounded-2xl backdrop-blur-md">
+                        <span class="text-[11px] font-black uppercase tracking-[0.2em] text-red-500">BERAKHIR:</span>
+                        <div class="flex items-center gap-1.5 font-mono text-lg font-black text-white">
+                            <span class="bg-red-500/10 border border-red-500/20 text-[#FF4E4E] px-2.5 py-1 rounded-xl" x-text="hours">00</span>
+                            <span class="text-red-500">:</span>
+                            <span class="bg-red-500/10 border border-red-500/20 text-[#FF4E4E] px-2.5 py-1 rounded-xl" x-text="minutes">00</span>
+                            <span class="text-red-500">:</span>
+                            <span class="bg-red-500/10 border border-red-500/20 text-[#FF4E4E] px-2.5 py-1 rounded-xl" x-text="seconds">00</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Products Grid --}}
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8 relative z-10">
+                    @foreach($flashProducts as $fp)
+                        @php
+                            $produk = $fp->produk;
+                            $promo = $fp->promo;
+                            $originalPrice = (float) $produk->harga_dasar;
+                            $discountAmount = (float) $promo->diskon;
+                            $finalPrice = max(0, $originalPrice - $discountAmount);
+                            $percent = $originalPrice > 0 ? round(($discountAmount / $originalPrice) * 100) : 0;
+                            
+                            $imageSource = optional($produk->gambarUtama)->url_lengkap 
+                                ?? optional($produk->gambarUtama)->url_safe 
+                                ?? asset('images/placeholder.png');
+                                
+                            // stock progress
+                            $stokTerjual = $produk->total_terjual ?? 0;
+                            $stokFlash = $promo->stok_flash_sale ?? 10;
+                            $stokTotal = $stokFlash + $stokTerjual;
+                            $progressPct = $stokTotal > 0 ? round(($stokTerjual / $stokTotal) * 100) : 0;
+                        @endphp
+                        
+                        <div class="group relative flex h-full flex-col overflow-hidden rounded-[1.8rem] border border-red-500/10 bg-slate-950 p-4 hover:border-red-500/30 transition-all duration-300">
+                            {{-- Image container --}}
+                            <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-900">
+                                <a href="{{ route('product.show', $produk->slug) }}" class="block h-full w-full">
+                                    <img src="{{ $imageSource }}" alt="{{ $produk->nama_produk }}" class="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105" onerror="this.src='{{ asset('images/placeholder.png') }}';">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent"></div>
+                                </a>
+                                
+                                {{-- Percent Discount Badge --}}
+                                <span class="absolute left-3 top-3 rounded-full bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-red-950/50">
+                                    -{{ $percent }}%
+                                </span>
+                            </div>
+
+                            {{-- Product Details --}}
+                            <div class="flex flex-1 flex-col mt-4">
+                                @if(isset($produk->kategori->nama_kategori))
+                                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#FF4E4E] mb-1.5 block">
+                                        {{ $produk->kategori->nama_kategori }}
+                                    </span>
+                                @endif
+
+                                <a href="{{ route('product.show', $produk->slug) }}" class="line-clamp-2 text-sm font-extrabold text-white transition-colors duration-200 hover:text-[#FF4E4E] leading-snug min-h-[2.5rem]">
+                                    {{ $produk->nama_produk }}
+                                </a>
+
+                                {{-- Price display --}}
+                                <div class="mt-4 space-y-0.5">
+                                    <div class="text-[11px] font-bold text-slate-500 line-through tracking-wider">
+                                        Rp {{ number_format($originalPrice, 0, ',', '.') }}
+                                    </div>
+                                    <div class="text-base font-black text-[#FF4E4E]">
+                                        Rp {{ number_format($finalPrice, 0, ',', '.') }}
+                                    </div>
+                                </div>
+
+                                {{-- Stock progress bar --}}
+                                <div class="mt-4 space-y-1.5">
+                                    <div class="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                                        <span>Tersedia: <span class="text-white font-black">{{ $stokFlash }} Pcs</span></span>
+                                        <span>{{ $progressPct }}% Terjual</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-red-600 to-[#FF4E4E] rounded-full" style="width: {{ min(100, max(8, $progressPct)) }}%"></div>
+                                    </div>
+                                </div>
+
+                                {{-- Action button --}}
+                                <div class="mt-5">
+                                    <a href="{{ route('product.show', $produk->slug) }}" class="inline-flex items-center justify-center w-full rounded-full bg-red-600 py-3 text-xs font-bold text-white transition-all duration-300 hover:bg-[#FF4E4E] hover:-translate-y-0.5 shadow-lg shadow-red-950/20">
+                                        Beli Sekarang ⚡
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
     <section id="shop-by-sport" class="section-shell space-y-6">
         <div class="flex items-end justify-between gap-4">
             <div>
@@ -305,4 +418,42 @@
         </section>
     @endif
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function countdown(endTimeStr) {
+        return {
+            endTime: endTimeStr ? new Date(endTimeStr).getTime() : 0,
+            hours: '00',
+            minutes: '00',
+            seconds: '00',
+            timer: null,
+            init() {
+                if (!this.endTime) return;
+                this.update();
+                this.timer = setInterval(() => {
+                    this.update();
+                }, 1000);
+            },
+            update() {
+                const now = new Date().getTime();
+                const diff = this.endTime - now;
+                if (diff <= 0) {
+                    clearInterval(this.timer);
+                    this.hours = '00';
+                    this.minutes = '00';
+                    this.seconds = '00';
+                    return;
+                }
+                const h = Math.floor(diff / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                this.hours = String(h).padStart(2, '0');
+                this.minutes = String(m).padStart(2, '0');
+                this.seconds = String(s).padStart(2, '0');
+            }
+        }
+    }
+</script>
 @endsection

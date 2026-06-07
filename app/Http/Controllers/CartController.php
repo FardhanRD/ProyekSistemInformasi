@@ -38,7 +38,7 @@ class CartController extends Controller
                 return [
                     'id' => $item->keranjang_id,
                     'jumlah' => $item->jumlah,
-                    'harga_saat_ini' => optional($item->detail)->harga ?? optional($produk)->harga_dasar ?? 0,
+                    'harga_saat_ini' => optional($item->detail)->harga_efektif ?? optional($produk)->harga_dasar ?? 0,
                     'produk' => [
                         'id' => optional($produk)->produk_id ?? 0,
                         'name' => optional($produk)->nama_produk ?? 'Tanpa Nama',
