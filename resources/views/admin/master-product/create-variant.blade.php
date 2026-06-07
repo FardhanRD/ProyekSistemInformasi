@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Add Product — Step 2 Variants')
 
@@ -25,46 +25,84 @@
 
     <div x-data="{
         variants: @json(session('product_step2', [])),
-        form: { warna: '', kode_hex: '#000000', ukuran: '', stok: 0, harga: 0, sku: '', stok_minimum: 5 },
+        form: { warna: '', kode_hex: '#000000', ukuran: [], stok: 0, harga: 0, sku: '', stok_minimum: 5, gambar_base64: '' },
+        customSize: '',
         saving: false,
         errors: {},
         savedCount: @json(count(session('product_step2', []))),
         isDuplicate() {
-            return this.variants.some(v =>
-                String(v.nama_warna || v.warna || '').toLowerCase() === String(this.form.warna || '').toLowerCase() &&
-                String(v.ukuran || '').toLowerCase() === String(this.form.ukuran || '').toLowerCase()
+            return this.form.ukuran.some(sz =>
+                this.variants.some(v =>
+                    String(v.nama_warna || v.warna || '').toLowerCase() === String(this.form.warna || '').toLowerCase() &&
+                    String(v.ukuran || '').toLowerCase() === String(sz || '').toLowerCase()
+                )
             );
+        },
+        toggleUkuran(sz) {
+            if (this.form.ukuran.includes(sz)) {
+                this.form.ukuran = this.form.ukuran.filter(x => x !== sz);
+            } else {
+                this.form.ukuran.push(sz);
+            }
+            this.errors.ukuran = '';
+            this.errors.duplikat = '';
+            this.autoSku();
+        },
+        addCustomSize() {
+            const sz = String(this.customSize).trim();
+            if (sz && !this.form.ukuran.includes(sz)) {
+                this.form.ukuran.push(sz);
+                this.customSize = '';
+                this.errors.ukuran = '';
+                this.errors.duplikat = '';
+                this.autoSku();
+            }
         },
         autoSku() {
             const warna = String(this.form.warna || '').substring(0, 3).toUpperCase();
-            const ukuran = String(this.form.ukuran || '').toUpperCase();
-            this.form.sku = 'SKU-{{ $step1Slug }}-' + (warna || 'VRN') + '-' + (ukuran || 'SZ');
+            if (this.form.ukuran.length > 0) {
+                const sizesStr = this.form.ukuran.join(', ');
+                this.form.sku = 'SKU-{{ $step1Slug }}-' + (warna || 'VRN') + '-[' + sizesStr + ']';
+            } else {
+                this.form.sku = 'SKU-{{ $step1Slug }}-' + (warna || 'VRN') + '-SZ';
+            }
         },
         resetForm() {
-            this.form = { warna: '', kode_hex: '#000000', ukuran: '', stok: 0, harga: 0, sku: '', stok_minimum: 5 };
+            this.form = { warna: '', kode_hex: '#000000', ukuran: [], stok: 0, harga: 0, sku: '', stok_minimum: 5, gambar_base64: '' };
+            this.customSize = '';
             this.errors = {};
+            const fileInput = document.getElementById('file-input-variant');
+            if (fileInput) fileInput.value = '';
         },
         validateForm() {
             this.errors = {};
             if (!String(this.form.warna).trim()) { this.errors.warna = 'Warna wajib diisi'; return false; }
-            if (!String(this.form.ukuran).trim()) { this.errors.ukuran = 'Ukuran wajib diisi'; return false; }
+            if (this.form.ukuran.length === 0) { this.errors.ukuran = 'Pilih minimal satu ukuran'; return false; }
             if (Number(this.form.harga) <= 0) { this.errors.harga = 'Harga wajib diisi'; return false; }
-            if (this.isDuplicate()) { this.errors.duplikat = 'Kombinasi warna + ukuran sudah ada!'; return false; }
+            if (this.isDuplicate()) { this.errors.duplikat = 'Salah satu kombinasi warna + ukuran yang dipilih sudah ada!'; return false; }
             return true;
         },
         saveVariant() {
             if (!this.validateForm()) return;
-            this.variants.push({
-                nama_variant: this.form.warna,
-                nama_warna: this.form.warna,
-                kode_hex: this.form.kode_hex,
-                ukuran: this.form.ukuran,
-                stok_awal: this.form.stok,
-                stok_minimum: this.form.stok_minimum,
-                price_adjustment: this.form.harga,
-                is_active: '1',
-                sku_preview: this.form.sku,
+            
+            this.form.ukuran.forEach(sz => {
+                const warnaStr = String(this.form.warna || '').substring(0, 3).toUpperCase();
+                const skuForSize = 'SKU-{{ $step1Slug }}-' + (warnaStr || 'VRN') + '-' + String(sz).toUpperCase();
+                
+                this.variants.push({
+                    nama_variant: this.form.warna,
+                    nama_warna: this.form.warna,
+                    kode_hex: this.form.kode_hex,
+                    ukuran: sz,
+                    stok_awal: this.form.stok,
+                    stok_minimum: this.form.stok_minimum,
+                    price_adjustment: this.form.harga,
+                    is_active: '1',
+                    sku_preview: skuForSize,
+                    gambar_base64: this.form.gambar_base64 || '',
+                });
             });
+            
             this.savedCount = this.variants.length;
             this.resetForm();
             this.$nextTick(() => document.getElementById('input-warna-step2')?.focus());
@@ -99,7 +137,14 @@
                     <div x-show="variants.length > 0" class="space-y-2 max-h-80 overflow-y-auto pr-1">
                         <template x-for="(v, idx) in variants" :key="idx">
                             <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl group">
-                                <div class="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0" :style="'background:' + (v.kode_hex || '#000000')"></div>
+                                <div class="flex-shrink-0 flex items-center justify-center">
+                                    <template x-if="v.gambar_base64">
+                                        <img :src="v.gambar_base64" class="w-8 h-8 rounded-lg object-cover border border-gray-200 shadow-sm">
+                                    </template>
+                                    <template x-if="!v.gambar_base64">
+                                        <div class="w-6 h-6 rounded-full border-2 border-white shadow-sm" :style="'background:' + (v.kode_hex || '#000000')"></div>
+                                    </template>
+                                </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-xs font-bold text-gray-800 truncate" x-text="(v.nama_warna || '-') + ' / ' + (v.ukuran || '-')"></p>
                                     <p class="text-[10px] text-gray-400" x-text="'Stok: ' + (v.stok_awal ?? 0) + ' · Rp ' + Number(v.price_adjustment ?? 0).toLocaleString('id-ID')"></p>
@@ -165,20 +210,35 @@
 
                         {{-- Ukuran --}}
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Ukuran *</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Ukuran * (Bisa pilih lebih dari 1)</label>
                             <div class="flex flex-wrap gap-1.5 mb-2">
                                 @foreach($ukurans as $sz)
                                     <button type="button"
-                                            @click="form.ukuran = '{{ $sz }}'; autoSku(); errors.ukuran=''; errors.duplikat=''"
-                                            :class="form.ukuran === '{{ $sz }}' ? 'bg-admin text-white border-admin' : 'bg-white text-gray-600 border-gray-200 hover:border-admin'"
+                                            @click="toggleUkuran('{{ $sz }}')"
+                                            :class="form.ukuran.includes('{{ $sz }}') ? 'bg-admin text-white border-admin' : 'bg-white text-gray-600 border-gray-200 hover:border-admin'"
                                             class="px-2.5 py-1 rounded-lg border-2 text-xs font-semibold transition">{{ $sz }}</button>
                                 @endforeach
                             </div>
-                            <input type="text"
-                                   x-model="form.ukuran"
-                                   @input="autoSku(); errors.ukuran=''; errors.duplikat=''"
-                                   placeholder="Atau ketik ukuran manual..."
-                                   class="w-full px-3 py-2 border-2 border-gray-200 focus:border-admin rounded-xl text-sm focus:outline-none transition">
+                            
+                            {{-- Selected sizes badges --}}
+                            <div x-show="form.ukuran.length > 0" x-cloak class="flex flex-wrap gap-1 mb-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                                <span class="text-xs text-gray-400 w-full mb-1">Ukuran terpilih:</span>
+                                <template x-for="sz in form.ukuran" :key="sz">
+                                    <span class="inline-flex items-center gap-1 bg-admin/10 text-admin text-xs font-bold px-2.5 py-1 rounded-lg">
+                                        <span x-text="sz"></span>
+                                        <button type="button" @click="toggleUkuran(sz)" class="hover:text-red-500 font-bold ml-0.5">×</button>
+                                    </span>
+                                </template>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <input type="text"
+                                       x-model="customSize"
+                                       @keydown.enter.prevent="addCustomSize()"
+                                       placeholder="Ketik ukuran custom..."
+                                       class="flex-1 px-3 py-2 border-2 border-gray-200 focus:border-admin rounded-xl text-sm focus:outline-none transition">
+                                <button type="button" @click="addCustomSize()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200 border-2 border-gray-200 transition">Tambah</button>
+                            </div>
                             <p x-show="errors.ukuran" x-cloak x-text="errors.ukuran" class="text-red-500 text-xs mt-1"></p>
                         </div>
 
@@ -210,6 +270,41 @@
                                        placeholder="0">
                             </div>
                             <p x-show="errors.harga" x-cloak x-text="errors.harga" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Foto Varian (Optional)</label>
+                            <div class="flex items-center gap-3">
+                                <input type="file"
+                                       accept="image/*"
+                                       @change="
+                                           const file = $event.target.files[0];
+                                           if (file) {
+                                               const reader = new FileReader();
+                                               reader.onload = (e) => { form.gambar_base64 = e.target.result; };
+                                               reader.readAsDataURL(file);
+                                           } else {
+                                               form.gambar_base64 = '';
+                                           }
+                                       "
+                                       class="hidden"
+                                       id="file-input-variant">
+                                <button type="button"
+                                        @click="document.getElementById('file-input-variant').click()"
+                                        class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold border-2 border-gray-200 transition">
+                                    Pilih Foto
+                                </button>
+                                <template x-if="form.gambar_base64">
+                                    <div class="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-gray-200">
+                                        <img :src="form.gambar_base64" class="w-full h-full object-cover">
+                                        <button type="button"
+                                                @click="form.gambar_base64 = ''; document.getElementById('file-input-variant').value = '';"
+                                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600 transition">
+                                            ×
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
 
                         <div>
@@ -250,6 +345,7 @@
                                         <input type="hidden" :name="`variants[${idx}][stok_minimum]`" :value="v.stok_minimum">
                                         <input type="hidden" :name="`variants[${idx}][price_adjustment]`" :value="v.price_adjustment">
                                         <input type="hidden" :name="`variants[${idx}][is_active]`" :value="v.is_active">
+                                        <input type="hidden" :name="`variants[${idx}][gambar_base64]`" :value="v.gambar_base64">
                                     </div>
                                 </template>
                                 <button type="submit"

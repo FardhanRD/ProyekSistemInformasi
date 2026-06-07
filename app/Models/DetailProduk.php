@@ -11,6 +11,7 @@ class DetailProduk extends Model
     public $timestamps = false;
     protected $fillable = [
         'produk_id',
+        'warna_id',
         'nama_produk',
         'ukuran',
         'harga',
@@ -28,6 +29,11 @@ class DetailProduk extends Model
     public function warna()
     {
         return $this->belongsTo(WarnaProduk::class, 'warna_id', 'warna_id');
+    }
+
+    public function gambarDetail()
+    {
+        return $this->hasMany(GambarDetailProduk::class, 'detail_produk_id', 'detail_produk_id');
     }
 
     public function stockMovements()

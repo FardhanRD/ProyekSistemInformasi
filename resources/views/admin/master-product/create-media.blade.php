@@ -62,8 +62,12 @@
                             <p class="text-xs text-slate-500 mt-1">Gambar pertama akan menjadi thumbnail utama</p>
                         </div>
 
-                        <label class="block border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-[#2B9BAF] transition">
-                            <input type="file" name="gambar[]" multiple accept="image/jpg,image/jpeg,image/png,image/webp,image/avif,.webp,.avif" class="hidden" @change="handleFiles($event)">
+                        <label class="block border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-[#2B9BAF] transition"
+                               :class="dragActive ? 'border-[#2B9BAF] bg-white' : ''"
+                               @dragover.prevent="onDragOver"
+                               @dragleave.prevent="onDragLeave"
+                               @drop.prevent="handleDrop($event)">
+                                    <input type="file" name="gambar[]" multiple accept="image/jpg,image/jpeg,image/png,image/webp,image/avif,.webp,.avif" class="hidden" @change="handleFiles($event)">
                             <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.9A5 5 0 0119.9 6A4 4 0 0118 16H7z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12v6m3-3H9" />
@@ -117,20 +121,23 @@
 <script>
 function fileUploadForm() {
     return {
+        dragActive: false,
         fileCount: 0,
         previews: [],
-        handleFiles(e) {
+        processFiles(fileList) {
             const maxFiles = 3;
-            const allFiles = Array.from(e.target.files);
-            
+            const allFiles = Array.from(fileList);
+
             if (allFiles.length > maxFiles) {
                 alert('Maksimal ' + maxFiles + ' gambar saja. Anda memilih ' + allFiles.length + ' gambar.');
-                e.target.value = '';
+                // clear input if present
+                const input = document.querySelector('input[name="gambar[]"]');
+                if (input) input.value = '';
                 this.previews = [];
                 this.fileCount = 0;
                 return;
             }
-            
+
             this.fileCount = allFiles.length;
             this.previews = [];
             allFiles.forEach(f => {
@@ -138,6 +145,39 @@ function fileUploadForm() {
                 r.onload = (ev) => this.previews.push(ev.target.result);
                 r.readAsDataURL(f);
             });
+        },
+
+        handleFiles(e) {
+            this.processFiles(e.target.files);
+        },
+
+        onDragOver(e) {
+            this.dragActive = true;
+        },
+
+        onDragLeave(e) {
+            this.dragActive = false;
+        },
+
+        handleDrop(e) {
+            this.dragActive = false;
+            const dt = e.dataTransfer;
+            if (!dt) return;
+            const files = dt.files;
+            // update the hidden file input so form submission includes the files
+            const input = document.querySelector('input[name="gambar[]"]');
+            if (input) {
+                // Creating a DataTransfer to set files on input (supported in modern browsers)
+                try {
+                    const dataTransfer = new DataTransfer();
+                    Array.from(files).forEach(f => dataTransfer.items.add(f));
+                    input.files = dataTransfer.files;
+                } catch (err) {
+                    // fallback: leave input unchanged; we'll still show previews
+                    console.warn('DataTransfer not supported for setting files on input', err);
+                }
+            }
+            this.processFiles(files);
         },
         validateFiles(e) {
             const fileInput = document.querySelector('input[name="gambar[]"]');

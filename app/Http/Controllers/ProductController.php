@@ -103,7 +103,7 @@ class ProductController extends Controller
 
         $product = Produk::with([
             'images' => fn($q) => $q->orderBy('urutan', 'ASC'),
-            'details' => fn($q) => $q->where('is_active', 1)->with('warna'),
+            'details' => fn($q) => $q->where('is_active', 1)->with(['warna', 'gambarDetail']),
             'kategori',
             'ratings' => fn($q) => $q->latest()->limit(100),
             'ratings.buyer.pengguna'

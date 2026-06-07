@@ -124,6 +124,7 @@ class MasterProductCreateController extends Controller
             'variants.*.stok_minimum' => 'required|integer|min:0',
             'variants.*.price_adjustment' => 'nullable|numeric',
             'variants.*.is_active' => 'required|in:0,1',
+            'variants.*.gambar_base64' => 'nullable|string',
         ]);
 
         session(['product_step2' => $request->variants]);
@@ -203,7 +204,7 @@ class MasterProductCreateController extends Controller
             // 2) Variants + warna + detail_produk + stock_movement + gambar variant
             foreach ($variants as $idx => $variant) {
                 // Simpan master warna global (schema warna_produk tidak punya produk_id)
-                WarnaProduk::firstOrCreate(
+                $warnaRecord = WarnaProduk::firstOrCreate(
                     [
                         'nama_warna' => $variant['nama_warna'],
                     ],
@@ -224,10 +225,11 @@ class MasterProductCreateController extends Controller
                     $sku = $skuBase . '-' . $skuCount;
                 }
 
-                $harga = floatval($step1['harga_dasar']) + floatval($variant['price_adjustment'] ?? 0);
+                $harga = floatval($variant['price_adjustment'] ?? 0);
 
                 $detail = DetailProduk::create([
                     'produk_id' => $produk->produk_id,
+                    'warna_id' => $warnaRecord->warna_id,
                     'nama_produk' => $variant['nama_variant'],
                     'ukuran' => $variant['ukuran'],
                     'harga' => $harga,
@@ -247,6 +249,31 @@ class MasterProductCreateController extends Controller
                     'catatan' => 'Stok awal saat produk dibuat',
                     'dibuat_oleh' => auth()->user()->pengguna_id,
                 ]);
+
+                // Simpan gambar variant base64 jika ada
+                if (!empty($variant['gambar_base64'])) {
+                    $base64Data = $variant['gambar_base64'];
+                    if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
+                        $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
+                        $type = strtolower($type[1]); // jpg, png, etc.
+                        if (in_array($type, ['jpg', 'jpeg', 'gif', 'png', 'webp', 'svg', 'avif'])) {
+                            $base64Data = base64_decode($base64Data);
+                            if ($base64Data !== false) {
+                                $fileName = 'variant_' . uniqid() . '.' . $type;
+                                $path = 'products/variants/' . $fileName;
+                                \Illuminate\Support\Facades\Storage::disk('public')->put($path, $base64Data);
+                                
+                                DB::table('gambar_detail_produk')->insert([
+                                    'detail_produk_id' => $detail->detail_produk_id,
+                                    'url_gambar' => $path,
+                                    'alt_text' => $variant['nama_variant'],
+                                    'urutan' => 0,
+                                    'created_at' => now(),
+                                ]);
+                            }
+                        }
+                    }
+                }
 
                 // Gambar variant: input name harus variant_gambar_{i}[] sesuai blade
                 $keyGambar = 'variant_gambar_' . $idx;

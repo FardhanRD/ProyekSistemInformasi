@@ -35,14 +35,23 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="text-sm font-semibold text-slate-700">Supplier Category</label>
-                        <select name="kategori_supplier" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#63A2BB] focus:outline-none">
-                            <option value="">(optional)</option>
-                            @foreach(($categories ?? collect()) as $c)
-                                <option value="{{ $c->nama_kategori }}">{{ $c->nama_kategori }}</option>
-                            @endforeach
-                        </select>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Supplier Category</label>
+                            <select name="kategori_supplier" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#63A2BB] focus:outline-none">
+                                <option value="">(optional)</option>
+                                @foreach(($categories ?? collect()) as $c)
+                                    <option value="{{ $c->nama_kategori }}">{{ $c->nama_kategori }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Status</label>
+                            <select name="is_verified" required class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-[#63A2BB] focus:outline-none">
+                                <option value="1" {{ old('is_verified', '1') == '1' ? 'selected' : '' }}>Active</option>
+                                <option value="0" {{ old('is_verified') == '0' ? 'selected' : '' }}>Inactive</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -102,8 +111,12 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const defaultLat = parseFloat(document.getElementById('lat-input')?.value || '-6.2088');
-    const defaultLng = parseFloat(document.getElementById('lng-input')?.value || '106.8456');
+    let defaultLat = parseFloat(document.getElementById('lat-input')?.value);
+    let defaultLng = parseFloat(document.getElementById('lng-input')?.value);
+    
+    if (isNaN(defaultLat)) defaultLat = -6.2088;
+    if (isNaN(defaultLng)) defaultLng = 106.8456;
+
     const map = L.map('supplier-map').setView([defaultLat, defaultLng], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -121,14 +134,18 @@ document.addEventListener('DOMContentLoaded', function() {
             map.removeLayer(marker);
         }
         marker = L.marker([lat, lng]).addTo(map);
-        document.getElementById('lat-input').value = lat.toFixed(6);
-        document.getElementById('lng-input').value = lng.toFixed(6);
+        const latInput = document.getElementById('lat-input');
+        const lngInput = document.getElementById('lng-input');
+        if (latInput) latInput.value = lat.toFixed(6);
+        if (lngInput) lngInput.value = lng.toFixed(6);
     });
 
     ['lat-input', 'lng-input'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', function() {
-            const lat = parseFloat(document.getElementById('lat-input').value);
-            const lng = parseFloat(document.getElementById('lng-input').value);
+            const latVal = document.getElementById('lat-input')?.value;
+            const lngVal = document.getElementById('lng-input')?.value;
+            const lat = parseFloat(latVal);
+            const lng = parseFloat(lngVal);
             if (!isNaN(lat) && !isNaN(lng)) {
                 map.setView([lat, lng], 14);
                 if (marker) {
@@ -148,9 +165,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
-                supplierLogoPreview.src = event.target.result;
-                supplierLogoPreview.classList.remove('hidden');
-                supplierLogoIcon.classList.add('hidden');
+                if (supplierLogoPreview) {
+                    supplierLogoPreview.src = event.target.result;
+                    supplierLogoPreview.classList.remove('hidden');
+                    supplierLogoPreview.style.display = 'block';
+                }
+                if (supplierLogoIcon) {
+                    supplierLogoIcon.classList.add('hidden');
+                    supplierLogoIcon.style.display = 'none';
+                }
             };
             reader.readAsDataURL(file);
         });

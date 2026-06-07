@@ -3,11 +3,29 @@
 @section('content')
 
 @php
+  $variantImages = collect($product->details ?? $product->detailProduk ?? [])
+    ->filter(fn($detail) => !is_null($detail->warna_id))
+    ->groupBy('warna_id')
+    ->map(function ($detailsByColor) {
+      foreach ($detailsByColor as $detail) {
+        $img = $detail->gambarDetail->first();
+        if ($img && $img->url_lengkap) {
+          return $img->url_lengkap;
+        }
+      }
+      return null;
+    })
+    ->filter()
+    ->values()
+    ->all();
+
   $galleryImages = collect($product->images ?? $product->gambarProduk ?? [])
     ->map(function ($img) {
       return $img->url_lengkap ?? $img->url_safe ?? null;
     })
     ->filter()
+    ->concat($variantImages)
+    ->unique()
     ->values()
     ->all();
 
@@ -26,6 +44,7 @@
         'ukuran' => $detail->ukuran,
         'stok' => (int) ($detail->stok ?? 0),
         'harga' => (float) ($detail->harga ?? 0),
+        'gambar_url' => $detail->gambarDetail->first()?->url_lengkap,
       ];
     })
     ->values();
@@ -71,7 +90,8 @@
                this.activeImage = this.images[0];
              }
            }
-         }">
+         }"
+         @change-active-image.window="activeImage = $event.detail.image">
       {{-- Main Image --}}
             <div class="relative bg-[#F8FAFB] rounded-2xl overflow-hidden aspect-square flex items-center justify-center group border border-slate-100">
         <img :src="activeImage"
@@ -411,6 +431,12 @@
       init() {
         if (this.hasWarna && this.warnaOptions.length > 0) {
           this.selectedWarna = this.warnaOptions[0].warna_id;
+          const variant = this.variantItems.find(item => item.warna_id === this.selectedWarna && item.gambar_url);
+          if (variant && variant.gambar_url) {
+            this.$nextTick(() => {
+              this.$dispatch('change-active-image', { image: variant.gambar_url });
+            });
+          }
         } else {
           this.selectedWarna = '__no_color__';
         }
@@ -438,6 +464,11 @@
         this.selectedDetail = null;
         this.qty = 1;
         this.maxQty = 1;
+
+        const variant = this.variantItems.find(item => item.warna_id === warnaId && item.gambar_url);
+        if (variant && variant.gambar_url) {
+          this.$dispatch('change-active-image', { image: variant.gambar_url });
+        }
       },
 
       selectUkuran(detailId) {

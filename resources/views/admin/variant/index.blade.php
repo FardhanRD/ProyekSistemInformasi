@@ -213,22 +213,49 @@
 
                         <div>
                             <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Ukuran *</label>
-                            <div class="mb-2 flex flex-wrap gap-2">
-                                @foreach(['XS','S','M','L','XL','XXL','XXXL','38','39','40','41','42','43','44','OS','FREE SIZE'] as $size)
-                                    <button type="button"
-                                            @click="form.ukuran = '{{ $size }}'; autoSku(); checkDuplicate()"
-                                            :class="form.ukuran === '{{ $size }}' ? 'border-admin bg-admin text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-admin'"
-                                            class="rounded-lg border-2 px-3 py-1.5 text-xs font-semibold transition">
-                                        {{ $size }}
-                                    </button>
-                                @endforeach
+                            <div class="mb-2">
+                                {{-- Pilih ukuran (multi-select) --}}
+                                <div class="mb-2 flex flex-wrap gap-2">
+                                    @foreach(['XS','S','M','L','XL','XXL','XXXL','38','39','40','41','42','43','44','OS','FREE SIZE'] as $size)
+                                        <button type="button"
+                                                @click="toggleSize('{{ $size }}')"
+                                                :class="form.ukuran.includes('{{ $size }}') ? 'border-admin bg-admin text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-admin'"
+                                                class="rounded-lg border-2 px-3 py-1.5 text-xs font-semibold transition">
+                                            {{ $size }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text"
+                                           x-model="manualUkuran"
+                                           @keydown.enter.prevent="addManualUkuran()"
+                                           placeholder="Ketik ukuran lalu tekan Enter, atau pisahkan dengan koma"
+                                           class="w-full rounded-xl border-2 px-4 py-3 text-sm focus:border-admin focus:outline-none"
+                                           :class="errors.ukuran ? 'border-red-300' : 'border-slate-200'">
+                                    <p class="text-xs text-slate-400 mt-1">Selected: <span x-text="form.ukuran.join(', ') || '-'"></span></p>
+                                </div>
+                                <input type="hidden" name="ukuran" :value="form.ukuran.join(',')">
                             </div>
-                            <input type="text"
-                                   x-model="form.ukuran"
-                                   @input="autoSku(); checkDuplicate()"
-                                   placeholder="Atau ketik manual..."
-                                   class="w-full rounded-xl border-2 px-4 py-3 text-sm focus:border-admin focus:outline-none"
-                                   :class="errors.ukuran ? 'border-red-300' : 'border-slate-200'">
+                                <div class="mb-2 flex flex-wrap gap-2">
+                                    @foreach(['XS','S','M','L','XL','XXL','XXXL','38','39','40','41','42','43','44','OS','FREE SIZE'] as $size)
+                                        <button type="button"
+                                                @click="toggleSize('{{ $size }}')"
+                                                :class="form.ukuran.includes('{{ $size }}') ? 'border-admin bg-admin text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-admin'"
+                                                class="rounded-lg border-2 px-3 py-1.5 text-xs font-semibold transition">
+                                            {{ $size }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text"
+                                           x-model="manualUkuran"
+                                           @keydown.enter.prevent="addManualUkuran()"
+                                           placeholder="Ketik ukuran lalu tekan Enter, atau pisahkan dengan koma"
+                                           class="w-full rounded-xl border-2 px-4 py-3 text-sm focus:border-admin focus:outline-none"
+                                           :class="errors.ukuran ? 'border-red-300' : 'border-slate-200'">
+                                    <p class="text-xs text-slate-400 mt-1">Selected: <span x-text="form.ukuran.join(', ') || '-'"></span></p>
+                                </div>
+                                <input type="hidden" name="ukuran" :value="form.ukuran.join(',')">
                             <p x-show="errors.ukuran" x-cloak class="mt-1 text-xs text-red-500" x-text="errors.ukuran"></p>
                         </div>
 
@@ -293,12 +320,13 @@ function variantMgmt() {
         form: {
             warna: '',
             kode_hex: '#000000',
-            ukuran: '',
+            ukuran: [],
             stok: 0,
             harga: 0,
             sku: '',
             stok_minimum: 5,
         },
+        manualUkuran: '',
         saving: false,
         errors: {},
 
@@ -352,39 +380,59 @@ function variantMgmt() {
 
         autoSku() {
             const warna = this.form.warna.substring(0, 3).toUpperCase().replace(/\s+/g, '');
-            const ukuran = this.form.ukuran.toUpperCase().replace(/\s+/g, '');
-            this.form.sku = 'SKU-' + (this.activeProdukId || '000') + '-' + (warna || 'VRN') + '-' + (ukuran || 'SZ');
+            const ukuran = Array.isArray(this.form.ukuran) ? (this.form.ukuran[0] || '') : (this.form.ukuran || '');
+            const ukuranSlug = String(ukuran).toUpperCase().replace(/\s+/g, '');
+            this.form.sku = 'SKU-' + (this.activeProdukId || '000') + '-' + (warna || 'VRN') + '-' + (ukuranSlug || 'SZ');
         },
 
-        isDuplicate() {
+        isDuplicateFor(ukuran) {
             const warna = this.form.warna.trim().toLowerCase();
-            const ukuran = this.form.ukuran.trim().toLowerCase();
             if (!warna || !ukuran) return false;
             return this.variants.some(v =>
                 String(v.warna || '').toLowerCase() === warna &&
-                String(v.ukuran || '').toLowerCase() === ukuran
+                String(v.ukuran || '').toLowerCase() === String(ukuran).toLowerCase()
             );
         },
 
         checkDuplicate() {
             this.errors.duplikat = '';
-            if (this.form.warna.trim() && this.form.ukuran.trim() && this.isDuplicate()) {
-                this.errors.duplikat = 'Kombinasi warna ' + this.form.warna + ' + ukuran ' + this.form.ukuran + ' sudah ada!';
+            if (!this.form.warna.trim() || this.form.ukuran.length === 0) return;
+            const duplicates = this.form.ukuran.filter(u => this.isDuplicateFor(u));
+            if (duplicates.length) {
+                this.errors.duplikat = 'Kombinasi warna ' + this.form.warna + ' + ukuran ' + duplicates.join(', ') + ' sudah ada!';
             }
+        },
+
+        toggleSize(size) {
+            const idx = this.form.ukuran.indexOf(size);
+            if (idx === -1) this.form.ukuran.push(size);
+            else this.form.ukuran.splice(idx, 1);
+            this.autoSku();
+            this.checkDuplicate();
+        },
+
+        addManualUkuran() {
+            if (!this.manualUkuran) return;
+            const parts = this.manualUkuran.split(',').map(s => s.trim()).filter(Boolean);
+            parts.forEach(p => { if (!this.form.ukuran.includes(p)) this.form.ukuran.push(p); });
+            this.manualUkuran = '';
+            this.autoSku();
+            this.checkDuplicate();
         },
 
         validateForm() {
             this.errors = {};
-            if (!this.form.warna.trim()) { this.errors.warna = 'Nama warna wajib diisi'; }
-            if (!this.form.ukuran.trim()) { this.errors.ukuran = 'Ukuran wajib diisi'; }
+            if (!this.form.warna || !this.form.warna.trim()) { this.errors.warna = 'Nama warna wajib diisi'; }
+            if (!Array.isArray(this.form.ukuran) || this.form.ukuran.length === 0) { this.errors.ukuran = 'Ukuran wajib dipilih minimal satu'; }
             if (Number(this.form.stok) < 0) { this.errors.stok = 'Stok tidak boleh negatif'; }
             if (Number(this.form.harga) <= 0) { this.errors.harga = 'Harga wajib diisi'; }
-            if (this.isDuplicate()) { this.errors.duplikat = 'Kombinasi warna + ukuran sudah ada!'; }
+            this.checkDuplicate();
             return Object.keys(this.errors).length === 0;
         },
 
         resetForm() {
-            this.form = { warna: '', kode_hex: '#000000', ukuran: '', stok: 0, harga: 0, sku: '', stok_minimum: 5 };
+            this.form = { warna: '', kode_hex: '#000000', ukuran: [], stok: 0, harga: 0, sku: '', stok_minimum: 5 };
+            this.manualUkuran = '';
             this.errors = {};
         },
 
@@ -400,26 +448,35 @@ function variantMgmt() {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                     },
-                    body: JSON.stringify({
-                        produk_id: this.activeProdukId,
-                        warna: this.form.warna,
-                        kode_hex: this.form.kode_hex,
-                        ukuran: this.form.ukuran,
-                        stok: this.form.stok,
-                        harga: this.form.harga,
-                        sku: this.form.sku,
-                        stok_minimum: this.form.stok_minimum,
-                    }),
+                            body: JSON.stringify({
+                                produk_id: this.activeProdukId,
+                                warna: this.form.warna,
+                                kode_hex: this.form.kode_hex,
+                                ukuran: this.form.ukuran,
+                                stok: this.form.stok,
+                                harga: this.form.harga,
+                                sku: this.form.sku,
+                                stok_minimum: this.form.stok_minimum,
+                            }),
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok || !data.success) {
-                    this.errors.server = data.message ?? 'Gagal menyimpan varian';
+                    this.errors.server = data.message ?? (Array.isArray(data.errors) ? data.errors.join('\n') : 'Gagal menyimpan varian');
                     return;
                 }
-                this.variants.unshift(data.variant);
-                this.savedCount += 1;
+
+                if (Array.isArray(data.variants) && data.variants.length > 0) {
+                    // add each created variant to list
+                    data.variants.forEach(v => this.variants.unshift(v));
+                    this.savedCount += data.variants.length;
+                }
+
+                if (Array.isArray(data.errors) && data.errors.length) {
+                    this.errors.server = data.errors.join('\n');
+                }
+
                 this.resetForm();
-                if (typeof showAdminToast === 'function') showAdminToast('Varian berhasil disimpan!');
+                if (typeof showAdminToast === 'function') showAdminToast((data.variants?.length || 0) + ' varian berhasil disimpan!');
                 setTimeout(() => document.getElementById('input-warna')?.focus(), 100);
             } catch (e) {
                 this.errors.server = 'Terjadi kesalahan: ' + e.message;

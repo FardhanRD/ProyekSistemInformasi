@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use App\Models\Produk;
 use App\Models\Kategori;
+use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Str;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 
 class SupplierController extends Controller
 {
@@ -28,6 +30,9 @@ class SupplierController extends Controller
         }
 
         $query = Supplier::query();
+
+        // Tampilkan hanya supplier yang aktif/terverifikasi di daftar
+        $query->where('is_verified', 1);
 
         if ($q) {
             $query->where(function ($qq) use ($q) {
@@ -76,6 +81,7 @@ class SupplierController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'foto_toko' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg|max:10240',
+            'is_verified' => 'required|boolean',
         ]);
 
         $fotoPath = null;
@@ -83,24 +89,61 @@ class SupplierController extends Controller
             $fotoPath = $request->file('foto_toko')->store('suppliers', 'public');
         }
 
-        $penggunaId = auth()->user()?->pengguna_id;
-        if (! $penggunaId) {
-            return back()->with('error', 'Akun admin tidak valid untuk membuat supplier.');
+        $email = $validated['email'];
+        if ($email && Pengguna::where('email', $email)->exists()) {
+            if ($fotoPath) {
+                Storage::disk('public')->delete($fotoPath);
+            }
+            return back()->withErrors(['email' => 'Email ini sudah digunakan oleh akun lain.'])->withInput();
         }
 
-        $supplier = Supplier::create([
-            'pengguna_id' => $penggunaId,
-            'nama_toko' => $validated['nama_toko'],
-            'nama_owner' => $validated['nama_owner'],
-            'kategori_supplier' => $validated['kategori_supplier'] ?? null,
-            'no_telepon' => $validated['no_telepon'] ?? null,
-            'email' => $validated['email'] ?? null,
-            'alamat_toko' => $validated['alamat_toko'],
-            'latitude' => $validated['latitude'] ?? null,
-            'longitude' => $validated['longitude'] ?? null,
-            'foto_toko' => $fotoPath,
-            'is_verified' => 0,
-        ]);
+        if (!$email) {
+            $slug = Str::slug($validated['nama_toko']) ?: 'supplier';
+            do {
+                $email = $slug . '-' . rand(1000, 9999) . '@example.com';
+            } while (Pengguna::where('email', $email)->exists());
+        }
+
+        $slug = Str::slug($validated['nama_toko']) ?: 'supplier';
+        do {
+            $username = $slug . '-' . rand(100, 999);
+        } while (Pengguna::where('username', $username)->exists());
+
+        try {
+            DB::beginTransaction();
+
+            $pengguna = Pengguna::create([
+                'nama_pengguna' => $validated['nama_owner'],
+                'username' => $username,
+                'email' => $email,
+                'no_telepon' => $validated['no_telepon'] ?? '-',
+                'sandi' => Hash::make('password'),
+                'role' => 'supplier',
+                'is_active' => 1,
+            ]);
+
+            $supplier = Supplier::create([
+                'pengguna_id' => $pengguna->pengguna_id,
+                'nama_toko' => $validated['nama_toko'],
+                'nama_owner' => $validated['nama_owner'],
+                'kategori_supplier' => $validated['kategori_supplier'] ?? null,
+                'no_telepon' => $validated['no_telepon'] ?? null,
+                'email' => $validated['email'] ?? null,
+                'alamat_toko' => $validated['alamat_toko'],
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
+                'foto_toko' => $fotoPath,
+                'is_verified' => $validated['is_verified'],
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($fotoPath) {
+                Storage::disk('public')->delete($fotoPath);
+            }
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        }
 
         return redirect()->route('admin.supplier.index')->with('success', 'Supplier berhasil ditambahkan.');
     }
@@ -136,10 +179,10 @@ class SupplierController extends Controller
             Storage::disk('public')->delete($supplier->foto_toko);
         }
 
-        // Soft/nonaktif
-        $supplier->update(['is_verified' => 0]);
+        // Hapus permanen record supplier
+        $supplier->delete();
 
-        return redirect()->route('admin.supplier.index')->with('success', 'Supplier dihapus (nonaktif).');
+        return redirect()->route('admin.supplier.index')->with('success', 'Supplier telah dihapus.');
     }
 }
 

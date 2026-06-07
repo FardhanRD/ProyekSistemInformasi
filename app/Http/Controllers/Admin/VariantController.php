@@ -105,67 +105,84 @@ class VariantController extends Controller
             'produk_id' => 'required|exists:produk,produk_id',
             'warna' => 'required|string|max:50',
             'kode_hex' => 'nullable|string|max:20',
-            'ukuran' => 'required|string|max:20',
+            'ukuran' => 'required', // array|string allowed
             'stok' => 'required|integer|min:0',
             'harga' => 'required|numeric|min:1',
             'sku' => 'nullable|string|max:100',
             'stok_minimum' => 'nullable|integer|min:0',
         ]);
 
+        $produk = Produk::findOrFail($data['produk_id']);
+
         $warnaRecord = WarnaProduk::firstOrCreate(
             ['nama_warna' => trim($data['warna'])],
             ['kode_hex' => $data['kode_hex'] ?? '#000000']
         );
 
-        $duplikat = DetailProduk::query()
-            ->where('produk_id', $data['produk_id'])
-            ->where('warna_id', $warnaRecord->warna_id)
-            ->where('ukuran', $data['ukuran'])
-            ->exists();
-
-        if ($duplikat) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Varian ' . $data['warna'] . ' ukuran ' . $data['ukuran'] . ' sudah ada!',
-            ], 422);
+        // normalize ukuran to array
+        $ukuranList = [];
+        if (is_array($data['ukuran'])) {
+            $ukuranList = $data['ukuran'];
+        } else {
+            // comma separated or single
+            $ukuranList = array_map('trim', explode(',', (string) $data['ukuran']));
         }
 
-        $produk = Produk::findOrFail($data['produk_id']);
-        $sku = trim((string) ($data['sku'] ?? ''));
+        $created = [];
+        $errors = [];
 
-        if ($sku === '') {
-            $warnaSlug = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $data['warna']), 0, 3));
-            $ukuranSlug = strtoupper(preg_replace('/\s+/', '', $data['ukuran']));
-            $sku = 'SKU-' . str_pad((string) $produk->produk_id, 3, '0', STR_PAD_LEFT) . '-' . ($warnaSlug ?: 'VAR') . '-' . ($ukuranSlug ?: 'STD');
-        }
+        foreach ($ukuranList as $ukuran) {
+            if ($ukuran === '') continue;
 
-        $detail = new DetailProduk();
-        $detail->forceFill([
-            'produk_id' => $produk->produk_id,
-            'warna_id' => $warnaRecord->warna_id,
-            'nama_produk' => $produk->nama_produk,
-            'ukuran' => $data['ukuran'],
-            'stok' => $data['stok'],
-            'harga' => $data['harga'],
-            'sku' => $sku,
-            'stok_minimum' => $data['stok_minimum'] ?? 5,
-            'is_active' => 1,
-        ]);
-        $detail->save();
+            $duplikat = DetailProduk::query()
+                ->where('produk_id', $data['produk_id'])
+                ->where('warna_id', $warnaRecord->warna_id)
+                ->where('ukuran', $ukuran)
+                ->exists();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Varian berhasil disimpan',
-            'variant' => [
+            if ($duplikat) {
+                $errors[] = 'Varian ' . $data['warna'] . ' ukuran ' . $ukuran . ' sudah ada!';
+                continue;
+            }
+
+            $sku = trim((string) ($data['sku'] ?? ''));
+            if ($sku === '') {
+                $warnaSlug = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $data['warna']), 0, 3));
+                $ukuranSlug = strtoupper(preg_replace('/\s+/', '', $ukuran));
+                $sku = 'SKU-' . str_pad((string) $produk->produk_id, 3, '0', STR_PAD_LEFT) . '-' . ($warnaSlug ?: 'VAR') . '-' . ($ukuranSlug ?: 'STD');
+            }
+
+            $detail = new DetailProduk();
+            $detail->forceFill([
+                'produk_id' => $produk->produk_id,
+                'warna_id' => $warnaRecord->warna_id,
+                'nama_produk' => $produk->nama_produk,
+                'ukuran' => $ukuran,
+                'stok' => $data['stok'],
+                'harga' => $data['harga'],
+                'sku' => $sku,
+                'stok_minimum' => $data['stok_minimum'] ?? 5,
+                'is_active' => 1,
+            ]);
+            $detail->save();
+
+            $created[] = [
                 'id' => $detail->detail_produk_id,
                 'warna' => $data['warna'],
                 'kode_hex' => $data['kode_hex'] ?? '#000000',
-                'ukuran' => $data['ukuran'],
+                'ukuran' => $ukuran,
                 'stok' => (int) $data['stok'],
                 'harga' => (float) $data['harga'],
                 'sku' => $sku,
                 'stok_minimum' => (int) ($data['stok_minimum'] ?? 5),
-            ],
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Operasi selesai',
+            'variants' => $created,
+            'errors' => $errors,
         ]);
     }
 
