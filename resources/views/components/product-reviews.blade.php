@@ -55,13 +55,19 @@
         @forelse($ratings as $ulasan)
             @php
                 $buyerName = $ulasan->buyer?->pengguna?->nama_pengguna ?? 'Anonymous';
+                $fotoProfil = $ulasan->buyer?->pengguna?->foto_profil ?? null;
+                $fotoProfilPosition = $ulasan->buyer?->pengguna?->foto_profil_position ?? '50% 50%';
                 $avatar = strtoupper(mb_substr($buyerName, 0, 1));
             @endphp
             <div class="rounded-3xl bg-white p-5 shadow-sm">
                 <div class="flex items-start gap-4">
-                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#63A2BB] text-sm font-bold text-white">
-                        {{ $avatar }}
-                    </div>
+                    @if($fotoProfil)
+                        <img src="{{ asset('storage/' . $fotoProfil) }}" alt="{{ $buyerName }}" class="h-10 w-10 flex-shrink-0 rounded-full object-cover" style="object-position: {{ $fotoProfilPosition }}">
+                    @else
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#63A2BB] text-sm font-bold text-white">
+                            {{ $avatar }}
+                        </div>
+                    @endif
 
                     <div class="flex-1">
                         <div class="flex items-start justify-between gap-2">
@@ -102,6 +108,30 @@
                                     @endforeach
                                 </div>
                             @endif
+                        @endif
+                        @if($ulasan->balasan)
+                            <div class="mt-4 rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                                <div class="flex items-center justify-between gap-2 mb-1.5">
+                                    <div class="flex items-center gap-1.5 text-slate-850">
+                                        <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-white">A</span>
+                                        <span class="text-xs font-bold">
+                                            @if(auth()->check() && auth()->user()->pengguna_id === ($ulasan->buyer?->pengguna_id ?? null))
+                                                admin reply to you
+                                            @else
+                                                admin reply to '{{ $buyerName }}'
+                                            @endif
+                                        </span>
+                                    </div>
+                                    @if($ulasan->balas_tanggal)
+                                        <span class="text-[10px] text-gray-400">
+                                            {{ $ulasan->balas_tanggal->isoFormat('D MMM YYYY') }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-xs sm:text-sm leading-relaxed text-gray-600 mt-1">
+                                    {{ $ulasan->balasan }}
+                                </p>
+                            </div>
                         @endif
                     </div>
                 </div>

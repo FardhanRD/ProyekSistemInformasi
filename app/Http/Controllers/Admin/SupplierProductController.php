@@ -78,7 +78,6 @@ class SupplierProductController extends Controller
         return redirect()->route('admin.supplier-product.index')
             ->with('success', 'Relasi supplier-produk berhasil ditambahkan.');
     }
-
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -89,7 +88,12 @@ class SupplierProductController extends Controller
         $relation = ProdukSupplier::findOrFail($id);
         $relation->update($request->only(['harga_modal', 'catatan']));
 
-        return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui.']);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui.']);
+        }
+
+        return redirect()->route('admin.supplier-product.index')
+            ->with('success', 'Relasi supplier-produk berhasil diperbarui.');
     }
 
     public function destroy($id)

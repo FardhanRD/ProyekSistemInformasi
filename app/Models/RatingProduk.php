@@ -30,7 +30,32 @@ class RatingProduk extends Model
         'foto_ulasan' => 'array',
         'is_verified' => 'boolean',
         'balas_tanggal' => 'datetime',
+        'created_at' => 'datetime',
     ];
+
+    protected static function booted()
+    {
+        static::saved(function ($rating) {
+            $rating->updateProductStats();
+        });
+
+        static::deleted(function ($rating) {
+            $rating->updateProductStats();
+        });
+    }
+
+    public function updateProductStats()
+    {
+        $produk = $this->produk;
+        if ($produk) {
+            $avg = self::where('produk_id', $this->produk_id)->avg('bintang') ?? 0.0;
+            $count = self::where('produk_id', $this->produk_id)->count();
+            $produk->update([
+                'rata_rating' => $avg,
+                'jumlah_ulasan' => $count,
+            ]);
+        }
+    }
 
     public function produk()
     {

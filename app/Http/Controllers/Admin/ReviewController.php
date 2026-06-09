@@ -84,7 +84,7 @@ class ReviewController extends Controller
 
         $review = RatingProduk::findOrFail($id);
         
-        $admin = Admin::where('pengguna_id', auth()->user()->pengguna_id)->firstOrFail();
+        $admin = Admin::firstOrCreate(['pengguna_id' => auth()->user()->pengguna_id]);
 
         $review->update([
             'balasan' => $request->get('balasan'),

@@ -25,16 +25,34 @@ class PromotionController extends Controller
 
         $products = Produk::where('is_active', 1)->orderBy('nama_produk')->get();
         $variants = DetailProduk::with(['produk'])->where('is_active', 1)->orderBy('nama_produk')->get();
+        $now = \Carbon\Carbon::now();
+        $activePromoProductIds = Promo::where('is_active', 1)
+            ->where('mulai', '<=', $now)
+            ->where('selesai', '>=', $now)
+            ->pluck('produk_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $activePromoVariantProductIds = Promo::where('is_active', 1)
+            ->where('mulai', '<=', $now)
+            ->where('selesai', '>=', $now)
+            ->whereNotNull('detail_produk_id')
+            ->with('detailProduk')
+            ->get()
+            ->pluck('detailProduk.produk_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $allPromoProductIds = array_unique(array_merge($activePromoProductIds, $activePromoVariantProductIds));
+
         $produkDiskon = Produk::with([
             'gambarUtama',
             'detailProduk',
             'supplier',
         ])
-            ->whereHas('detailProduk', function ($q) {
-                $q->where('harga', '<', DB::raw(
-                    '(SELECT MAX(dp2.harga) FROM detail_produk dp2 WHERE dp2.produk_id = detail_produk.produk_id)'
-                ));
-            })
+            ->whereIn('produk_id', $allPromoProductIds)
             ->where('is_active', 1)
             ->orderBy('nama_produk')
             ->limit(20)

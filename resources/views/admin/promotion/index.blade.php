@@ -139,10 +139,29 @@
                         <tbody>
                             @forelse($produkDiskon ?? [] as $p)
                                 @php
-                                    $hargaNormal = $p->detailProduk->max('harga');
-                                    $hargaDiskon = $p->detailProduk->min('harga');
-                                    $hemat = max(0, $hargaNormal - $hargaDiskon);
-                                    $persen = $hargaNormal > 0 ? round($hemat / $hargaNormal * 100) : 0;
+                                    $maxPersen = 0;
+                                    $hargaNormal = 0;
+                                    $hargaDiskon = 0;
+                                    foreach ($p->detailProduk as $dp) {
+                                        $orig = (float) $dp->harga;
+                                        $efek = (float) $dp->harga_efektif;
+                                        if ($orig > 0) {
+                                            $p_saved = ($orig - $efek) / $orig * 100;
+                                            if ($p_saved > $maxPersen) {
+                                                $maxPersen = $p_saved;
+                                                $hargaNormal = $orig;
+                                                $hargaDiskon = $efek;
+                                            }
+                                        }
+                                    }
+                                    // If no active promo is found (fallback)
+                                    if ($maxPersen <= 0 && $p->detailProduk->isNotEmpty()) {
+                                        $first = $p->detailProduk->first();
+                                        $hargaNormal = (float) $first->harga;
+                                        $hargaDiskon = (float) $first->harga_efektif;
+                                        $maxPersen = 0;
+                                    }
+                                    $persen = round($maxPersen);
                                 @endphp
                                 <tr>
                                     <td>

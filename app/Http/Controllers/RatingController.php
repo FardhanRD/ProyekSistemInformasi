@@ -76,14 +76,13 @@ class RatingController extends Controller
     public function store(Request $request, $kodeTransaksi)
     {
         $user = auth()->user();
-        $buyer = $user?->buyer;
-
-        if (! $user || ! $buyer) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Silakan login kembali untuk memberi rating.',
             ], 401);
         }
+        $buyer = $user->buyer ?: \App\Models\Buyer::firstOrCreate(['pengguna_id' => $user->pengguna_id]);
 
         $transaksi = Transaksi::with(['transaksiDetail.detailProduk.produk'])
             ->where('kode_transaksi', $kodeTransaksi)
@@ -93,10 +92,14 @@ class RatingController extends Controller
 
         $validated = $request->validate([
             'produk_ratings' => 'nullable|array',
+            'produk_ratings.*.produk_id' => 'required|integer',
             'produk_ratings.*.bintang' => 'nullable|integer|min:0|max:5',
+            'produk_ratings.*.judul' => 'nullable|string|max:200',
+            'produk_ratings.*.isi' => 'nullable|string',
             'toko_rating' => 'nullable|array',
             'toko_rating.pelayanan' => 'nullable|integer|min:1|max:5',
             'toko_rating.aplikasi' => 'nullable|integer|min:1|max:5',
+            'toko_rating.komentar' => 'nullable|string',
         ]);
 
         DB::beginTransaction();

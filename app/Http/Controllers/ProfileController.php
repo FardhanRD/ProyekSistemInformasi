@@ -77,7 +77,7 @@ class ProfileController extends Controller
                 'dibatalkan' => $semuaPesanan->where('status', 'dibatalkan')->count(),
             ];
 
-            if (Schema::hasTable('voucher_klaim')) {
+            if (Schema::hasTable('voucher_klaim') && $buyer) {
                 $voucherKlaim = VoucherKlaim::with('voucher')
                     ->where('buyer_id', $buyer->buyer_id)
                     ->orderBy('diklaim_at', 'desc')
