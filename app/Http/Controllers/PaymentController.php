@@ -191,6 +191,13 @@ class PaymentController extends Controller
             return back()->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
+        $metode = $pembayaran->metode ?? $pembayaran->metodePembayaran ?? null;
+        $isCod = $metode && strtolower($metode->jenis) === 'cod';
+
+        if (!$isCod && empty($pembayaran->bukti_pembayaran)) {
+            return back()->with('error', 'Silakan unggah bukti transfer terlebih dahulu sebelum konfirmasi pembayaran.');
+        }
+
         if ($pembayaran->expired_at && now()->gt($pembayaran->expired_at)) {
             return back()->with('error', 'Waktu pembayaran untuk transaksi ini sudah habis.');
         }

@@ -423,9 +423,9 @@ class ProfileController extends Controller
             'new_password' => 'required|string|min:8|confirmed',
         ]);
 
-        Auth::user()->update([
-            'password' => Hash::make($request->new_password),
-        ]);
+        $user = Auth::user();
+        $user->sandi = Hash::make($request->new_password);
+        $user->save();
 
         return back()->with('success', 'Password berhasil diubah.');
     }

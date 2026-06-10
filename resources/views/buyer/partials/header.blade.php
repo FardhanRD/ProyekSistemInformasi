@@ -17,7 +17,31 @@
     $userPhoto = $user->foto_profil ?? $user->foto ?? null;
 @endphp
 
-<header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl" x-data="{ mobileOpen: false, searchQuery: '', notificationOpen: false, wishlistCount: {{ $wishlistCount }}, cartCount: {{ $cartCount }} }">
+<header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl" 
+        x-data="{ 
+            mobileOpen: false, 
+            searchQuery: '', 
+            notificationOpen: false, 
+            wishlistCount: {{ $wishlistCount }}, 
+            cartCount: {{ $cartCount }},
+            async refreshCounts() {
+                try {
+                    const cartRes = await fetch('/api/cart-count');
+                    const cartData = await cartRes.json();
+                    this.cartCount = cartData.count || 0;
+                    
+                    const wlRes = await fetch('/api/wishlist-count');
+                    const wlData = await wlRes.json();
+                    this.wishlistCount = wlData.count || 0;
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        }" 
+        @update-cart-count.window="cartCount = $event.detail" 
+        @update-wishlist-count.window="wishlistCount = $event.detail"
+        @cart-updated.window="refreshCounts()"
+        @wishlist-updated.window="refreshCounts()">
     <div class="section-shell">
         <div class="flex h-20 items-center justify-between gap-4">
             <div class="flex items-center gap-4 lg:gap-6">
@@ -212,7 +236,7 @@
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H6.4M7 13L6.4 5M7 13l-1.5 3.5A1 1 0 007 18h10m-10 0a2 2 0 104 0m6 0a2 2 0 104 0" />
                     </svg>
-                    <span x-cloak x-show="cartCount > 0" x-text="cartCount" class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#63A2BB] px-1.5 text-[10px] font-bold text-white shadow-md"></span>
+                    <span data-cart-badge x-cloak x-show="cartCount > 0" x-text="cartCount" class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#63A2BB] px-1.5 text-[10px] font-bold text-white shadow-md"></span>
                 </a>
 
                 <div class="hidden sm:flex items-center rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold">

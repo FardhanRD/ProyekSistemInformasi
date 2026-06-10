@@ -12,7 +12,7 @@ class PaymentController extends Controller
 {
     public function confirmByBuyer($kodeTransaksi)
     {
-        $transaksi = Transaksi::with('pembayaran', 'buyer')
+        $transaksi = Transaksi::with(['pembayaran.metode', 'buyer'])
             ->where('kode_transaksi', $kodeTransaksi)
             ->first();
 
@@ -32,6 +32,13 @@ class PaymentController extends Controller
         $pembayaran = $transaksi->pembayaran;
         if (!$pembayaran) {
             return response()->json(['success' => false, 'message' => 'Data pembayaran tidak ditemukan'], 404);
+        }
+
+        $metode = $pembayaran->metode ?? $pembayaran->metodePembayaran ?? null;
+        $isCod = $metode && strtolower($metode->jenis) === 'cod';
+
+        if (!$isCod && empty($pembayaran->bukti_pembayaran)) {
+            return response()->json(['success' => false, 'message' => 'Silakan unggah bukti transfer terlebih dahulu sebelum konfirmasi pembayaran'], 422);
         }
 
         if ($pembayaran->expired_at && now()->gt($pembayaran->expired_at)) {

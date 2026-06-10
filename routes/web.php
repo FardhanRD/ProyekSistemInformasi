@@ -103,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show')->middleware(['auth']);
     Route::get('/orders/{kode}/json', [OrderController::class, 'showJson'])->name('orders.show.json');
     Route::post('/orders/{kode}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->middleware(['auth']);
+    Route::post('/orders/{kode}/complete', [OrderController::class, 'complete'])->name('orders.complete')->middleware(['auth']);
     Route::get('/orders/{kode}/cancelled', [OrderController::class, 'cancelled'])->name('orders.cancelled')->middleware(['auth']);
     Route::get('/tracking/{kode_transaksi}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/orders/{kode_transaksi}/tracking', [TrackingController::class, 'show'])->name('order.tracking');

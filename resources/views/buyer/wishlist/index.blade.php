@@ -61,47 +61,14 @@
                       group-hover:scale-105 
                       transition-transform duration-500">
           @endif
-        </a>
-
-        {{-- Wishlist Toggle (merah = aktif) --}}
-        <div class="absolute top-3 right-3"
-             x-data="{ 
-               loading: false,
-               async remove() {
-                 this.loading = true;
-                 const res = await fetch(
-                   '{{ route('wishlist.toggle') }}', {
-                   method: 'POST',
-                   headers: {
-                     'Content-Type': 'application/json',
-                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                   },
-                   body: JSON.stringify({ 
-                     produk_id: {{ $item->produk_id }} 
-                   })
-                 });
-                 const data = await res.json();
-                 if (data.success) {
-                   const card = document.getElementById(
-                     'wl-card-{{ $item->produk_id }}');
-                   card.style.transition = 'all 0.3s';
-                   card.style.opacity = '0';
-                   card.style.transform = 'scale(0.85)';
-                   setTimeout(() => card.remove(), 300);
-                   const badge = document.getElementById(
-                     'wishlist-count');
-                   if (badge) badge.textContent = data.count;
-                   showToast(@json(__('ui.wishlist_removed')));
-                 }
-                 this.loading = false;
-               }
-             }">
-          <button @click.prevent="remove()"
-                  :disabled="loading"
-                  class="w-9 h-9 rounded-full bg-white/90 
+        </a>        {{-- Wishlist Toggle (merah = aktif) --}}
+        <div class="absolute top-3 right-3 z-30">
+          <button class="btn-remove-wishlist w-9 h-9 rounded-full bg-white/90 
                          shadow-md flex items-center 
                          justify-center hover:scale-110 
-                         transition">
+                         transition"
+                  data-product-id="{{ $item->produk_id }}"
+                  aria-label="Remove from Wishlist">
             <svg class="w-4 h-4 text-red-500 fill-red-500" 
                  viewBox="0 0 24 24">
               <path d="M12 21.593c-5.63-5.539-11
@@ -116,7 +83,7 @@
           </button>
         </div>
       </div>
-
+ 
       <div class="p-4">
         <a href="{{ route('product.show', 
                     $item->produk->slug) }}"
@@ -153,4 +120,64 @@
   </div>
   @endif
 </div>
+ 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-remove-wishlist').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const productId = this.getAttribute('data-product-id');
+            const card = document.getElementById('wl-card-' + productId);
+            if (!card) return;
+            
+            // disable button
+            this.disabled = true;
+            this.style.opacity = '0.5';
+            
+            try {
+                const res = await fetch('{{ route('wishlist.toggle') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ produk_id: productId })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    card.style.transition = 'all 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.85)';
+                    setTimeout(() => card.remove(), 300);
+                    
+                    window.dispatchEvent(new CustomEvent('update-wishlist-count', { detail: data.count }));
+                    const badge = document.getElementById('wishlist-count');
+                    if (badge) badge.textContent = data.count;
+                    
+                    if (typeof showToast === 'function') {
+                        showToast('{{ __('ui.wishlist_removed') }}');
+                    }
+                } else {
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Gagal menghapus dari wishlist', 'error');
+                    }
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }
+            } catch (err) {
+                console.error(err);
+                if (typeof showToast === 'function') {
+                    showToast('Terjadi kesalahan saat menghapus dari wishlist', 'error');
+                }
+                this.disabled = false;
+                this.style.opacity = '1';
+            }
+        });
+    });
+});
+</script>
 @endsection

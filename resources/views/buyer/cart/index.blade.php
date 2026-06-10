@@ -73,11 +73,15 @@
        async removeItem(id) {
          const res = await fetch('/cart/remove/' + id, {
            method: 'DELETE',
-           headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+           headers: { 
+             'X-CSRF-TOKEN': '{{ csrf_token() }}',
+             'Accept': 'application/json'
+           }
          });
          const data = await res.json();
          if (data.success) {
            this.items = this.items.filter(i => i.id !== id);
+           window.dispatchEvent(new CustomEvent('update-cart-count', { detail: data.cart_count }));
            const badge = document.getElementById('cart-count');
            if (badge) badge.textContent = data.cart_count;
            showToast('Item dihapus dari keranjang');
@@ -115,7 +119,7 @@
 
   <h1 class="text-2xl font-black text-gray-900 mb-8">
     Keranjang Belanja
-    <span class="text-gray-400 font-normal text-lg ml-2">
+    <span class="text-gray-400 font-normal text-lg ml-2" x-text="'(' + items.length + ' item)'">
       ({{ $items->count() }} item)
     </span>
   </h1>
@@ -148,7 +152,34 @@
   
   @else
   
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  {{-- Empty State (Dynamic fallback when all items are deleted client-side) --}}
+  <div x-show="items.length === 0" 
+       class="flex flex-col items-center justify-center 
+              py-24 text-center" 
+       style="display: none;">
+    <div class="w-24 h-24 bg-[#63A2BB]/10 rounded-full 
+                flex items-center justify-center mb-6">
+      <svg class="w-12 h-12 text-[#63A2BB]" 
+           fill="none" stroke="currentColor" 
+           viewBox="0 0 24 24">
+        <path stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="1.5"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-700 mb-2">
+      Keranjang masih kosong
+    </h2>
+    <p class="text-gray-400 mb-8">
+      Yuk tambahkan produk favoritmu!
+    </p>
+    <a href="/" class="btn-primary">
+      Mulai Belanja
+    </a>
+  </div>
+  
+  <div x-show="items.length > 0" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     
     {{-- KIRI: List Item --}}
     <div class="lg:col-span-8 space-y-3">
@@ -169,21 +200,24 @@
         </label>
         <span class="text-sm text-gray-400 ml-auto">
           <span x-text="checkedCount"></span> 
-          dari {{ $items->count() }} dipilih
+          dari <span x-text="items.length"></span> dipilih
         </span>
       </div>
 
       {{-- Cart Items --}}
       @foreach($items as $item)
       <div id="cart-item-{{ $item->keranjang_id }}"
+           x-data="{ 
+             id: {{ $item->keranjang_id }},
+             get item() { return items.find(i => i.id === this.id) || { checked: false, qty: 1 } }
+           }"
+           x-show="items.some(i => i.id === id)"
            class="bg-white rounded-2xl p-4 md:p-5 
                   shadow-sm flex gap-4 transition-all">
         
         {{-- Checkbox --}}
         <input type="checkbox"
-               x-model="items.find(
-                 i => i.id === {{ $item->keranjang_id }})
-                 .checked"
+               x-model="item.checked"
                class="w-4 h-4 mt-2 rounded 
                       accent-[#63A2BB] cursor-pointer 
                       flex-shrink-0">
@@ -243,11 +277,7 @@
 
             {{-- Qty Control --}}
             <div class="flex items-center gap-1">
-              <button @click="updateQty(
-                        items.find(i => i.id === 
-                          {{ $item->keranjang_id }}), 
-                        items.find(i => i.id === 
-                          {{ $item->keranjang_id }}).qty - 1)"
+              <button @click="updateQty(item, item.qty - 1)"
                       class="w-8 h-8 rounded-xl border-2 
                              border-gray-200 flex items-center 
                              justify-center text-gray-500 
@@ -256,17 +286,11 @@
                              font-bold transition text-sm">
                 −
               </button>
-              <span x-text="items.find(
-                      i => i.id === {{ $item->keranjang_id }})
-                      ?.qty ?? {{ $item->jumlah }}"
+              <span x-text="item.qty"
                     class="w-10 text-center font-bold 
                            text-sm text-gray-800">
               </span>
-              <button @click="updateQty(
-                        items.find(i => i.id === 
-                          {{ $item->keranjang_id }}), 
-                        items.find(i => i.id === 
-                          {{ $item->keranjang_id }}).qty + 1)"
+              <button @click="updateQty(item, item.qty + 1)"
                       class="w-8 h-8 rounded-xl border-2 
                              border-gray-200 flex items-center 
                              justify-center text-gray-500 
@@ -278,8 +302,7 @@
             </div>
 
             {{-- Hapus --}}
-            <button @click="removeItem(
-                      {{ $item->keranjang_id }})"
+            <button @click="removeItem(id)"
                     class="p-2 text-gray-400 
                            hover:text-red-500 
                            hover:bg-red-50 rounded-xl 
