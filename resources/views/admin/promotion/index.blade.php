@@ -360,7 +360,7 @@
 
     {{-- ===== VOUCHER MODAL ===== --}}
     <div x-show="voucherModal" x-cloak style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;" @click.self="voucherModal=false">
-        <div style="background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 580px; overflow: hidden; border: 1px solid #E2E8F0;"
+        <div style="background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; border: 1px solid #E2E8F0;"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100">
@@ -433,7 +433,7 @@
 
     {{-- ===== PROMO MODAL ===== --}}
     <div x-show="promoModal" x-cloak style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;" @click.self="promoModal=false">
-        <div style="background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 580px; overflow: hidden; border: 1px solid #E2E8F0;"
+        <div style="background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; border: 1px solid #E2E8F0;"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100">
@@ -572,7 +572,7 @@ function promotionPage() {
                 kuota: voucher.kuota ?? '',
                 berlaku_mulai: voucher.berlaku_mulai ? String(voucher.berlaku_mulai).replace(' ', 'T').slice(0,16) : '',
                 berlaku_sampai: voucher.berlaku_sampai ? String(voucher.berlaku_sampai).replace(' ', 'T').slice(0,16) : '',
-                is_active: !!voucher.is_active,
+                is_active: mode === 'create' ? true : !!voucher.is_active,
             };
         },
         openPromoModal(mode, promoType, promo = {}) {
@@ -591,7 +591,7 @@ function promotionPage() {
                 stok_flash_sale: promo.stok_flash_sale ?? '',
                 mulai: promo.mulai ? String(promo.mulai).replace(' ', 'T').slice(0,16) : '',
                 selesai: promo.selesai ? String(promo.selesai).replace(' ', 'T').slice(0,16) : '',
-                is_active: !!promo.is_active,
+                is_active: mode === 'create' ? true : !!promo.is_active,
             };
         },
     }

@@ -122,12 +122,12 @@ class AdminVerifyPaymentTest extends TestCase
 
         $this->assertDatabaseHas('transaksi', [
             'transaksi_id' => $trans->transaksi_id,
-            'status' => 'pembayaran_dikonfirmasi',
+            'status' => 'diproses',
         ]);
 
         $this->assertDatabaseHas('pesanan', [
             'transaksi_id' => $trans->transaksi_id,
-            'status_pesanan' => 'dikonfirmasi',
+            'status_pesanan' => 'dikemas',
         ]);
     }
 }

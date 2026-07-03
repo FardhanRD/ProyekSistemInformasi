@@ -433,9 +433,11 @@
                         this.count = 0; this.notifs = [];
                     }
                 }" x-init="load(); setInterval(() => load(), 20000)">
-                    <button @click="open = !open" @click.outside="open = false" style="position:relative; width:36px; height:36px; border-radius:10px; background:#F8FAFC; border:1.5px solid #E2E8F0; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.borderColor='#63A2BB'" onmouseout="this.style.borderColor='#E2E8F0'">
+                    <button id="notificationBell" @click="open = !open" @click.outside="open = false" style="position:relative; width:36px; height:36px; border-radius:10px; background:#F8FAFC; border:1.5px solid #E2E8F0; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.borderColor='#63A2BB'" onmouseout="this.style.borderColor='#E2E8F0'">
                         <svg width="17" height="17" fill="none" stroke="#64748B" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                        <span x-show="count > 0" x-cloak x-text="count > 9 ? '9+' : count" style="position:absolute; top:-4px; right:-4px; background:#EF4444; color:white; font-size:9px; font-weight:800; min-width:16px; height:16px; border-radius:99px; display:flex; align-items:center; justify-content:center; padding:0 3px; border:2px solid white;"></span>
+                        <template x-if="count > 0">
+                            <span x-cloak x-text="count > 9 ? '9+' : count" style="position:absolute; top:-4px; right:-4px; background:#EF4444; color:white; font-size:9px; font-weight:800; min-width:16px; height:16px; border-radius:99px; display:flex; align-items:center; justify-content:center; padding:0 3px; border:2px solid white;"></span>
+                        </template>
                     </button>
 
                     <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="position:absolute; right:0; top:calc(100% + 8px); width:320px; background:white; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.12); border:1px solid #F1F5F9; z-index:100; overflow:hidden;">
@@ -482,13 +484,13 @@
         {{-- PAGE CONTENT --}}
         <main class="admin-content">
             @if(session('success'))
-                <div style="margin:16px 24px 0; padding:12px 16px; background:#DCFCE7; border:1px solid #BBF7D0; border-radius:12px; color:#16A34A; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;">
+                <div class="alert-success" style="margin:16px 24px 0; padding:12px 16px; background:#DCFCE7; border:1px solid #BBF7D0; border-radius:12px; color:#16A34A; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     {{ session('success') }}
                 </div>
             @endif
             @if(session('error'))
-                <div style="margin:16px 24px 0; padding:12px 16px; background:#FEE2E2; border:1px solid #FECACA; border-radius:12px; color:#DC2626; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;">
+                <div class="alert-danger" style="margin:16px 24px 0; padding:12px 16px; background:#FEE2E2; border:1px solid #FECACA; border-radius:12px; color:#DC2626; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     {{ session('error') }}
                 </div>

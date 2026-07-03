@@ -3,7 +3,7 @@
 @section('title', 'Detail Customer Order')
 
 @section('content')
-<div style="padding: 32px; max-width: 1400px; margin: 0 auto;" x-data="{ showProofModal: false, proofUrl: '', proofTitle: '' }">
+<div style="padding: 32px; max-width: 1400px; margin: 0 auto;" x-data="{ showProofModal: false, proofUrl: '', proofTitle: '', showRejectModal: false }">
 
     {{-- Page Header --}}
     <div class="page-header" style="margin-bottom: 28px;">
@@ -56,12 +56,12 @@
                 <p style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px;">Status Pesanan</p>
                 @php
                     $orderStatusClasses = [
-                        'pembayaran_menunggu' => 'badge-warning',
+                        'menunggu_pembayaran' => 'badge-warning',
                         'pembayaran_dikonfirmasi' => 'badge-info',
-                        'pesanan_diproses' => 'badge-admin',
-                        'pesanan_dikirim' => 'badge-info',
-                        'pesanan_selesai' => 'badge-success',
-                        'pesanan_dibatalkan' => 'badge-danger',
+                        'diproses' => 'badge-admin',
+                        'dikirim' => 'badge-info',
+                        'selesai' => 'badge-success',
+                        'dibatalkan' => 'badge-danger',
                     ];
                     $orderBadgeClass = $orderStatusClasses[$order->status] ?? 'badge';
                 @endphp
@@ -227,13 +227,16 @@
                         </div>
 
                         @if($order->pembayaran && $order->pembayaran->status_pembayaran === 'menunggu_konfirmasi')
-                            <div style="border-top: 1px solid #F1F5F9; padding-top: 16px; margin-top: 4px;">
+                            <div style="border-top: 1px solid #F1F5F9; padding-top: 16px; margin-top: 4px; display: flex; flex-direction: column; gap: 8px;">
                                 <form method="POST" action="{{ route('admin.customer-order.verify-payment', $order->pembayaran->pembayaran_id) }}" style="margin: 0; width: 100%;">
                                     @csrf
                                     <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; background: #10B981; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 12px rgba(16,185,129,0.25); border: none; cursor: pointer;">
                                         ✓ Verifikasi Pembayaran
                                     </button>
                                 </form>
+                                <button type="button" @click="showRejectModal = true" class="btn-danger" style="width: 100%; justify-content: center; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: white;">
+                                    ✕ Reject Pembayaran
+                                </button>
                             </div>
                         @endif
                     </div>
@@ -265,6 +268,38 @@
                     <img :src="proofUrl" alt="Bukti Pembayaran" style="max-height: 60vh; max-width: 100%; object-fit: contain; border-radius: 10px;">
                 </div>
             </div>
+        </div>
+    </div>
+
+    {{-- MODAL REJECT PEMBAYARAN --}}
+    <div x-show="showRejectModal" x-cloak
+         @click.self="showRejectModal = false"
+         style="position: fixed; inset: 0; background: rgba(15,23,42,0.65); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: white; border-radius: 24px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.3); width: 100%; max-width: 500px; overflow: hidden; border: 1px solid #E2E8F0;"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="opacity-0 scale-95 translateY(10px)"
+             x-transition:enter-end="opacity-100 scale-100 translateY(0)">
+            
+            <div style="background: #EF4444; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); color: white;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800; margin: 0; color: white;">Reject Pembayaran</h3>
+                    <p style="font-size: 11px; margin: 4px 0 0; font-family: monospace; color: white;">{{ $order->kode_transaksi }}</p>
+                </div>
+                <button type="button" @click="showRejectModal = false" style="background: rgba(255,255,255,0.2); border: none; cursor: pointer; color: white; height: 28px; width: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">✕</button>
+            </div>
+            
+            <form method="POST" action="{{ route('admin.customer-order.reject', $order->transaksi_id) }}" style="padding: 24px; margin: 0; display: flex; flex-direction: column; gap: 16px;">
+                @csrf
+                <div>
+                    <label for="reject_reason" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Alasan Penolakan</label>
+                    <input type="text" id="reject_reason" name="alasan_reject" required placeholder="Masukkan alasan penolakan..." class="form-input" style="height: 42px; border-radius: 10px; font-size: 13.5px; padding: 0 16px; width: 100%; box-sizing: border-box; border: 1.5px solid #E2E8F0; background: #F8FAFC;">
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #F1F5F9; padding-top: 16px; margin-top: 8px;">
+                    <button type="button" @click="showRejectModal = false" class="btn-secondary" style="height: 38px; padding: 0 16px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1.5px solid #E2E8F0; background: white;">Batal</button>
+                    <button type="submit" id="submitRejectBtn" class="btn-danger" style="height: 38px; padding: 0 20px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px;">Reject Pembayaran</button>
+                </div>
+            </form>
         </div>
     </div>
 

@@ -178,6 +178,8 @@ class CustomerOrderController extends Controller
                     ]);
                 }
             } else {
+                $transaksi->update(['status' => 'dibatalkan']);
+
                 $buyerId = $transaksi->buyer?->pengguna_id;
                 if ($buyerId) {
                     Notifikasi::create([
@@ -226,12 +228,12 @@ class CustomerOrderController extends Controller
         $transaksi = Transaksi::with(['pesanan', 'buyer'])->findOrFail($id);
 
         $statusMap = [
-            'menunggu_pembayaran' => 'pembayaran_menunggu',
+            'menunggu_pembayaran' => 'menunggu_pembayaran',
             'pembayaran_dikonfirmasi' => 'pembayaran_dikonfirmasi',
-            'diproses' => 'pesanan_diproses',
-            'dikirim' => 'pesanan_dikirim',
-            'selesai' => 'pesanan_selesai',
-            'dibatalkan' => 'pesanan_dibatalkan',
+            'diproses' => 'diproses',
+            'dikirim' => 'dikirim',
+            'selesai' => 'selesai',
+            'dibatalkan' => 'dibatalkan',
         ];
 
         $pesananStatusMap = [
@@ -341,7 +343,7 @@ class CustomerOrderController extends Controller
                 'status_pesanan' => 'dalam_pengiriman',
             ]);
 
-            $transaksi->update(['status' => 'pesanan_dikirim']);
+            $transaksi->update(['status' => 'dikirim']);
 
             if (Schema::hasTable('tracking_log')) {
                 TrackingLog::create([

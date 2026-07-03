@@ -48,7 +48,7 @@ class MasterProductCreateController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nama_produk' => 'required|string|max:255',
+            'nama_produk' => 'required|string|max:255|unique:produk,nama_produk',
             'deskripsi' => 'required|string',
             'kategori_id' => 'required|exists:kategori,kategori_id',
             'supplier_id' => 'required|exists:supplier,supplier_id',
@@ -62,6 +62,8 @@ class MasterProductCreateController extends Controller
             'status_publish' => 'required|in:publish,draft,scheduled',
             'scheduled_at' => 'required_if:status_publish,scheduled|nullable|date',
             'is_featured' => 'nullable|boolean',
+        ], [
+            'nama_produk.unique' => 'Nama produk sudah ada',
         ]);
 
         // Generate slug unik

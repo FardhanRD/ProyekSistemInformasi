@@ -101,12 +101,12 @@
                     <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Status Order</label>
                     <select name="status" class="form-input" style="height: 42px; cursor: pointer; border-radius: 10px; font-size: 13.5px; padding: 0 12px; background-color: #F8FAFC;">
                         <option value="">All Status</option>
-                        <option value="pembayaran_menunggu" {{ ($status_filter ?? '') === 'pembayaran_menunggu' ? 'selected' : '' }}>Pembayaran Menunggu</option>
+                        <option value="menunggu_pembayaran" {{ ($status_filter ?? '') === 'menunggu_pembayaran' ? 'selected' : '' }}>Pembayaran Menunggu</option>
                         <option value="pembayaran_dikonfirmasi" {{ ($status_filter ?? '') === 'pembayaran_dikonfirmasi' ? 'selected' : '' }}>Pembayaran Dikonfirmasi</option>
-                        <option value="pesanan_diproses" {{ ($status_filter ?? '') === 'pesanan_diproses' ? 'selected' : '' }}>Diproses</option>
-                        <option value="pesanan_dikirim" {{ ($status_filter ?? '') === 'pesanan_dikirim' ? 'selected' : '' }}>Dikirim</option>
-                        <option value="pesanan_selesai" {{ ($status_filter ?? '') === 'pesanan_selesai' ? 'selected' : '' }}>Selesai</option>
-                        <option value="pesanan_dibatalkan" {{ ($status_filter ?? '') === 'pesanan_dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+                        <option value="diproses" {{ ($status_filter ?? '') === 'diproses' ? 'selected' : '' }}>Diproses</option>
+                        <option value="dikirim" {{ ($status_filter ?? '') === 'dikirim' ? 'selected' : '' }}>Dikirim</option>
+                        <option value="selesai" {{ ($status_filter ?? '') === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                        <option value="dibatalkan" {{ ($status_filter ?? '') === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                     </select>
                 </div>
 

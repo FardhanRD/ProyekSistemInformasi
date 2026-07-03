@@ -129,7 +129,7 @@ class CategoryController extends Controller
         $insert = [
             'nama_kategori' => $validated['nama_kategori'],
             'slug' => $slug,
-            'parent_id' => $validated['parent_id'] ?? null,
+            'parent_id' => !empty($validated['parent_id']) ? $validated['parent_id'] : null,
             'level' => $level,
             'urutan' => $validated['urutan'] ?? 0,
             'is_active' => (int)$validated['is_active'],
@@ -159,6 +159,14 @@ class CategoryController extends Controller
 
         $slug = $validated['slug'] ?? Str::slug($validated['nama_kategori']);
 
+        // Cegah duplikasi slug saat update (abaikan kategori saat ini)
+        $slugBase = $slug;
+        $suffix = 1;
+        while (Kategori::where('slug', $slug)->where('kategori_id', '!=', $id)->exists()) {
+            $slug = $slugBase . '-' . $suffix;
+            $suffix++;
+        }
+
         $level = null;
         if (!empty($validated['parent_id'])) {
             $parent = Kategori::find($validated['parent_id']);
@@ -170,7 +178,7 @@ class CategoryController extends Controller
         $update = [
             'nama_kategori' => $validated['nama_kategori'],
             'slug' => $slug,
-            'parent_id' => $validated['parent_id'] ?? null,
+            'parent_id' => !empty($validated['parent_id']) ? $validated['parent_id'] : null,
             'level' => $level,
             'urutan' => $validated['urutan'] ?? 0,
             'is_active' => (int)$validated['is_active'],

@@ -54,8 +54,8 @@
                 
                 {{-- Image Area --}}
                 <div style="position: relative; width: 100%; aspect-ratio: 1/1; background: #F8FAFC; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                    @if($item->url_gambar && Storage::disk('public')->exists($item->url_gambar))
-                        <img src="{{ Storage::url($item->url_gambar) }}" alt="{{ $item->alt_text }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    @if($item->url_lengkap)
+                        <img src="{{ $item->url_lengkap }}" alt="{{ $item->alt_text }}" style="width: 100%; height: 100%; object-fit: cover;">
                     @else
                         <div style="text-align: center; color: #CBD5E1;">
                             <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="margin: 0 auto 8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>

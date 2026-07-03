@@ -33,7 +33,10 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Product Name *</label>
-                            <input type="text" name="nama_produk" required value="{{ old('nama_produk') }}" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B9BAF]" />
+                            <input type="text" name="nama_produk" required value="{{ old('nama_produk') }}" class="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 @error('nama_produk') border-red-500 focus:ring-red-200 @else border-slate-200 focus:ring-[#2B9BAF] @enderror" />
+                            @error('nama_produk')
+                                <p class="mt-1 text-xs font-semibold text-red-500">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
