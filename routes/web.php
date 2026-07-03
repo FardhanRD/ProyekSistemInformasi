@@ -15,6 +15,7 @@ use App\Http\Controllers\RatingTokoController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\VoucherController;
@@ -54,9 +55,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store'])->name('login.post');
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->name('register.post');
-    Route::get('/forgot-password', function () {
-        return view('auth.forgot-password');
-    })->name('password.request');
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/reset-password', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 });
 
 // Protected (buyer routes)
@@ -103,6 +105,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders/{kode_transaksi}', [OrderController::class, 'show'])->name('orders.show')->middleware(['auth']);
     Route::get('/orders/{kode}/json', [OrderController::class, 'showJson'])->name('orders.show.json');
     Route::post('/orders/{kode}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->middleware(['auth']);
+    Route::post('/orders/{kode}/complete', [OrderController::class, 'complete'])->name('orders.complete')->middleware(['auth']);
     Route::get('/orders/{kode}/cancelled', [OrderController::class, 'cancelled'])->name('orders.cancelled')->middleware(['auth']);
     Route::get('/tracking/{kode_transaksi}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/orders/{kode_transaksi}/tracking', [TrackingController::class, 'show'])->name('order.tracking');

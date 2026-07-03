@@ -161,7 +161,14 @@ class CartController extends Controller
         $item->delete();
 
         if (request()->expectsJson() || request()->ajax() || request()->is('api/*')) {
-            return response()->json(['success' => true, 'message' => 'Produk dihapus dari keranjang']);
+            $count = $ownerId
+                ? Keranjang::where($ownerColumn, $ownerId)->distinct()->count('detail_produk_id')
+                : 0;
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk dihapus dari keranjang',
+                'cart_count' => $count
+            ]);
         }
 
         return back()->with('success','Produk dihapus dari keranjang');

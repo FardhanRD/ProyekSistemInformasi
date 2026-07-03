@@ -254,4 +254,79 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    public function complete($kode)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan login terlebih dahulu',
+            ], 401);
+        }
+
+        $buyer = $user->buyer;
+        if (! $buyer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data buyer tidak ditemukan',
+            ], 403);
+        }
+
+        $transaksi = Transaksi::with(['pembayaran', 'pesanan'])
+            ->where('kode_transaksi', $kode)
+            ->where('pengguna_id', $buyer->pengguna_id)
+            ->firstOrFail();
+
+        if ($transaksi->status !== 'dikirim') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak dalam pengiriman',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($transaksi) {
+            $transaksi->update(['status' => 'selesai']);
+
+            if ($transaksi->pembayaran) {
+                $transaksi->pembayaran->update([
+                    'status_pembayaran' => 'berhasil',
+                ]);
+            }
+
+            if (Schema::hasTable('pesanan')) {
+                $pesanan = \App\Models\Pesanan::where('transaksi_id', $transaksi->transaksi_id)->first();
+                if ($pesanan) {
+                    $pesanan->update(['status_pesanan' => 'selesai']);
+
+                    if (Schema::hasTable('tracking_log')) {
+                        \App\Models\TrackingLog::create([
+                            'pesanan_id' => $pesanan->pesanan_id,
+                            'status' => 'Pesanan Selesai',
+                            'deskripsi' => 'Pesanan telah diterima oleh pembeli. Transaksi selesai.',
+                            'lokasi' => 'Alamat Tujuan',
+                            'waktu_update' => now(),
+                        ]);
+                    }
+                }
+            }
+
+            if (Schema::hasTable('notifikasi')) {
+                \App\Models\Notifikasi::create([
+                    'pengguna_id' => $transaksi->pengguna_id,
+                    'judul' => 'Pesanan Selesai',
+                    'pesan' => "Pesanan dengan kode transaksi {$transaksi->kode_transaksi} telah selesai diterima. Terima kasih telah berbelanja di MOVR!",
+                    'jenis' => 'completed',
+                    'url_redirect' => '/orders?status=selesai',
+                    'is_read' => false,
+                    'created_at' => now(),
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pesanan berhasil diselesaikan.',
+        ]);
+    }
 }

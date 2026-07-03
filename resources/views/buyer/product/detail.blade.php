@@ -108,7 +108,7 @@
         @endif
 
         {{-- Wishlist Button (Floating) --}}
-        <div class="absolute top-4 right-4"
+        <div class="absolute top-4 right-4 z-30"
              x-data="{ 
                isWishlisted: @json(auth()->check() && \App\Models\Wishlist::where('pengguna_id', auth()->id())->where('produk_id', $product->produk_id)->exists()),
                loading: false,
@@ -118,19 +118,21 @@
                    method: 'POST',
                    headers: {
                      'Content-Type': 'application/json',
-                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                     'Accept': 'application/json',
+                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
                    },
                    body: JSON.stringify({ produk_id: {{ $product->produk_id }} })
                  });
                  const data = await res.json();
                  if (data.success) {
                    this.isWishlisted = !this.isWishlisted;
+                   window.dispatchEvent(new Event('wishlist-updated'));
                    showToast(this.isWishlisted ? @json(__('ui.product_added_wishlist')) : @json(__('ui.product_removed_wishlist')));
                  }
                  this.loading = false;
                }
              }">
-          <button @click.prevent="toggle()"
+          <button @click.stop.prevent="toggle()"
                   :disabled="loading"
                   class="w-12 h-12 rounded-full bg-white shadow-lg 
                          flex items-center justify-center 

@@ -210,6 +210,21 @@
             </svg>
             {{ __('ui.track_package') }}
           </a>
+          @if($t->status === 'dikirim')
+          <button onclick="confirmCompleteOrder('{{ $t->kode_transaksi }}')"
+                  class="px-4 py-2 bg-green-600 text-white 
+                         text-xs font-bold rounded-full 
+                         hover:bg-green-700 transition 
+                         flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" 
+                 stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" 
+                    stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Pesanan Selesai
+          </button>
+          @endif
           
           @elseif($t->status === 'selesai' && !$sudahRating)
           <a href="{{ route('orders.rating', $t->kode_transaksi) }}"
@@ -263,4 +278,48 @@
     @endforelse
   </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    async function confirmCompleteOrder(kode) {
+        if (!confirm('Apakah Anda yakin ingin menyelesaikan pesanan ini? Status pesanan akan diubah menjadi selesai dan tidak dapat diubah kembali.')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/orders/${kode}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                if (typeof showToast === 'function') {
+                    showToast('✅ Pesanan berhasil diselesaikan!', 'success');
+                } else {
+                    alert('Pesanan berhasil diselesaikan!');
+                }
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast(data.message || 'Gagal menyelesaikan pesanan', 'error');
+                } else {
+                    alert(data.message || 'Gagal menyelesaikan pesanan');
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            if (typeof showToast === 'function') {
+                showToast('Terjadi kesalahan', 'error');
+            } else {
+                alert('Terjadi kesalahan');
+            }
+        }
+    }
+</script>
 @endsection
